@@ -1,0 +1,351 @@
+/* VerifyOtp.css */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body  {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* #root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  min-height: 100vh;
+} */
+
+.verify-page {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.verify-container {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.verify-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  width: 100%;
+  animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.verify-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.red-accent {
+  width: 60px;
+  height: 4px;
+  background: #dc2626;
+  margin: 0 auto 16px;
+  border-radius: 2px;
+  animation: expandWidth 0.5s ease;
+}
+
+@keyframes expandWidth {
+  from {
+    width: 0;
+  }
+  to {
+    width: 60px;
+  }
+}
+
+.verify-header h2 {
+  color: #1f2937;
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.verify-subtitle {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.verify-email {
+  color: #dc2626;
+  font-weight: 500;
+  display: inline-block;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background: #fee2e2;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.verify-input-group {
+  margin-bottom: 24px;
+}
+
+.verify-input-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.verify-input-group input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 18px;
+  transition: all 0.3s ease;
+  outline: none;
+  background: white;
+  text-align: center;
+  letter-spacing: 4px;
+  font-weight: 600;
+}
+
+.verify-input-group input:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.verify-input-group input.input-error {
+  border-color: #dc2626;
+  animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.verify-input-group input::placeholder {
+  color: #9ca3af;
+  letter-spacing: normal;
+  font-weight: normal;
+  font-size: 15px;
+}
+
+.verify-button {
+  width: 100%;
+  padding: 14px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.verify-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.verify-button:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+.verify-button:hover:not(:disabled) {
+  background: #b91c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.verify-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.verify-button:disabled::after {
+  display: none;
+}
+
+.verify-button.loading {
+  position: relative;
+  color: transparent;
+}
+
+.verify-button.loading::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 50%;
+  margin: -10px 0 0 -10px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  background: none;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.verify-error {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 20px;
+  border-left: 4px solid #dc2626;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.verify-footer {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.verify-resend {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.resend-link {
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+  text-decoration: underline;
+  transition: color 0.3s ease;
+}
+
+.resend-link:hover:not(:disabled) {
+  color: #b91c1c;
+  background: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.resend-link:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.verify-back {
+  margin-top: 8px;
+}
+
+.back-link {
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.3s ease;
+}
+
+.back-link:hover {
+  color: #dc2626;
+  text-decoration: underline;
+}
+
+/* Style pour l'autofill */
+.verify-input-group input:-webkit-autofill,
+.verify-input-group input:-webkit-autofill:hover,
+.verify-input-group input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px white inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .verify-card {
+    margin: 20px;
+    padding: 30px 20px;
+  }
+  
+  .verify-header h2 {
+    font-size: 24px;
+  }
+  
+  .verify-input-group input {
+    font-size: 16px;
+    padding: 12px;
+  }
+}
+
+/* Animation de pulse pour le bouton */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.verify-button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+/* Style pour le code à 6 chiffres */
+.verify-input-group input[type="text"] {
+  font-family: monospace;
+}

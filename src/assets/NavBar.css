@@ -1,0 +1,76 @@
+/* NAVBAR CONTAINER */
+.navbar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 10000px;
+  padding: 10px 25px; 
+  display: flex;      
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 18px; 
+  z-index: 1000;
+  backdrop-filter: blur(15px);
+  /* background: rgba(148, 149, 150, 0.12);
+  border: 1px solid rgba(97, 97, 97, 0.25);
+  box-shadow: 0 6px 20px rgba(73, 74, 75, 0.15);
+  transition: all 0.4s ease; */
+}
+/* .logo {
+ 
+  gap: 10px;
+  font-weight: bold;
+  font-size: 20px;
+  width: 100%;
+}  */
+
+/* .logo-icon {
+  width: 28px;
+  height: 28px;
+  background: black;
+  border-radius: 6px;
+} */
+
+/* Center capsule */
+.nav-links {
+  display: flex;
+  gap: 30px;
+  list-style: none;
+
+  background: #e5e5e5;
+  padding: 14px 40px;
+  border-radius: 50px;
+
+  font-weight: 500;
+  color: #555;
+}
+
+/* Right section */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.signin {
+  padding: 10px 22px;
+  border-radius: 30px;
+  border: 1px solid black;
+  background: transparent;
+  cursor: pointer;
+}
+
+.signup {
+  padding: 10px 22px;
+  border-radius: 30px;
+  border: none;
+  background: black;
+  color: white;
+  cursor: pointer;
+}
+
+.moon {
+  font-size: 20px;
+  cursor: pointer;
+}
