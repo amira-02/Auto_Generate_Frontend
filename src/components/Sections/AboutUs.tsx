@@ -23,9 +23,9 @@ const AboutUs: React.FC = () => {
 const { t, isDark, toggleTheme } = useTheme();
   return (
     <div style={{ background: t.bg, color: t.text }}>
-      <button onClick={toggleTheme}>
+      {/* <button onClick={toggleTheme}>
         {isDark ? "☀️ Light" : "🌙 Dark"}
-      </button>
+      </button> */}
     
     <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 bg-[#F4F5F3] overflow-hidden">
 
