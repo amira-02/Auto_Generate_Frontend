@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../hooks/AuthContext";
 import { API } from "../services/api";
 import { jwtDecode } from "jwt-decode";
+import CalendarView from "../components/CalendarView";
+import CreatePostModal from "../components/CreatePostModal";
+
 
 type Step = "form" | "generating" | "preview";
 type CaptionLength = "short" | "medium" | "long";
@@ -286,53 +289,68 @@ export default function Dashboard() {
   };
 
   // ─── Instagram mock shared component ────────────────────────────────────────
-  const IgMock = () => (
-    <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
-      {/* header */}
-      <div style={{ padding: "10px 12px", borderBottom: "1px solid #e5e7eb", display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)", flexShrink: 0 }} />
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 700 }}>workflows.diy</div>
-          <div style={{ fontSize: 10, color: "#9ca3af" }}>Just now</div>
-        </div>
-        <span style={{ marginLeft: "auto", color: "#9ca3af", fontSize: 18 }}>···</span>
-      </div>
+  // const IgMock = () => (
+  //   <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", overflow: "hidden" }}>
+  //     {/* header */}
+  //     <div style={{ padding: "10px 12px", borderBottom: "1px solid #e5e7eb", display: "flex", alignItems: "center", gap: 8 }}>
+  //       <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)", flexShrink: 0 }} />
+  //       <div>
+  //         <div style={{ fontSize: 12, fontWeight: 700 }}>workflows.diy</div>
+  //         <div style={{ fontSize: 10, color: "#9ca3af" }}>Just now</div>
+  //       </div>
+  //       <span style={{ marginLeft: "auto", color: "#9ca3af", fontSize: 18 }}>···</span>
+  //     </div>
 
-      {/* media */}
-      <div style={{ background: "#f3f4f6", minHeight: 240, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8, position: "relative", overflow: "hidden" }}>
-        {modal.generatedImage ? (
-          <img src={modal.generatedImage} alt="AI" style={{ width: "100%", maxHeight: 320, objectFit: "cover" }} />
-        ) : modal.uploadedImages[0] ? (
-          <img src={modal.uploadedImages[0]} alt="upload" style={{ width: "100%", maxHeight: 320, objectFit: "cover" }} />
-        ) : modal.uploadedVideo ? (
-          <video src={modal.uploadedVideo} controls style={{ width: "100%", maxHeight: 280 }} />
-        ) : (
-          <div style={{ textAlign: "center", color: "#9ca3af" }}>
-            <div style={{ fontSize: 40, marginBottom: 6 }}>📷</div>
-            <div style={{ fontSize: 11 }}>No media yet</div>
-          </div>
-        )}
-      </div>
+  //     {/* media */}
+  //     <div style={{ background: "#f3f4f6", minHeight: 240, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8, position: "relative", overflow: "hidden" }}>
+  //       {modal.generatedImage ? (
+  //         <img src={modal.generatedImage} alt="AI" style={{ width: "100%", maxHeight: 320, objectFit: "cover" }} />
+  //       ) : modal.uploadedImages[0] ? (
+  //         <img src={modal.uploadedImages[0]} alt="upload" style={{ width: "100%", maxHeight: 320, objectFit: "cover" }} />
+  //       ) : modal.uploadedVideo ? (
+  //         <video src={modal.uploadedVideo} controls style={{ width: "100%", maxHeight: 280 }} />
+  //       ) : (
+  //         <div style={{ textAlign: "center", color: "#9ca3af" }}>
+  //           <div style={{ fontSize: 40, marginBottom: 6 }}>📷</div>
+  //           <div style={{ fontSize: 11 }}>No media yet</div>
+  //         </div>
+  //       )}
+  //     </div>
 
-      {/* actions */}
-      <div style={{ padding: "8px 12px", display: "flex", gap: 14, fontSize: 20, borderBottom: "1px solid #f3f4f6" }}>
-        ❤️ 💬 📤
-      </div>
+  //     {/* actions */}
+  //     <div style={{ padding: "8px 12px", display: "flex", gap: 14, fontSize: 20, borderBottom: "1px solid #f3f4f6" }}>
+  //       ❤️ 💬 📤
+  //     </div>
 
-      {/* caption */}
-      <div style={{ padding: "8px 12px 12px" }}>
-        <span style={{ fontSize: 12, fontWeight: 700 }}>workflows.diy </span>
-        <span style={{ fontSize: 12, color: "#374151" }}>
-          {modal.generatedContent
-            ? modal.generatedContent.slice(0, 140) + (modal.generatedContent.length > 140 ? "…" : "")
-            : <span style={{ color: "#9ca3af" }}>Caption will appear here…</span>}
-        </span>
-        {modal.hashtags && (
-          <div style={{ fontSize: 12, color: "#3b82f6", marginTop: 4 }}>{modal.hashtags}</div>
-        )}
-      </div>
-    </div>
-  );
+  //     {/* caption */}
+  //     <div style={{ padding: "8px 12px 12px" }}>
+  //       <span style={{ fontSize: 12, fontWeight: 700 }}>workflows.diy </span>
+  //       <span style={{ fontSize: 12, color: "#374151" }}>
+  //         {modal.generatedContent
+  //           ? modal.generatedContent.slice(0, 140) + (modal.generatedContent.length > 140 ? "…" : "")
+  //           : <span style={{ color: "#9ca3af" }}>Caption will appear here…</span>}
+  //       </span>
+  //       {modal.hashtags && (
+  //         <div style={{ fontSize: 12, color: "#3b82f6", marginTop: 4 }}>{modal.hashtags}</div>
+  //       )}
+  //     </div>
+  //   </div>
+  // );
+
+
+    const [posts, setPosts] = useState<any[]>([]);
+
+      // useEffect(() => {
+      //   const fetchPosts = async () => {
+      //     const res = await API.get("/posts", {
+      //       headers: { Authorization: `Bearer ${token}` },
+      //     });
+      //     setPosts(res.data);
+      //   };
+
+      //   fetchPosts();
+      // }, []);
+
 
   // ─── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -399,364 +417,241 @@ export default function Dashboard() {
       </aside>
 
       {/* ═══════════════ MAIN ═══════════════ */}
-      <main style={{ flex: 1, marginLeft: 230, overflowY: "auto" }}>
-        <div style={{ padding: 40, maxWidth: 1200, margin: "0 auto" }}>
-          {activeNav === "dashboard" && (
-            <>
-              <h1 style={{ fontSize: 28, fontWeight: 800, color: "#111827", marginBottom: 4 }}>Dashboard</h1>
-              <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 28 }}>Welcome back! Ready to create engaging content?</p>
+     <main style={{ flex: 1, marginLeft: 230, overflowY: "auto" }}>
+  <div style={{ padding: 40, maxWidth: 1200, margin: "0 auto" }}>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 16, marginBottom: 36 }}>
-                {[
-                  { label: "Total Posts",  value: "0", color: "#3b82f6", icon: "📝" },
-                  { label: "Published",    value: "0", color: "#10b981", icon: "✅" },
-                  { label: "Drafts",       value: "0", color: "#f59e0b", icon: "💾" },
-                  { label: "Engagement",   value: "0%", color: "#8b5cf6", icon: "📊" },
-                ].map((s, i) => (
-                  <div key={i} style={{ background: "#fff", borderRadius: 12, padding: 20, border: "1px solid #e5e7eb" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                      <span style={{ fontSize: 28 }}>{s.icon}</span>
-                      <span style={{ fontSize: 26, fontWeight: 800, color: s.color }}>{s.value}</span>
-                    </div>
-                    <div style={{ fontSize: 13, color: "#6b7280" }}>{s.label}</div>
+    {/* ================= DASHBOARD ================= */}
+    {activeNav === "dashboard" && (
+      <>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#111827", marginBottom: 4 }}>
+          Dashboard
+        </h1>
+
+        <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 28 }}>
+          Welcome back! Ready to create engaging content?
+        </p>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+          gap: 16,
+          marginBottom: 36
+        }}>
+          {[
+            { label: "Total Posts", value: posts.length, color: "#3b82f6", icon: "📝" },
+            { label: "Published", value: posts.filter(p => p.status === "published").length, color: "#10b981", icon: "✅" },
+            { label: "Drafts", value: posts.filter(p => p.status === "draft").length, color: "#f59e0b", icon: "💾" },
+            { label: "Scheduled", value: posts.filter(p => p.status === "scheduled").length, color: "#8b5cf6", icon: "📅" },
+          ].map((s, i) => (
+            <div key={i} style={{
+              background: "#fff",
+              borderRadius: 12,
+              padding: 20,
+              border: "1px solid #e5e7eb"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 28 }}>{s.icon}</span>
+                <span style={{ fontSize: 26, fontWeight: 800, color: s.color }}>
+                  {s.value}
+                </span>
+              </div>
+              <div style={{ fontSize: 13, color: "#6b7280" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={openModal}
+          style={{
+            padding: "12px 24px",
+            borderRadius: 8,
+            border: "none",
+            background: "#3b82f6",
+            color: "#fff",
+            cursor: "pointer",
+            fontWeight: 600
+          }}
+        >
+          Create Post →
+        </button>
+      </>
+    )}
+
+    {/* ================= POSTS ================= */}
+    {activeNav === "posts" && (
+      <div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 20 }}>📝 Posts</h1>
+
+        {posts.length === 0 ? (
+          <p>No posts yet</p>
+        ) : (
+          <div style={{ display: "grid", gap: 12 }}>
+            {posts.map((p, i) => (
+              <div key={i} style={{
+                background: "#fff",
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                padding: 16
+              }}>
+                <div style={{ fontWeight: 700 }}>
+                  {p.caption?.slice(0, 100)}
+                </div>
+
+                <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>
+                  Platforms: {p.platforms?.join(", ")}
+                </div>
+
+                <div style={{ fontSize: 12, marginTop: 4 }}>
+                  Status: <b>{p.status}</b>
+                </div>
+
+                {p.scheduledAt && (
+                  <div style={{ fontSize: 11, color: "#9ca3af" }}>
+                    📅 {new Date(p.scheduledAt).toLocaleString()}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
+
+    {/* ================= CALENDAR ================= */}
+    {/* {activeNav === "calendar" && (
+      <div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 20 }}>📅 Calendar</h1>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          gap: 10
+        }}>
+          {Array.from({ length: 30 }).map((_, i) => {
+            const dayPosts = posts.filter(p => {
+              if (!p.scheduledAt) return false;
+              return new Date(p.scheduledAt).getDate() === i + 1;
+            });
+
+            return (
+              <div key={i} style={{
+                background: "#fff",
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                minHeight: 120,
+                padding: 8
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 700 }}>
+                  Day {i + 1}
+                </div>
+
+                {dayPosts.map((p, idx) => (
+                  <div key={idx} style={{
+                    marginTop: 6,
+                    fontSize: 11,
+                    background: "#eff6ff",
+                    padding: 4,
+                    borderRadius: 6
+                  }}>
+                    {p.caption?.slice(0, 40)}...
                   </div>
                 ))}
               </div>
-
-              <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 48, textAlign: "center" }}>
-                <div style={{ fontSize: 48, marginBottom: 14 }}>📭</div>
-                <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6, color: "#111827" }}>No posts yet</h3>
-                <p style={{ color: "#6b7280", marginBottom: 20, fontSize: 13 }}>Create your first post to get started</p>
-                <button onClick={openModal} style={{ padding: "10px 22px", borderRadius: 8, border: "none", background: "#3b82f6", color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Create Post →</button>
-              </div>
-            </>
-          )}
-
-          {activeNav !== "dashboard" && (
-            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 48, textAlign: "center" }}>
-              <div style={{ fontSize: 48, marginBottom: 14 }}>🚧</div>
-              <h3 style={{ fontSize: 17, fontWeight: 700, color: "#111827" }}>Coming soon</h3>
-              <p style={{ color: "#6b7280", fontSize: 13, marginTop: 6 }}>This section is under construction.</p>
-            </div>
-          )}
+            );
+          })}
         </div>
-      </main>
+      </div>
+    )} */}
+    {activeNav === "calendar" && <CalendarView posts={posts} />}
+
+    {/* ================= ACCOUNTS ================= */}
+    {activeNav === "accounts" && (
+      <div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 20 }}>
+          🔗 Connected Accounts
+        </h1>
+
+        {PLATFORMS.map((p) => (
+          <div key={p.id} style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            background: "#fff",
+            border: "1px solid #e5e7eb",
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 10
+          }}>
+            <div style={{ display: "flex", gap: 10 }}>
+              <span>{p.icon}</span>
+              <span style={{ fontWeight: 600 }}>{p.label}</span>
+            </div>
+
+            <button style={{
+              background: "#3b82f6",
+              color: "#fff",
+              border: "none",
+              padding: "6px 12px",
+              borderRadius: 6,
+              cursor: "pointer"
+            }}>
+              Connect
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {/* ================= FALLBACK ================= */}
+    {!["dashboard", "posts", "calendar", "accounts"].includes(activeNav) && (
+      <div style={{
+        background: "#fff",
+        borderRadius: 12,
+        border: "1px solid #e5e7eb",
+        padding: 48,
+        textAlign: "center"
+      }}>
+        <div style={{ fontSize: 48 }}>🚧</div>
+        <h3>Coming soon</h3>
+      </div>
+    )}
+
+  </div>
+     </main>
 
       {/* ═══════════════ MODAL ═══════════════ */}
-      {modal.open && (
-        <div
-          onClick={closeModal}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.52)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, zIndex: 1000 }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{ background: "#fff", width: "95vw", maxWidth: 1380, height: "90vh", borderRadius: 20, boxShadow: "0 25px 60px -10px rgba(0,0,0,0.3)", display: "flex", flexDirection: "column", overflow: "hidden" }}
-          >
-            {/* Modal header */}
-            <div style={{ padding: "16px 24px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>Create Post</h2>
-                {/* step indicator */}
-                <div style={{ display: "flex", gap: 6 }}>
-                  {(["form","generating","preview"] as Step[]).map((s, i) => (
-                    <div key={s} style={{ width: 8, height: 8, borderRadius: "50%", background: modal.step === s ? "#3b82f6" : i < (["form","generating","preview"].indexOf(modal.step)) ? "#10b981" : "#e5e7eb" }} />
-                  ))}
-                </div>
-              </div>
-              <button onClick={closeModal} style={{ background: "transparent", border: "none", fontSize: 22, cursor: "pointer", color: "#9ca3af", lineHeight: 1 }}>✕</button>
-            </div>
+<CreatePostModal
+  modal={modal}
+  setM={setM}
+  closeModal={closeModal}
 
-            {/* ── STEP: FORM ── */}
-            {modal.step === "form" && (
-              <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+  handleGenerate={handleGenerate}
+  handlePublish={handlePublish}
+  handleSaveDraft={handleSaveDraft}
 
-                {/* COL 1 — Inputs */}
-                <div style={{ ...S.col, ...S.divider, maxWidth: 320, minWidth: 280 }}>
-                  <div style={S.colTitle}>📝 Content Settings</div>
+  handleFileUpload={handleFileUpload}
+  handleImageUpload={handleImageUpload}
+  handleVideoUpload={handleVideoUpload}
+  handleGenerateImage={handleGenerateImage}
 
-                  <div>
-                    <label style={S.label}>Topic</label>
-                    <textarea
-                      rows={3}
-                      placeholder="What's your post about?"
-                      value={modal.topic}
-                      onChange={e => setM({ topic: e.target.value, error: "" })}
-                      style={{ ...S.input, resize: "vertical" }}
-                    />
-                  </div>
+  togglePlatform={togglePlatform}
+  removeImage={removeImage}
+  copyCaption={copyCaption}
 
-                  <div>
-                    <label style={S.label}>Upload file <span style={{ fontWeight: 400, color: "#9ca3af" }}>(PDF / TXT)</span></label>
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      style={{ border: "1.5px dashed #d1d5db", borderRadius: 8, padding: "12px", textAlign: "center", cursor: "pointer", fontSize: 12, color: "#6b7280" }}
-                    >
-                      {modal.fileName ? `✅ ${modal.fileName}` : "📄 Click to upload"}
-                    </div>
-                    <input ref={fileInputRef} type="file" accept=".txt,.pdf" onChange={handleFileUpload} style={{ display: "none" }} />
-                  </div>
+  fileInputRef={fileInputRef}
+  imageInputRef={imageInputRef}
+  videoInputRef={videoInputRef}
 
-                  <div>
-                    <label style={S.label}>Caption length</label>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      {(["short","medium","long"] as CaptionLength[]).map(v => (
-                        <button key={v} onClick={() => setM({ captionLength: v })}
-                          style={{ flex: 1, padding: "7px 4px", borderRadius: 7, fontSize: 11, fontWeight: modal.captionLength === v ? 700 : 400, border: "1px solid", borderColor: modal.captionLength === v ? "#3b82f6" : "#d1d5db", background: modal.captionLength === v ? "#eff6ff" : "#fff", color: modal.captionLength === v ? "#3b82f6" : "#6b7280", cursor: "pointer" }}>
-                          {v.charAt(0).toUpperCase() + v.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={S.label}>Tone of voice</label>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {(["professional","casual","funny","inspirational"] as Tone[]).map(v => (
-                        <button key={v} onClick={() => setM({ tone: v })}
-                          style={{ padding: "6px 10px", borderRadius: 7, fontSize: 11, fontWeight: modal.tone === v ? 700 : 400, border: "1px solid", borderColor: modal.tone === v ? "#3b82f6" : "#d1d5db", background: modal.tone === v ? "#eff6ff" : "#fff", color: modal.tone === v ? "#3b82f6" : "#6b7280", cursor: "pointer" }}>
-                          {v.charAt(0).toUpperCase() + v.slice(1)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={S.label}>Hashtags</label>
-                    <input
-                      placeholder="#automation #n8n #ai"
-                      value={modal.hashtags}
-                      onChange={e => setM({ hashtags: e.target.value })}
-                      style={S.input}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={S.label}>Platforms</label>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                      {PLATFORMS.map(p => {
-                        const sel = modal.selectedPlatforms.includes(p.id);
-                        return (
-                          <button key={p.id} onClick={() => togglePlatform(p.id)}
-                            style={{ padding: "6px 10px", borderRadius: 20, fontSize: 11, fontWeight: sel ? 700 : 400, border: "1px solid", borderColor: sel ? p.color : "#d1d5db", background: sel ? p.color + "18" : "#fff", color: sel ? p.color : "#6b7280", cursor: "pointer" }}>
-                            {p.icon} {p.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {modal.error && (
-                    <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 12px", fontSize: 12, color: "#dc2626" }}>
-                      ⚠️ {modal.error}
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handleGenerate}
-                    disabled={(!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0}
-                    style={{
-                      marginTop: "auto",
-                      padding: "12px",
-                      borderRadius: 9,
-                      border: "none",
-                      background: (!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0 ? "#9ca3af" : "#3b82f6",
-                      color: "#fff",
-                      cursor: (!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0 ? "not-allowed" : "pointer",
-                      fontSize: 14,
-                      fontWeight: 700,
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    ✨ Generate Content
-                  </button>
-                </div>
-
-                {/* COL 2 — Output preview */}
-                <div style={{ ...S.col, ...S.divider, flex: 1, background: "#f9fafb" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={S.colTitle}>📄 Caption Output</div>
-                    {modal.generatedContent && (
-                      <button onClick={copyCaption}
-                        style={{ padding: "5px 12px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", fontSize: 11, cursor: "pointer", color: "#374151" }}>
-                        {copyDone ? "✅ Copied!" : "📋 Copy"}
-                      </button>
-                    )}
-                  </div>
-
-                  {modal.generatedContent ? (
-                    <textarea
-                      value={modal.generatedContent}
-                      onChange={e => setM({ generatedContent: e.target.value })}
-                      style={{ ...S.input, flex: 1, resize: "none", lineHeight: 1.65 }}
-                    />
-                  ) : (
-                    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#9ca3af", textAlign: "center", gap: 12 }}>
-                      <div style={{ fontSize: 52 }}>✨</div>
-                      <div style={{ fontSize: 13 }}>Fill in the form and click<br /><strong style={{ color: "#3b82f6" }}>Generate Content</strong> to start</div>
-                    </div>
-                  )}
-                </div>
-
-                {/* COL 3 — Instagram preview + media */}
-                <div style={{ ...S.col, maxWidth: 320, minWidth: 280 }}>
-                  <div style={S.colTitle}>📱 Instagram Preview</div>
-
-                  <IgMock />
-
-                  {/* Media controls */}
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8 }}>Media</div>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                      <button
-                        onClick={handleGenerateImage}
-                        disabled={!modal.generatedContent || modal.loading}
-                        style={{ flex: 1, padding: "9px", background: !modal.generatedContent ? "#e5e7eb" : "#8b5cf6", color: "#fff", border: "none", borderRadius: 8, cursor: !modal.generatedContent ? "not-allowed" : "pointer", fontSize: 11, fontWeight: 600 }}>
-                        🎨 AI Image
-                      </button>
-                      <button
-                        onClick={() => imageInputRef.current?.click()}
-                        style={{ flex: 1, padding: "9px", background: "#10b981", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 11, fontWeight: 600 }}>
-                        📸 Upload
-                      </button>
-                      <button
-                        onClick={() => videoInputRef.current?.click()}
-                        style={{ flex: 1, padding: "9px", background: "#f59e0b", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 11, fontWeight: 600 }}>
-                        🎥 Reel
-                      </button>
-                    </div>
-                    <input ref={imageInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} style={{ display: "none" }} />
-                    <input ref={videoInputRef} type="file" accept="video/*" onChange={handleVideoUpload} style={{ display: "none" }} />
-
-                    {/* Thumbs */}
-                    {modal.uploadedImages.length > 0 && (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
-                        {modal.uploadedImages.map((img, idx) => (
-                          <div key={idx} style={{ position: "relative" }}>
-                            <img src={img} alt="" style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8, border: "1px solid #e5e7eb" }} />
-                            <button onClick={() => removeImage(idx)}
-                              style={{ position: "absolute", top: -5, right: -5, width: 18, height: 18, borderRadius: "50%", background: "#ef4444", color: "#fff", border: "none", cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {modal.uploadedVideo && (
-                      <div style={{ marginTop: 8, fontSize: 11, color: "#10b981" }}>🎥 Video uploaded</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── STEP: GENERATING ── */}
-            {modal.step === "generating" && (
-              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 20 }}>
-                <div style={{ position: "relative", width: 64, height: 64 }}>
-                  <div style={{ width: 64, height: 64, border: "4px solid #e5e7eb", borderTopColor: "#3b82f6", borderRadius: "50%", animation: "spin 0.9s linear infinite" }} />
-                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>✨</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Generating your content…</h3>
-                  <p style={{ color: "#6b7280", fontSize: 13 }}>n8n is crafting your post. This can take up to 2 minutes.</p>
-                </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {[0, 1, 2].map(i => (
-                    <div key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#3b82f6", animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* ── STEP: PREVIEW ── */}
-            {modal.step === "preview" && (
-              <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-
-                {/* COL 1 — Edit caption */}
-                <div style={{ ...S.col, ...S.divider, flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={S.colTitle}>✏️ Edit Caption</div>
-                    <button onClick={copyCaption}
-                      style={{ padding: "5px 12px", borderRadius: 6, border: "1px solid #d1d5db", background: "#fff", fontSize: 11, cursor: "pointer", color: "#374151" }}>
-                      {copyDone ? "✅ Copied!" : "📋 Copy"}
-                    </button>
-                  </div>
-                  <textarea
-                    value={modal.generatedContent}
-                    onChange={e => setM({ generatedContent: e.target.value })}
-                    style={{ ...S.input, flex: 1, resize: "none", lineHeight: 1.65 }}
-                  />
-                </div>
-
-                {/* COL 2 — Final Instagram preview */}
-                <div style={{ ...S.col, ...S.divider, flex: 1, background: "#f9fafb" }}>
-                  <div style={S.colTitle}>📱 Final Preview</div>
-                  <IgMock />
-
-                  {/* extra uploaded media if multiple */}
-                  {modal.uploadedImages.length > 1 && (
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {modal.uploadedImages.slice(1).map((img, i) => (
-                        <img key={i} src={img} alt="" style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8, border: "1px solid #e5e7eb" }} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* COL 3 — Publish options */}
-                <div style={{ ...S.col, maxWidth: 300, minWidth: 260 }}>
-                  <div style={S.colTitle}>🚀 Publish</div>
-
-                  <div>
-                    <label style={S.label}>Schedule</label>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      {(["now","schedule"] as ScheduleType[]).map(v => (
-                        <button key={v} onClick={() => setM({ scheduleType: v })}
-                          style={{ flex: 1, padding: "9px", borderRadius: 8, fontSize: 12, fontWeight: modal.scheduleType === v ? 700 : 400, border: "1px solid", borderColor: modal.scheduleType === v ? "#3b82f6" : "#d1d5db", background: modal.scheduleType === v ? "#eff6ff" : "#fff", color: modal.scheduleType === v ? "#3b82f6" : "#6b7280", cursor: "pointer" }}>
-                          {v === "now" ? "Publish now" : "Schedule"}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {modal.scheduleType === "schedule" && (
-                    <div>
-                      <label style={S.label}>Date & time</label>
-                      <input
-                        type="datetime-local"
-                        value={modal.scheduledAt}
-                        onChange={e => setM({ scheduledAt: e.target.value })}
-                        style={S.input}
-                      />
-                    </div>
-                  )}
-
-                  <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
-                    {modal.error && (
-                      <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 12px", fontSize: 12, color: "#dc2626" }}>
-                        ⚠️ {modal.error}
-                      </div>
-                    )}
-                    <button onClick={handleSaveDraft} disabled={modal.loading}
-                      style={{ padding: "11px", borderRadius: 8, border: "1px solid #d1d5db", background: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "inherit" }}>
-                      💾 Save as Draft
-                    </button>
-                    <button onClick={handlePublish} disabled={modal.loading}
-                      style={{ padding: "11px", borderRadius: 8, border: "none", background: modal.loading ? "#9ca3af" : "#3b82f6", color: "#fff", cursor: modal.loading ? "not-allowed" : "pointer", fontWeight: 700, fontSize: 13, fontFamily: "inherit" }}>
-                      {modal.loading ? "Publishing…" : "🚀 Publish"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+  copyDone={copyDone}
+  PLATFORMS={PLATFORMS}
+/>
 
       <style>{`
         @keyframes spin   { to { transform: rotate(360deg); } }
         @keyframes bounce { 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-8px) } }
       `}</style>
+
+      
     </div>
   );
 }
