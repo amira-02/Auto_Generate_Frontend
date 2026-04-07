@@ -6,7 +6,6 @@ import { jwtDecode } from "jwt-decode";
 import CalendarView from "../components/CalendarView";
 import CreatePostModal from "../components/CreatePostModal";
 
-
 type Step = "form" | "generating" | "preview";
 type CaptionLength = "short" | "medium" | "long";
 type Tone = "professional" | "casual" | "funny" | "inspirational";
@@ -35,12 +34,12 @@ type ModalState = {
 };
 
 const PLATFORMS = [
-  { id: "linkedin",   label: "LinkedIn",    color: "#0077b5", icon: "💼" },
-  { id: "twitter",    label: "Twitter / X", color: "#1da1f2", icon: "𝕏"  },
-  { id: "instagram",  label: "Instagram",   color: "#e1306c", icon: "📸" },
-  { id: "facebook",   label: "Facebook",    color: "#1877f2", icon: "f"  },
-  { id: "tiktok",     label: "TikTok",      color: "#010101", icon: "🎵" },
-  { id: "threads",    label: "Threads",     color: "#000000", icon: "🧵" },
+  { id: "linkedin", label: "LinkedIn", color: "#0077b5", icon: "💼" },
+  { id: "twitter", label: "Twitter / X", color: "#1da1f2", icon: "𝕏" },
+  { id: "instagram", label: "Instagram", color: "#e1306c", icon: "📸" },
+  { id: "facebook", label: "Facebook", color: "#1877f2", icon: "f" },
+  { id: "tiktok", label: "TikTok", color: "#010101", icon: "🎵" },
+  { id: "threads", label: "Threads", color: "#000000", icon: "🧵" },
 ];
 
 const INITIAL_MODAL: ModalState = {
@@ -231,30 +230,7 @@ export default function Dashboard() {
     }
   };
 
-  // ─── Styles (shared tokens) ──────────────────────────────────────────────────
-  const S = {
-    col: {
-      flex: 1,
-      padding: 24,
-      overflowY: "auto" as const,
-      display: "flex",
-      flexDirection: "column" as const,
-      gap: 16,
-    },
-    divider: { borderRight: "1px solid #e5e7eb" },
-    label: { fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 4, display: "block" } as React.CSSProperties,
-    input: {
-      width: "100%",
-      padding: "9px 12px",
-      borderRadius: 8,
-      border: "1px solid #d1d5db",
-      fontSize: 13,
-      fontFamily: "inherit",
-      color: "#111",
-      outline: "none",
-    } as React.CSSProperties,
-    colTitle: { fontSize: 14, fontWeight: 700, color: "#111827", marginBottom: 4 },
-  };
+
 
   // ─── Sidebar items ───────────────────────────────────────────────────────────
   const navItems   = [
@@ -338,6 +314,7 @@ export default function Dashboard() {
   // );
 
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [posts, setPosts] = useState<any[]>([]);
 
       // useEffect(() => {
@@ -620,31 +597,31 @@ export default function Dashboard() {
      </main>
 
       {/* ═══════════════ MODAL ═══════════════ */}
-<CreatePostModal
-  modal={modal}
-  setM={setM}
-  closeModal={closeModal}
+        <CreatePostModal
+          modal={modal}
+          setM={setM}
+          closeModal={closeModal}
 
-  handleGenerate={handleGenerate}
-  handlePublish={handlePublish}
-  handleSaveDraft={handleSaveDraft}
+          handleGenerate={handleGenerate}
+          handlePublish={handlePublish}
+          handleSaveDraft={handleSaveDraft}
 
-  handleFileUpload={handleFileUpload}
-  handleImageUpload={handleImageUpload}
-  handleVideoUpload={handleVideoUpload}
-  handleGenerateImage={handleGenerateImage}
+          handleFileUpload={handleFileUpload}
+          handleImageUpload={handleImageUpload}
+          handleVideoUpload={handleVideoUpload}
+          handleGenerateImage={handleGenerateImage}
 
-  togglePlatform={togglePlatform}
-  removeImage={removeImage}
-  copyCaption={copyCaption}
+          togglePlatform={togglePlatform}
+          removeImage={removeImage}
+          copyCaption={copyCaption}
 
-  fileInputRef={fileInputRef}
-  imageInputRef={imageInputRef}
-  videoInputRef={videoInputRef}
+          fileInputRef={fileInputRef}
+          imageInputRef={imageInputRef}
+          videoInputRef={videoInputRef}
 
-  copyDone={copyDone}
-  PLATFORMS={PLATFORMS}
-/>
+          copyDone={copyDone}
+          PLATFORMS={PLATFORMS}
+        />
 
       <style>{`
         @keyframes spin   { to { transform: rotate(360deg); } }
