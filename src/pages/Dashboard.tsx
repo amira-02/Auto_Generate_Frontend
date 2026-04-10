@@ -315,7 +315,7 @@ export default function Dashboard() {
 
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [posts, setPosts] = useState<any[]>([]);
+const [posts] = useState<any[]>([]);
 
       // useEffect(() => {
       //   const fetchPosts = async () => {
