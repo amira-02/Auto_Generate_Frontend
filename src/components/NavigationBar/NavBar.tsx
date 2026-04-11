@@ -8,6 +8,9 @@ type Sections = {
   about: RefObject<HTMLDivElement>;
   generate: RefObject<HTMLDivElement>;
   contact: RefObject<HTMLDivElement>;
+  pricing: RefObject<HTMLDivElement>;
+  blog: RefObject<HTMLDivElement>;
+  preview: RefObject<HTMLDivElement>;
 };
 
 interface NavBarProps {
@@ -42,6 +45,9 @@ export default function NavBar({ sections }: NavBarProps) {
           <li onClick={() => scrollToSection("about")}>About Us</li>
           <li onClick={() => scrollToSection("generate")}>Generate Post</li>
           <li onClick={() => scrollToSection("contact")}>Contact</li>
+             <li onClick={() => scrollToSection("pricing")}>Pricing</li>
+             <li onClick={() => scrollToSection("blog")}>Blog</li>
+             <li onClick={() => scrollToSection("preview")}>Preview</li>
         </ul>
       )}
 

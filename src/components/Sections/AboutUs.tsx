@@ -27,7 +27,7 @@ const { t, isDark, toggleTheme } = useTheme();
         {isDark ? "☀️ Light" : "🌙 Dark"}
       </button> */}
     
-    <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 bg-[#F4F5F3] overflow-hidden">
+    <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-6 bg-[#ffffff] overflow-hidden">
 
       {/* Floating Animated Icons */}
       <div className="absolute inset-0 pointer-events-none">
@@ -85,21 +85,9 @@ const { t, isDark, toggleTheme } = useTheme();
         </motion.div>
       </div>
 
-      {/* Badge */}
-      <div className="mb-6 bg-white/70 backdrop-blur-md px-6 py-2 rounded-full text-sm text-gray-600 shadow-sm">
-        ● Just released: Personal Branding Studio
-      </div>
+     
 
-      {/* Social Icons */}
-      <div className="flex items-center gap-4 text-4xl mb-6">
-        <FaFacebookF className="text-[#1877F2] hover:scale-110 transition-transform cursor-pointer" />
-        <FaInstagram className="text-[#E4405F] hover:scale-110 transition-transform cursor-pointer" />
-        <FaLinkedinIn className="text-[#0A66C2] hover:scale-110 transition-transform cursor-pointer" />
-        <FaSnapchat className="text-yellow-500 hover:scale-110 transition-transform cursor-pointer" />
-        <FaTwitter className="text-[#1DA1F2] hover:scale-110 transition-transform cursor-pointer" />
-        <FaYoutube className="text-[#FF0000] hover:scale-110 transition-transform cursor-pointer" />
-        <FaTiktok className="text-black hover:scale-110 transition-transform cursor-pointer" />
-      </div>
+    
 
       {/* Title */}
       <h1 className="text-5xl md:text-7xl font-semibold text-[#0F172A] leading-tight max-w-4xl mb-4">
@@ -113,15 +101,48 @@ const { t, isDark, toggleTheme } = useTheme();
         with smart content systems, automation tools, and scalable strategies.
       </p>
 
+
+
+
+{/* Social Icons AUTO SCROLL CENTERED */}
+<div className="overflow-hidden w-[400px] mx-auto mb-6">
+  <motion.div
+    className="flex gap-8 text-4xl w-max"
+    animate={{ x: ["0%", "-50%"] }}
+    transition={{
+      repeat: Infinity,
+      duration: 50,
+      ease: "linear",
+    }}
+  >
+    {/* FIRST SET */}
+    <FaFacebookF className="text-[#1877F2]" />
+    <FaInstagram className="text-[#E4405F]" />
+    <FaLinkedinIn className="text-[#0A66C2]" />
+    <FaSnapchat className="text-yellow-500" />
+    <FaTwitter className="text-[#1DA1F2]" />
+    <FaYoutube className="text-[#FF0000]" />
+    <FaTiktok className="text-black" />
+
+    {/* DUPLICATE SET */}
+    <FaFacebookF className="text-[#1877F2]" />
+    <FaInstagram className="text-[#E4405F]" />
+    <FaLinkedinIn className="text-[#0A66C2]" />
+    <FaSnapchat className="text-yellow-500" />
+    <FaTwitter className="text-[#1DA1F2]" />
+    <FaYoutube className="text-[#FF0000]" />
+    <FaTiktok className="text-black" />
+  </motion.div>
+</div>                                              
       {/* Buttons */}
-      <div className="mt-4 flex gap-6 mb-8">
-        <button className="px-8 py-4 rounded-xl bg-white border border-gray-300 text-gray-700 hover:shadow-md transition">
-          Watch
-        </button>
-        <button className="px-8 py-4 rounded-xl bg-[#4E8B6B] text-white shadow-lg hover:scale-105 transition">
-          Work
-        </button>
-      </div>
+<div className="mt-4 flex gap-6 mb-8">
+  <button className="px-10 py-2 rounded-2xl bg-white border border-gray-300 text-gray-700">
+    Watch
+  </button>
+  <button className="px-10 py-2 rounded-2xl bg-[#4E8B6B] text-white shadow-lg">
+    Work
+  </button>
+
 
       {/* Reviews */}
       <div className="flex items-center gap-4">
@@ -141,8 +162,10 @@ const { t, isDark, toggleTheme } = useTheme();
           <p className="text-gray-600 text-sm">Trusted by 500+ creators</p>
         </div>
       </div>
+      </div>
     </section>
     </div>
+    
   );
 };
 

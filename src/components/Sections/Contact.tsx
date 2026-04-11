@@ -4,7 +4,7 @@ import { FaInstagram, FaLinkedinIn, FaTwitter } from "react-icons/fa";
 
 const ContactPage: React.FC = () => {
   return (
-    <section className="min-h-screen bg-[#F4F5F3] px-6 py-20 flex items-center justify-center">
+    <section className="min-h-screen bg-[#ffffff] px-6 py-20 flex items-center justify-center">
      <div className="max-w-6xl w-full grid md:grid-cols-2 gap-16">
 
         {/* LEFT SIDE */}

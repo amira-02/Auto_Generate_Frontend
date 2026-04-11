@@ -9,7 +9,7 @@ body {
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
   width: 8px;
 }
 
@@ -24,7 +24,7 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #33ff33, #00ffff);
-}
+} */
 
 /* Custom animations */
 @keyframes marquee {
@@ -183,10 +183,10 @@ body {
 }
 
 /* Matrix animation for projects section */
-@keyframes matrix-scroll {
+/* @keyframes matrix-scroll {
   0% { transform: translateY(0); }
   100% { transform: translateY(60px); }
-}
+} */
 
 /* Floating animation for code elements */
 @keyframes float {
@@ -355,23 +355,23 @@ body {
   }
 }
 
-@keyframes ultra-scroll {
+/* @keyframes ultra-scroll {
   0% {
     transform: translateX(0);
   }
   100% {
     transform: translateX(-50%);
   }
-}
+} */
 
-.animate-ultra-scroll {
+/* .animate-ultra-scroll {
   animation: ultra-scroll 30s linear infinite;
 }
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-20px); }
   100% { transform: translateY(0px); }
-}
+} */
 
 .animate-float {
   animation: float 6s ease-in-out infinite;
@@ -385,3 +385,14 @@ button:hover {
   color: inherit !important;
   box-shadow: none !important;
 }
+
+/* Hide Scrollbar but keep scrolling */
+.hide-scrollbar {
+  -ms-overflow-style: none;       /* IE and Edge */
+  scrollbar-width: none;          /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;                  /* Chrome, Safari, Opera */
+}
+

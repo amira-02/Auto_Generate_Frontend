@@ -2,144 +2,97 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { API } from "../../services/api";
 import { AuthContext } from "../../hooks/AuthContext";
-import "../../assets/Editor.css";
-const GeneratePost: React.FC = () => {
+
+export default function GeneratePost() {
   const auth = useContext(AuthContext);
   const token = auth?.token;
 
-  const [prompt, setPrompt] = useState<string>("");
+  const [prompt, setPrompt] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [fileName, setFileName] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [focused, setFocused] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0] || null;
-    setFile(selectedFile);
-    setFileName(selectedFile ? selectedFile.name : "");
-  };
-
   const handleGenerate = async () => {
-    if (!prompt && !file) return alert("Prompt or JSON file is required");
+    if (!prompt && !file) return;
     try {
       setLoading(true);
       const formData = new FormData();
       formData.append("Prompt", prompt);
       if (file) formData.append("JsonFile", file);
+
       const res = await API.post("/ai/generate", formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       navigate("/editor", { state: { post: res.data.post, prompt } });
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Error generating post.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClear = () => {
-    setPrompt("");
-    setFile(null);
-    setFileName("");
-  };
-
   return (
-    <>
-     
+    <div className="min-h-screen bg-gradient-to-br from-[#ffffff] to-[#ffffff] flex items-center justify-center p-6">
+      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl p-8">
 
-      <div className="gp-root">
-        <div className="gp-orb gp-orb-1" />
-        <div className="gp-orb gp-orb-2" />
-        <div className="gp-orb gp-orb-3" />
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-semibold text-gray-800">
+            Generate LinkedIn Post ✨
+          </h1>
+          <p className="text-gray-500 mt-2">
+            Describe your idea and let AI do the magic
+          </p>
+        </div>
 
-        <div className="gp-card">
-          {/* Header */}
-          <div className="gp-header">
-            <p className="gp-eyebrow">✦ AI Content Studio</p>
-            <h1 className="gp-title">
-              Create your <span>LinkedIn post</span>
-            </h1>
-            <p className="gp-subtitle">Describe your idea — the AI handles the rest</p>
-            <div className="gp-divider" />
-          </div>
+        {/* Prompt Box */}
+        <div className="mb-6">
+          <textarea
+            className="w-full h-40 p-4 rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#4E8B6B] resize-none"
+            placeholder="Write something like: AI trends in 2025..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+          />
+        </div>
 
-          {/* Prompt */}
-          <div>
-            <label className="gp-label">Your prompt</label>
-            <div className={`gp-textarea-wrap ${focused ? "focused" : ""}`}>
-              <textarea
-                className="gp-textarea"
-                placeholder="E.g., Write a professional LinkedIn post about AI trends in 2025…"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                rows={6}
-                maxLength={500}
-              />
+        {/* File Upload */}
+        <div className="mb-6">
+          <label className="flex items-center justify-center w-full p-4 border-2 border-dashed rounded-2xl cursor-pointer hover:bg-gray-50 transition">
+            <input
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+            <span className="text-gray-500">
+              {file ? file.name : "Upload JSON file (optional)"}
+            </span>
+          </label>
+        </div>
 
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleFileChange}
-                id="fileInput"
-                style={{ display: "none" }}
-              />
+        {/* Actions */}
+        <div className="flex gap-4">
+          <button
+            onClick={handleGenerate}
+            disabled={loading}
+            className="flex-1 py-3 rounded-xl bg-[#4E8B6B] text-white font-medium shadow-md hover:scale-105 transition"
+          >
+            {loading ? "Generating..." : "Generate 🚀"}
+          </button>
 
-              <label
-                htmlFor="fileInput"
-                className={`gp-file-trigger ${fileName ? "has-file" : ""}`}
-                onClick={
-                  fileName
-                    ? (e) => {
-                        e.preventDefault();
-                        setFile(null);
-                        setFileName("");
-                      }
-                    : undefined
-                }
-              >
-                {fileName ? (
-                  <>✕ {fileName.length > 10 ? fileName.slice(0, 10) + "…" : fileName}</>
-                ) : (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                    <polyline points="17 8 12 3 7 8"/>
-                    <line x1="12" y1="3" x2="12" y2="15"/>
-                  </svg>
-                )}
-              </label>
-            </div>
-            <div className="gp-counter">{prompt.length} / 500</div>
-          </div>
-
-          {/* Actions */}
-          <div className="gp-actions">
-            <button
-              onClick={handleGenerate}
-              disabled={loading || (!prompt && !file)}
-              className={`gp-btn-primary ${loading ? "loading" : ""}`}
-            >
-              {loading ? (
-                <><span className="gp-spinner" />Generating…</>
-              ) : (
-                "⚡ Generate Post"
-              )}
-            </button>
-
-            {(prompt || file) && (
-              <button onClick={handleClear} className="gp-btn-secondary">
-                Clear
-              </button>
-            )}
-          </div>
+          <button
+            onClick={() => {
+              setPrompt("");
+              setFile(null);
+            }}
+            className="px-6 py-3 rounded-xl border border-gray-300 text-gray-600"
+          >
+            Clear
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
-};
-
-export default GeneratePost;
+}

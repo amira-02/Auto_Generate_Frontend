@@ -52,11 +52,11 @@ export default function Auth() {
       </button>
 
       {/* Theme Toggle */}
-      <button onClick={toggleTheme}
-        style={{ position: "absolute", top: 24, right: 24, background: t.card, border: `1px solid ${t.border}`, borderRadius: 20, padding: "6px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: t.text, fontFamily: "inherit", transition: "all 0.3s" }}>
-        <span style={{ fontSize: 16 }}>{isDark ? "☀️" : "🌙"}</span>
-        {isDark ? "Light" : "Dark"}
-      </button>
+        <button onClick={toggleTheme}
+          style={{ position: "absolute", top: 24, right: 24, background: t.card, border: `1px solid ${t.border}`, borderRadius: 20, padding: "6px 14px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: t.text, fontFamily: "inherit", transition: "all 0.3s" }}>
+          <span style={{ fontSize: 16 }}>{isDark ? "☀️" : "🌙"}</span>
+          {isDark ? "Light" : "Dark"}
+        </button>
 
       {/* Card */}
       <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: 16, padding: 40, width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 24, boxShadow: isDark ? "0 25px 50px rgba(0,0,0,0.5)" : "0 25px 50px rgba(0,0,0,0.1)", transition: "all 0.3s" }}>
