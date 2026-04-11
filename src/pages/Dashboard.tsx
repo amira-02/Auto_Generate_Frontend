@@ -3,10 +3,11 @@ import { useContext, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../hooks/AuthContext";
 import { jwtDecode } from "jwt-decode";
-import CalendarView from "../components/UI/CalendarView";
-import CreatePostModal from "../components/UI/CreatePostModal";
+import CalendarView from "../components/DashboardSection/CalendarView";
+import CreatePostModal from "../components/DashboardSection/CreatePostModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiBell, FiSearch, FiArrowLeft, FiMenu, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import PostsView from "../components/DashboardSection/PostsView";
 
 type Step = "form" | "generating" | "preview";
 type CaptionLength = "short" | "medium" | "long";
@@ -429,9 +430,7 @@ export default function Dashboard() {
             </>
           )}
 
-          {activeNav === "posts" && (
-            <div className="text-2xl font-bold">Posts Section</div>
-          )}
+          {activeNav === "posts" && <PostsView />}
           
           {activeNav === "calendar" && <CalendarView posts={posts} />}
           

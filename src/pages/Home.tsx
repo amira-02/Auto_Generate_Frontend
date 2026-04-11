@@ -1,12 +1,12 @@
 import { useRef } from "react";
 import NavBar from "../components/NavigationBar/NavBar";
-import AboutUs from "../components/Sections/AboutUs";
-import Generate from "../components/Sections/GeneratePost";
-import Contact from "../components/Sections/Contact";
+import AboutUs from "../components/HomeSection/AboutUs";
+import Generate from "../components/HomeSection/GeneratePost";
+import Contact from "../components/HomeSection/Contact";
 import Footer from "../components/Footer/Footer";
-import Phone from "../components/Sections/Phone";
-import PricingSection from "../components/Sections/PricingSection";
-import DashboardPreview from "../components/Sections/DashboardPreview";
+import Phone from "../components/HomeSection/Phone";
+import PricingSection from "../components/HomeSection/PricingSection";
+import DashboardPreview from "../components/HomeSection/DashboardPreview";
 export default function Home() {
 
   const aboutRef = useRef<HTMLDivElement>(null!);
