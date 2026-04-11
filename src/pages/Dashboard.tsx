@@ -1,11 +1,12 @@
 // src/pages/Dashboard.tsx
-import { useContext, useState, useRef } from "react";
+import { useContext, useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../hooks/AuthContext";
-import { API } from "../services/api";
 import { jwtDecode } from "jwt-decode";
 import CalendarView from "../components/UI/CalendarView";
 import CreatePostModal from "../components/UI/CreatePostModal";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiBell, FiSearch, FiArrowLeft, FiMenu, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 type Step = "form" | "generating" | "preview";
 type CaptionLength = "short" | "medium" | "long";
@@ -69,6 +70,7 @@ export default function Dashboard() {
   const { logout, token } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState("dashboard");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -138,7 +140,7 @@ export default function Dashboard() {
     setTimeout(() => setCopyDone(false), 1800);
   };
 
-  // Generate & Publish functions (keep your original logic)
+  // Generate & Publish functions (placeholder - keep your original logic)
   const handleGenerate = async () => { /* ... your original code ... */ };
   const handleGenerateImage = async () => { /* ... your original code ... */ };
   const handlePublish = async () => { /* ... your original code ... */ };
@@ -158,150 +160,284 @@ export default function Dashboard() {
     { icon: "⚙️", label: "Settings", id: "settings" },
   ];
 
+  // Auto-collapse on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setIsSidebarCollapsed(true);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
-    <div className="flex h-screen bg-gray-50 font-inter overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col fixed h-full shadow-sm">
-        <div className="p-5 border-b flex items-center gap-3">
-          <div className="w-10 h-10 bg-violet-600 text-white rounded-2xl flex items-center justify-center font-bold text-xl">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 font-inter overflow-hidden">
+      
+      {/* Collapsible Sidebar with Smooth Animation */}
+      <motion.aside 
+        initial={false}
+        animate={{ 
+          width: isSidebarCollapsed ? 80 : 256,
+          transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
+        }}
+        className="bg-white/70 backdrop-blur-xl border-r border-gray-200 flex flex-col fixed h-full shadow-sm z-20 overflow-hidden"
+      >
+        {/* Collapse Toggle Button */}
+        <button
+          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          className="absolute -right-3 top-20 bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:shadow-lg transition-all z-30"
+        >
+          {isSidebarCollapsed ? 
+            <FiChevronRight className="text-gray-600 text-sm" /> : 
+            <FiChevronLeft className="text-gray-600 text-sm" />
+          }
+        </button>
+
+        {/* User Section */}
+        <div className={`p-5 border-b flex items-center gap-3 transition-all duration-300 ${isSidebarCollapsed ? 'justify-center px-2' : ''}`}>
+          <div className="w-10 h-10 bg-gray-600 text-white rounded-2xl flex items-center justify-center font-bold text-xl flex-shrink-0">
             {userInitial}
           </div>
-          <div>
-            <div className="font-semibold text-gray-900">{userEmail}</div>
-            <div className="text-xs text-gray-500">Personal Workspace</div>
-          </div>
+          <AnimatePresence mode="wait">
+            {!isSidebarCollapsed && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="font-semibold text-gray-900 truncate max-w-[140px]">{userEmail}</div>
+                <div className="text-xs text-gray-500">Personal Workspace</div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
+        {/* New Post Button */}
         <div className="p-4">
           <button
             onClick={openModal}
-            className="w-full bg-violet-600 hover:bg-violet-700 text-white py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
+            className={`w-full bg-gray-600 hover:bg-gray-700 text-white py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 ${isSidebarCollapsed ? 'px-2' : ''}`}
+            title={isSidebarCollapsed ? "New Post" : ""}
           >
-            ✏️ New Post
+            {isSidebarCollapsed ? "✏️" : "✏️ New Post"}
           </button>
         </div>
 
-        <nav className="flex-1 px-3 py-2 space-y-1">
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveNav(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all group relative ${
                 activeNav === item.id
-                  ? "bg-violet-100 text-violet-700 font-semibold"
+                  ? "bg-gray-100 text-gray-700 font-semibold"
                   : "hover:bg-gray-100 text-gray-700"
-              }`}
+              } ${isSidebarCollapsed ? 'justify-center px-2' : ''}`}
+              title={isSidebarCollapsed ? item.label : ""}
             >
-              <span className="text-xl">{item.icon}</span>
-              {item.label}
+              <span className="text-xl flex-shrink-0">{item.icon}</span>
+              <AnimatePresence mode="wait">
+                {!isSidebarCollapsed && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="whitespace-nowrap overflow-hidden"
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
           ))}
 
-          <div className="px-4 mt-6 mb-2 text-xs font-bold text-gray-400 uppercase tracking-widest">
-            Manage
-          </div>
+          <AnimatePresence mode="wait">
+            {!isSidebarCollapsed && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="px-4 mt-6 mb-2 text-xs font-bold text-gray-400 uppercase tracking-widest"
+              >
+                Manage
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {manageItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveNav(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all ${
-                activeNav === item.id ? "bg-violet-100 text-violet-700" : "hover:bg-gray-100 text-gray-700"
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all group relative ${
+                activeNav === item.id ? "bg-gray-100 text-gray-700" : "hover:bg-gray-100 text-gray-700"
+              } ${isSidebarCollapsed ? 'justify-center px-2' : ''}`}
+              title={isSidebarCollapsed ? item.label : ""}
             >
-              <span className="text-xl">{item.icon}</span>
-              {item.label}
+              <span className="text-xl flex-shrink-0">{item.icon}</span>
+              <AnimatePresence mode="wait">
+                {!isSidebarCollapsed && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: 'auto' }}
+                    exit={{ opacity: 0, width: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="whitespace-nowrap overflow-hidden"
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
           ))}
         </nav>
 
+        {/* Bottom Section */}
         <div className="p-4 border-t">
-          <div className="bg-gray-50 rounded-2xl p-4 text-sm">
-            <div className="font-semibold mb-3">Starter Plan</div>
-            <div className="space-y-3 text-xs">
-              <div>🔗 Accounts: 9/10</div>
-              <div>✨ AI Credits: 42/100</div>
-            </div>
-          </div>
+          <AnimatePresence mode="wait">
+            {!isSidebarCollapsed ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="bg-gray-50 rounded-2xl p-4 text-sm"
+              >
+                <div className="font-semibold mb-3">Starter Plan</div>
+                <div className="space-y-3 text-xs">
+                  <div>🔗 Accounts: 9/10</div>
+                  <div>✨ AI Credits: 42/100</div>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex justify-center"
+              >
+                <div className="w-8 h-8 bg-gray-50 rounded-xl flex items-center justify-center text-lg">
+                  📊
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
           <button
             onClick={handleLogout}
-            className="w-full mt-4 py-2.5 text-gray-600 hover:text-red-600 transition-colors text-sm font-medium"
+            className={`w-full mt-4 py-2.5 text-gray-600 hover:text-red-600 transition-colors text-sm font-medium ${isSidebarCollapsed ? 'px-2' : ''}`}
+            title={isSidebarCollapsed ? "Logout" : ""}
           >
-            Logout
+            {isSidebarCollapsed ? "🚪" : "Logout"}
           </button>
         </div>
-      </aside>
+      </motion.aside>
 
-      {/* Main Content */}
-      <main className="flex-1 ml-64 overflow-auto">
-        <div className="p-10 max-w-7xl mx-auto">
+      {/* Main Content - Dynamic Margin */}
+      <motion.main 
+        animate={{ 
+          marginLeft: isSidebarCollapsed ? 80 : 256,
+          transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
+        }}
+        className="flex-1 overflow-auto"
+      >
+        <div className="p-6 md:p-10 max-w-7xl mx-auto">
           {activeNav === "dashboard" && (
             <>
-              <div className="flex justify-between items-end mb-10">
-                <div>
-                  <h1 className="text-4xl font-bold text-gray-900">
-                    Welcome back, {userEmail.split("@")[0]} 👋
-                  </h1>
-                  <p className="text-gray-600 mt-2 text-lg">
-                    Here's what's happening with your content today
-                  </p>
-                </div>
-                <button
-                  onClick={openModal}
-                  className="bg-violet-600 hover:bg-violet-700 text-white px-8 py-3.5 rounded-2xl font-semibold flex items-center gap-3 transition-all active:scale-95"
-                >
-                  ✏️ Create New Post
-                </button>
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col gap-6 mb-10"
+              >
+                {/* TOP BAR - Perfectly Aligned */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+                  {/* LEFT SIDE */}
+                  <div>
+                    <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+                      Welcome back, {userEmail.split("@")[0]} 👋
+                    </h1>
+                    <p className="text-gray-500 mt-2">
+                      Let's create something beautiful today
+                    </p>
+                  </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                  {/* RIGHT SIDE */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <button
+                      onClick={() => navigate("/")}
+                      className="flex items-center gap-2 bg-white/70 backdrop-blur-lg px-3 py-2 rounded-xl shadow-sm hover:scale-105 transition text-gray-700"
+                    >
+                      <FiArrowLeft />
+                      <span className="hidden sm:inline">Home</span>
+                    </button>
+
+                    {/* Menu Toggle for Mobile */}
+                    <button
+                      onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                      className="md:hidden flex items-center gap-2 bg-white/70 backdrop-blur-lg p-3 rounded-xl shadow-sm hover:scale-105 transition text-gray-700"
+                    >
+                      <FiMenu />
+                    </button>
+
+                    {/* Notification */}
+                    <div className="bg-white/70 backdrop-blur-lg p-3 rounded-2xl shadow-sm hover:scale-105 transition cursor-pointer">
+                      <FiBell className="text-xl text-gray-700" />
+                    </div>
+
+                    {/* Search */}
+                    <div className="hidden lg:flex items-center gap-2 bg-white/70 backdrop-blur-lg px-4 py-2 rounded-2xl shadow-sm w-80">
+                      <FiSearch className="text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search posts..."
+                        className="bg-transparent outline-none text-sm w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 {[
-                  { label: "Total Posts", value: posts.length || 12, icon: "📝", color: "blue" },
-                  { label: "Published", value: 8, icon: "✅", color: "emerald" },
-                  { label: "Scheduled", value: 3, icon: "📅", color: "violet" },
-                  { label: "AI Credits", value: "42", icon: "✨", color: "amber" },
+                  { label: "Total Posts", value: posts.length || 12, icon: "📝", color: "from-blue-500 to-blue-600" },
+                  { label: "Published", value: 8, icon: "✅", color: "from-green-500 to-green-600" },
+                  { label: "Scheduled", value: 3, icon: "📅", color: "from-purple-500 to-purple-600" },
+                  { label: "AI Credits", value: "42", icon: "✨", color: "from-orange-500 to-orange-600" },
                 ].map((stat, i) => (
-                  <div
+                  <motion.div
                     key={i}
-                    className="bg-white rounded-3xl p-7 shadow-sm border border-gray-100 hover:shadow transition-all"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    className="bg-white/70 backdrop-blur-xl rounded-3xl p-6 shadow-md border border-white/40"
                   >
-                    <div className="flex justify-between items-start">
-                      <span className="text-4xl">{stat.icon}</span>
-                      <span className={`text-5xl font-bold text-${stat.color}-600`}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-3xl">{stat.icon}</span>
+                      <span className="text-3xl font-bold text-gray-800">
                         {stat.value}
                       </span>
                     </div>
-                    <p className="text-gray-600 mt-6 text-lg font-medium">{stat.label}</p>
-                  </div>
+                    <p className="text-gray-500 mt-4">{stat.label}</p>
+                  </motion.div>
                 ))}
-              </div>
-
-              {/* Quick Actions & Preview */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-7 bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                  <h3 className="font-semibold text-xl mb-6">AI Performance Overview</h3>
-                  <div className="h-80 bg-gray-50 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-200">
-                    <p className="text-gray-400 text-lg">📈 Performance Chart (Will be added soon)</p>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-5 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white rounded-3xl p-8 flex flex-col">
-                  <h3 className="text-2xl font-semibold">Ready for your next post?</h3>
-                  <p className="mt-3 opacity-90">Our AI will generate engaging content in seconds</p>
-                  <button
-                    onClick={openModal}
-                    className="mt-auto bg-white text-violet-700 py-4 rounded-2xl font-semibold hover:bg-white/90 transition text-lg"
-                  >
-                    Start AI Generation →
-                  </button>
-                </div>
               </div>
             </>
           )}
 
-          {activeNav === "posts" && <div className="text-2xl font-bold">Posts Section</div>}
+          {activeNav === "posts" && (
+            <div className="text-2xl font-bold">Posts Section</div>
+          )}
+          
           {activeNav === "calendar" && <CalendarView posts={posts} />}
-          {activeNav === "accounts" && <div className="text-2xl font-bold">Connected Accounts</div>}
+          
+          {activeNav === "accounts" && (
+            <div className="text-2xl font-bold">Connected Accounts</div>
+          )}
 
           {!["dashboard", "posts", "calendar", "accounts"].includes(activeNav) && (
             <div className="text-center py-20">
@@ -310,7 +446,7 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-      </main>
+      </motion.main>
 
       {/* Modal */}
       <CreatePostModal

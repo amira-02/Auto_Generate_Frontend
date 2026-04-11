@@ -72,11 +72,11 @@ const PricingSection: React.FC = () => {
             <div
               key={index}
               className={`relative bg-white rounded-3xl p-8 shadow-xl transition-all hover:-translate-y-2 ${
-                plan.popular ? 'ring-2 ring-emerald-500 scale-105' : ''
+                plan.popular ? 'ring-2 ring-pink-500 scale-105' : ''
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-sm font-semibold px-6 py-1 rounded-full">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-pink-500 text-white text-sm font-semibold px-6 py-1 rounded-full">
                   MOST POPULAR
                 </div>
               )}
@@ -93,7 +93,7 @@ const PricingSection: React.FC = () => {
               <ul className="space-y-4 mb-10">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-center gap-3">
-                    <span className="text-emerald-500 text-xl">✓</span>
+                    <span className="text-violet-500 text-xl">✓</span>
                     <span className="text-gray-700">{feature}</span>
                   </li>
                 ))}
@@ -102,7 +102,7 @@ const PricingSection: React.FC = () => {
               <button
                 className={`w-full py-4 rounded-2xl font-semibold text-lg transition-all hover:scale-105 ${
                   plan.popular
-                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    ? 'bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-600 text-white'
                     : 'bg-gray-900 hover:bg-black text-white'
                 }`}
               >

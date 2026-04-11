@@ -14,14 +14,20 @@ export default function Home() {
   const contactRef = useRef<HTMLDivElement>(null!);
 const phoneRef = useRef<HTMLDivElement>(null!);
 const   pricingRef = useRef<HTMLDivElement>(null!);
-const dashboardRef = useRef<HTMLDivElement>(null!);
+const dashboardPreviewRef = useRef<HTMLDivElement>(null!);
+const blogRef = useRef<HTMLDivElement>(null!);
+const previewRef = useRef<HTMLDivElement>(null!);
+
+
   const sections = {
     about: aboutRef,
     generate: generateRef,
     contact: contactRef,
     phone: phoneRef,
     pricing: pricingRef,
-    dashboard: dashboardRef,
+    dashboardPreview: dashboardPreviewRef,
+    blog: blogRef,
+    preview: previewRef,
   };
 
   return (
@@ -34,7 +40,7 @@ const dashboardRef = useRef<HTMLDivElement>(null!);
          
       </div>
 
-      <div ref={dashboardRef}>
+      <div ref={dashboardPreviewRef}>
         <DashboardPreview />
       </div>
     
@@ -46,6 +52,8 @@ const dashboardRef = useRef<HTMLDivElement>(null!);
       <div ref={contactRef}>
         <Contact />
       </div>
+
+
    <div ref={pricingRef}>
     <PricingSection />
    </div>

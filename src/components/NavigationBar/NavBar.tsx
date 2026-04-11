@@ -10,7 +10,7 @@ type Sections = {
   contact: RefObject<HTMLDivElement>;
   pricing: RefObject<HTMLDivElement>;
   blog: RefObject<HTMLDivElement>;
-  preview: RefObject<HTMLDivElement>;
+  dashboardPreview: RefObject<HTMLDivElement>;
 };
 
 interface NavBarProps {
@@ -47,7 +47,7 @@ export default function NavBar({ sections }: NavBarProps) {
           <li onClick={() => scrollToSection("contact")}>Contact</li>
              <li onClick={() => scrollToSection("pricing")}>Pricing</li>
              <li onClick={() => scrollToSection("blog")}>Blog</li>
-             <li onClick={() => scrollToSection("preview")}>Preview</li>
+             <li onClick={() => scrollToSection("dashboardPreview")}>Dash Preview</li>
         </ul>
       )}
 
