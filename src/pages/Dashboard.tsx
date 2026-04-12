@@ -8,6 +8,8 @@ import CreatePostModal from "../components/DashboardSection/CreatePostModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiBell, FiSearch, FiArrowLeft, FiMenu, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import PostsView from "../components/DashboardSection/PostsView";
+import TopicsView from "../components/DashboardSection/TopicsView";
+import TopicDetailView from "../components/DashboardSection/TopicDetailView";
 
 type Step = "form" | "generating" | "preview";
 type CaptionLength = "short" | "medium" | "long";
@@ -150,6 +152,7 @@ export default function Dashboard() {
   // Navigation Items
   const navItems = [
     { icon: "📊", label: "Dashboard", id: "dashboard" },
+    { icon: "🗂️", label: "Topics",    id: "topics" },
     { icon: "📝", label: "Posts", id: "posts" },
     { icon: "📅", label: "Calendar", id: "calendar" },
     { icon: "📈", label: "Analytics", id: "analytics" },
@@ -160,6 +163,7 @@ export default function Dashboard() {
     { icon: "👥", label: "Team Members", id: "team" },
     { icon: "⚙️", label: "Settings", id: "settings" },
   ];
+const [selectedTopic, setSelectedTopic] = useState<{ id: number; name: string } | null>(null);
 
   // Auto-collapse on mobile
   useEffect(() => {
@@ -429,7 +433,16 @@ export default function Dashboard() {
               </div>
             </>
           )}
-
+{activeNav === "topics" && !selectedTopic && (
+  <TopicsView onSelectTopic={(id, name) => setSelectedTopic({ id, name })} />
+)}
+{activeNav === "topics" && selectedTopic && (
+  <TopicDetailView
+    topicId={selectedTopic.id}
+    topicName={selectedTopic.name}
+    onBack={() => setSelectedTopic(null)}
+  />
+)}
           {activeNav === "posts" && <PostsView />}
           
           {activeNav === "calendar" && <CalendarView posts={posts} />}
