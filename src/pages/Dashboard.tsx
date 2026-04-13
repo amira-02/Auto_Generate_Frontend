@@ -451,12 +451,12 @@ const [selectedTopic, setSelectedTopic] = useState<{ id: number; name: string } 
             <div className="text-2xl font-bold">Connected Accounts</div>
           )}
 
-          {!["dashboard", "posts", "calendar", "accounts"].includes(activeNav) && (
+          {/* {!["dashboard", "posts", "calendar", "accounts"].includes(activeNav) && (
             <div className="text-center py-20">
               <p className="text-6xl mb-4">🚧</p>
               <h3 className="text-2xl font-semibold">Coming Soon</h3>
             </div>
-          )}
+          )} */}
         </div>
       </motion.main>
 
