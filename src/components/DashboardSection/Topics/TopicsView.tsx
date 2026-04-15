@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiPlus, FiTrash2, FiChevronRight, FiGrid, FiX } from "react-icons/fi";
-import { AuthContext } from "../../hooks/AuthContext";
-
+import { AuthContext } from "../../../hooks/AuthContext";
+import { toast } from "react-toastify";
 const API = "https://localhost:7079";
 
 type Topic = {
@@ -88,7 +88,12 @@ export default function TopicsView({ onSelectTopic }: Props) {
       headers: { Authorization: `Bearer ${token}` },
     });
     setTopics(prev => prev.filter(t => t.id !== id));
+    toast.success("Topic deleted successfully ✅");
   };
+
+
+
+
 
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>

@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiArrowLeft, FiPlus, FiImage, FiAlertCircle } from "react-icons/fi";
-import { AuthContext } from "../../hooks/AuthContext";
-import CreatePostModal from "./CreatePostModal";
+import { AuthContext } from "../../../hooks/AuthContext";
+import CreatePostModal from "../Posts/CreatePostModal";
 
 const API = "https://localhost:7079";
 
