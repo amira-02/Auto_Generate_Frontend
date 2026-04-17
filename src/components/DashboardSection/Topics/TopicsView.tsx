@@ -1,8 +1,9 @@
 import { useState, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiPlus, FiTrash2, FiChevronRight, FiGrid, FiX } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiChevronRight, FiGrid, FiX, FiSearch,  } from "react-icons/fi";
 import { AuthContext } from "../../../hooks/AuthContext";
 import { toast } from "react-toastify";
+
 const API = "https://localhost:7079";
 
 type Topic = {
@@ -57,7 +58,10 @@ export default function TopicsView({ onSelectTopic }: Props) {
   };
 
   const handleCreate = async () => {
-    if (!form.name.trim()) { setError("Name is required"); return; }
+    if (!form.name.trim()) {
+      setError("Name is required");
+      return;
+    }
     setCreating(true);
     setError("");
     try {
@@ -73,6 +77,7 @@ export default function TopicsView({ onSelectTopic }: Props) {
       setTopics(prev => [created, ...prev]);
       setShowCreate(false);
       setForm({ name: "", description: "", platform: "" });
+      toast.success("Topic created successfully!");
     } catch {
       setError("Failed to create topic");
     } finally {
@@ -83,43 +88,82 @@ export default function TopicsView({ onSelectTopic }: Props) {
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm("Delete this topic and all its posts?")) return;
-    await fetch(`${API}/api/topics/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setTopics(prev => prev.filter(t => t.id !== id));
-    toast.success("Topic deleted successfully ✅");
+
+    try {
+      await fetch(`${API}/api/topics/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTopics(prev => prev.filter(t => t.id !== id));
+      toast.success("Topic deleted successfully ✅");
+    } catch {
+      toast.error("Failed to delete topic");
+    }
   };
 
-
-
-
+  // Statistiques
+  const totalTopics = topics.length;
+  const totalPosts = topics.reduce((sum, t) => sum + (t.postCount || 0), 0);
+  const avgPosts = totalTopics > 0 ? Math.round(totalPosts / totalTopics) : 0;
 
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 28 }}>
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Topics</h1>
-          <p style={{ color: "#888", marginTop: 4, fontSize: 14, margin: "4px 0 0" }}>
-            Organise your content by subject
-          </p>
-        </div>
-        <button
-          onClick={() => { setShowCreate(true); setError(""); }}
-          style={{
-            display: "flex", alignItems: "center", gap: 7,
-            background: "#7c3aed", color: "white", border: "none",
-            borderRadius: 12, padding: "10px 18px", fontSize: 14,
-            fontWeight: 600, cursor: "pointer",
-          }}
-        >
-          <FiPlus size={16} /> New Topic
-        </button>
-      </div>
+<div className="flex items-center justify-between mb-8 gap-3 flex-wrap">
+  <div>
+    <h1 className="text-2xl font-semibold text-gray-900">Topics</h1>
+    <p className="text-gray-500 text-sm mt-1">Organize your content by subject</p>
+  </div>
 
-      {/* Create Modal */}
+  <div className="flex items-center gap-3 flex-wrap">
+    <div className="hidden lg:flex items-center gap-3 border border-gray-300 px-4 py-2 rounded-2xl w-72 focus-within:border-gray-400">
+      <FiSearch size={17} className="text-gray-500" />
+      <input
+        type="text"
+        placeholder="Search topics..."
+        className="bg-transparent outline-none text-sm w-full placeholder-gray-400"
+      />
+    </div>
+    <button
+      onClick={() => { setShowCreate(true); setError(""); }}
+      className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-2xl hover:bg-gray-700 transition"
+    >
+      <FiPlus size={17} /> New Topic
+    </button>
+  </div>
+</div>
+
+      {/* Stats Grid */}
+      {!loading && totalTopics > 0 && (
+        <div style={{ display: "flex", gap: 16, marginBottom: 32, flexWrap: "wrap" }}>
+          <div style={{
+            background: "white", borderRadius: 16, padding: "18px 24px",
+            border: "1px solid #e2e8f0", flex: 1, minWidth: 160
+          }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "#334155" }}>{totalTopics}</div>
+            <div style={{ color: "#64748b", fontSize: 14, marginTop: 4 }}>Total Topics</div>
+          </div>
+
+          <div style={{
+            background: "white", borderRadius: 16, padding: "18px 24px",
+            border: "1px solid #e2e8f0", flex: 1, minWidth: 160
+          }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "#334155" }}>{totalPosts}</div>
+            <div style={{ color: "#64748b", fontSize: 14, marginTop: 4 }}>Total Posts</div>
+          </div>
+
+          <div style={{
+            background: "white", borderRadius: 16, padding: "18px 24px",
+            border: "1px solid #e2e8f0", flex: 1, minWidth: 160
+          }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: "#334155" }}>{avgPosts}</div>
+            <div style={{ color: "#64748b", fontSize: 14, marginTop: 4 }}>Avg. Posts per Topic</div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Topic Modal */}
       <AnimatePresence>
         {showCreate && (
           <motion.div
@@ -128,9 +172,9 @@ export default function TopicsView({ onSelectTopic }: Props) {
             exit={{ opacity: 0 }}
             onClick={() => setShowCreate(false)}
             style={{
-              position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
-              backdropFilter: "blur(4px)", display: "flex",
-              alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20,
+              position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+              backdropFilter: "blur(6px)", display: "flex",
+              alignItems: "center", justifyContent: "center", zIndex: 1000,
             }}
           >
             <motion.div
@@ -140,68 +184,68 @@ export default function TopicsView({ onSelectTopic }: Props) {
               onClick={e => e.stopPropagation()}
               style={{
                 background: "white", borderRadius: 20, padding: 28,
-                width: "100%", maxWidth: 480,
-                boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+                width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Create Topic</h2>
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Create New Topic</h2>
                 <button onClick={() => setShowCreate(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#888" }}>
-                  <FiX size={20} />
+                  <FiX size={22} />
                 </button>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>
-                    Name *
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6, display: "block" }}>
+                    Topic Name *
                   </label>
                   <input
                     autoFocus
                     value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="e.g. Italian Cuisine, Tech Tips..."
+                    placeholder="e.g. Product Launch, Italian Recipes..."
                     style={{
-                      width: "100%", padding: "10px 12px", borderRadius: 10,
-                      border: "1.5px solid #e5e7eb", fontSize: 14,
-                      outline: "none", boxSizing: "border-box", fontFamily: "inherit",
+                      width: "100%", padding: "11px 14px", borderRadius: 10,
+                      border: "1.5px solid #e5e7eb", fontSize: 15, outline: "none"
                     }}
                     onKeyDown={e => e.key === "Enter" && handleCreate()}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 6 }}>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6, display: "block" }}>
                     Description
                   </label>
                   <textarea
                     value={form.description}
                     onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                    placeholder="What is this topic about?"
+                    placeholder="What will this topic be about?"
                     rows={3}
                     style={{
-                      width: "100%", padding: "10px 12px", borderRadius: 10,
-                      border: "1.5px solid #e5e7eb", fontSize: 14,
-                      outline: "none", resize: "vertical", boxSizing: "border-box",
-                      fontFamily: "inherit",
+                      width: "100%", padding: "11px 14px", borderRadius: 10,
+                      border: "1.5px solid #e5e7eb", fontSize: 15, outline: "none", resize: "vertical"
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 8 }}>
-                    Main Platform
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 8, display: "block" }}>
+                    Primary Platform
                   </label>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {PLATFORMS.map(p => {
-                      const sel = form.platform === p.id;
+                      const isSelected = form.platform === p.id;
                       return (
-                        <button key={p.id} onClick={() => setForm(f => ({ ...f, platform: sel ? "" : p.id }))}
+                        <button
+                          key={p.id}
+                          onClick={() => setForm(f => ({ ...f, platform: isSelected ? "" : p.id }))}
                           style={{
-                            padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: sel ? 600 : 400,
-                            border: "1.5px solid", borderColor: sel ? p.color : "#e5e7eb",
-                            background: sel ? p.color + "15" : "white",
-                            color: sel ? p.color : "#6b7280", cursor: "pointer", fontFamily: "inherit",
+                            padding: "7px 14px", borderRadius: 20, fontSize: 13,
+                            border: `1.5px solid ${isSelected ? p.color : "#e5e7eb"}`,
+                            background: isSelected ? p.color + "15" : "white",
+                            color: isSelected ? p.color : "#6b7280",
+                            fontWeight: isSelected ? 600 : 400,
+                            cursor: "pointer",
                           }}
                         >
                           {p.label}
@@ -211,20 +255,16 @@ export default function TopicsView({ onSelectTopic }: Props) {
                   </div>
                 </div>
 
-                {error && (
-                  <div style={{ background: "#fee2e2", borderRadius: 8, padding: "8px 12px", fontSize: 13, color: "#dc2626" }}>
-                    {error}
-                  </div>
-                )}
+                {error && <div style={{ color: "#dc2626", fontSize: 13, background: "#fee2e2", padding: "10px", borderRadius: 8 }}>{error}</div>}
 
                 <button
                   onClick={handleCreate}
                   disabled={creating}
                   style={{
-                    marginTop: 4, padding: "12px", background: creating ? "#9ca3af" : "#7c3aed",
+                    padding: "13px", background: creating ? "#9ca3af" : "#334155",
                     color: "white", border: "none", borderRadius: 12,
-                    fontSize: 14, fontWeight: 700, cursor: creating ? "not-allowed" : "pointer",
-                    fontFamily: "inherit",
+                    fontSize: 15, fontWeight: 700, cursor: creating ? "not-allowed" : "pointer",
+                    marginTop: 8
                   }}
                 >
                   {creating ? "Creating..." : "Create Topic"}
@@ -235,41 +275,42 @@ export default function TopicsView({ onSelectTopic }: Props) {
         )}
       </AnimatePresence>
 
-      {/* Loading */}
+      {/* Loading State */}
       {loading && (
-        <div style={{ textAlign: "center", padding: "60px 20px", color: "#aaa" }}>
+        <div style={{ textAlign: "center", padding: "80px 20px", color: "#aaa" }}>
           <div style={{ fontSize: 36, marginBottom: 12 }}>⏳</div>
-          <div style={{ fontSize: 14 }}>Loading topics...</div>
+          <div>Loading topics...</div>
         </div>
       )}
 
-      {/* Empty */}
+      {/* Empty State */}
       {!loading && topics.length === 0 && (
         <div style={{
-          textAlign: "center", padding: "80px 20px",
-          background: "white", borderRadius: 20, border: "1.5px dashed #e5e7eb",
+          textAlign: "center", padding: "80px 20px", background: "white",
+          borderRadius: 20, border: "1.5px dashed #e5e7eb"
         }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🗂️</div>
-          <h3 style={{ fontSize: 18, fontWeight: 600, color: "#1a1a1a", margin: "0 0 8px" }}>No topics yet</h3>
-          <p style={{ color: "#888", fontSize: 14, margin: "0 0 20px" }}>
-            Create your first topic to start organising your posts
-          </p>
+          <div style={{ fontSize: 52, marginBottom: 16 }}>🗂️</div>
+          <h3 style={{ margin: "0 0 8px", fontSize: 19 }}>No topics yet</h3>
+          <p style={{ color: "#888", marginBottom: 24 }}>Create your first topic to get started</p>
           <button
             onClick={() => setShowCreate(true)}
             style={{
-              background: "#7c3aed", color: "white", border: "none",
-              borderRadius: 12, padding: "10px 20px", fontSize: 14,
-              fontWeight: 600, cursor: "pointer",
+              background: "#334155", color: "white", border: "none",
+              borderRadius: 12, padding: "12px 24px", fontSize: 15, fontWeight: 600
             }}
           >
-            <FiPlus size={14} style={{ marginRight: 6 }} /> Create Topic
+            <FiPlus style={{ marginRight: 8 }} /> Create First Topic
           </button>
         </div>
       )}
 
-      {/* Grid */}
+      {/* Topics Grid */}
       {!loading && topics.length > 0 && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
+          gap: 20
+        }}>
           <AnimatePresence>
             {topics.map((topic, i) => {
               const plat = PLATFORMS.find(p => p.id === topic.platform);
@@ -278,75 +319,65 @@ export default function TopicsView({ onSelectTopic }: Props) {
                   key={topic.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: i * 0.05 }}
-                  whileHover={{ y: -3 }}
+                  transition={{ delay: i * 0.04 }}
+                  whileHover={{ y: -4 }}
                   onClick={() => onSelectTopic(topic.id, topic.name)}
                   style={{
-                    background: "white", border: "1.5px solid #e8e8e8",
-                    borderRadius: 18, padding: "20px 20px 16px",
-                    cursor: "pointer", position: "relative",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                    transition: "border-color 0.2s",
+                    background: "white",
+                    border: "1.5px solid #e8e8e8",
+                    borderRadius: 18,
+                    padding: "20px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
                   }}
                 >
-                  {/* Top row */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
                     <div style={{
-                      width: 44, height: 44, borderRadius: 12,
-                      background: plat ? plat.color + "18" : "#f3f4f6",
+                      width: 48, height: 48, borderRadius: 12,
+                      background: plat ? plat.color + "15" : "#f1f5f9",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 20,
+                      fontSize: 22,
                     }}>
-                      <FiGrid size={20} color={plat?.color ?? "#888"} />
+                      <FiGrid color={plat?.color ?? "#94a3b8"} />
                     </div>
+
                     <button
-                      onClick={e => handleDelete(topic.id, e)}
-                      style={{
-                        background: "none", border: "none", cursor: "pointer",
-                        color: "#ddd", padding: 4, borderRadius: 8,
-                        transition: "color 0.15s",
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.color = "#ef4444")}
-                      onMouseLeave={e => (e.currentTarget.style.color = "#ddd")}
+                      onClick={(e) => handleDelete(topic.id, e)}
+                      style={{ background: "none", border: "none", color: "#cbd5e1", padding: 6, borderRadius: 8 }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#cbd5e1")}
                     >
-                      <FiTrash2 size={15} />
+                      <FiTrash2 size={17} />
                     </button>
                   </div>
 
-                  {/* Name */}
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#1a1a1a", marginBottom: 6 }}>
-                    {topic.name}
-                  </div>
+                  <h3 style={{ fontSize: 16.5, fontWeight: 700, margin: "0 0 8px 0" }}>{topic.name}</h3>
 
-                  {/* Description */}
                   {topic.description && (
-                    <div style={{
-                      fontSize: 13, color: "#888", lineHeight: 1.5,
-                      marginBottom: 12,
+                    <p style={{
+                      fontSize: 13.5, color: "#64748b", lineHeight: 1.5,
                       display: "-webkit-box", WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical", overflow: "hidden",
+                      WebkitBoxOrient: "vertical", overflow: "hidden"
                     }}>
                       {topic.description}
-                    </div>
+                    </p>
                   )}
 
-                  {/* Footer */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, paddingTop: 12, borderTop: "1px solid #f0f0f0" }}>
-                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                      <span style={{ fontSize: 12, color: "#888" }}>
-                        📝 <strong style={{ color: "#333" }}>{topic.postCount}</strong> posts
+                  <div style={{
+                    marginTop: 18, paddingTop: 14, borderTop: "1px solid #f1f5f9",
+                    display: "flex", justifyContent: "space-between", alignItems: "center"
+                  }}>
+                    <span style={{ fontSize: 13.5, color: "#64748b" }}>
+                      📝 <strong style={{ color: "#1f2937" }}>{topic.postCount}</strong> posts
+                    </span>
+                    {plat && (
+                      <span style={{
+                        fontSize: 12, padding: "3px 10px", borderRadius: 20,
+                        background: plat.color + "15", color: plat.color, fontWeight: 500
+                      }}>
+                        {plat.label}
                       </span>
-                      {plat && (
-                        <span style={{
-                          fontSize: 11, padding: "2px 8px", borderRadius: 20,
-                          background: plat.color + "15", color: plat.color, fontWeight: 500,
-                        }}>
-                          {plat.label}
-                        </span>
-                      )}
-                    </div>
-                    <FiChevronRight size={16} color="#ccc" />
+                    )}
                   </div>
                 </motion.div>
               );

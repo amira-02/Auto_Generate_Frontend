@@ -23,6 +23,7 @@ export type Post = {
   tone: string | null;
   imageUrl: string | null;
   videoUrl: string | null;
+  imageCount: number; 
   platforms: Platform[];
   scheduledAt: string | null;
   status: string;
@@ -835,6 +836,7 @@ export default function PostsView({ onPostsChange }: Props) {
             tone: p.tone ?? null,
             imageUrl: p.imageUrl ?? null,
             videoUrl: null,
+            imageCount: p.imageCount ?? p.ImageCount ?? 0, 
             platforms,
             scheduledAt: p.scheduledDate ?? p.scheduledAt ?? null,
             status: p.status ?? "DRAFT",

@@ -1,196 +1,155 @@
-  // src/pages/Dashboard.tsx
-  import { useContext, useState, useRef, useEffect } from "react";
-  import { useNavigate } from "react-router-dom";
-  import { AuthContext } from "../hooks/AuthContext";
-  import { jwtDecode } from "jwt-decode";
-  import CalendarView from "../components/DashboardSection/Calendar/CalendarView";
-  import CreatePostModal from "../components/DashboardSection/Posts/CreatePostModal";
-  import { motion, AnimatePresence } from "framer-motion";
-  import { FiBell, FiSearch, FiArrowLeft, FiMenu, FiChevronLeft, FiChevronRight } from "react-icons/fi";
-  import PostsView from "../components/DashboardSection/Posts/PostsView";
-  import TopicsView from "../components/DashboardSection/Topics/TopicsView";
-  import TopicDetailView from "../components/DashboardSection/Topics/TopicDetailView";
-  import ConnectedAccountsView from "../components/DashboardSection/SocialAccounts/ConnectedAccountsView";
+// src/pages/Dashboard.tsx
+import { useContext, useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../hooks/AuthContext";
+import { jwtDecode } from "jwt-decode";
+import CalendarView from "../components/DashboardSection/Calendar/CalendarView";
+import CreatePostModal from "../components/DashboardSection/Posts/CreatePostModal";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FiBell, FiSearch, FiArrowLeft, FiMenu,
+  FiChevronsLeft, FiChevronsRight,
+} from "react-icons/fi";
+import PostsView from "../components/DashboardSection/Posts/PostsView";
+import TopicsView from "../components/DashboardSection/Topics/TopicsView";
+import TopicDetailView from "../components/DashboardSection/Topics/TopicDetailView";
+import ConnectedAccountsView from "../components/DashboardSection/SocialAccounts/ConnectedAccountsView";
 
-  type Step = "form" | "generating" | "preview";
-  type CaptionLength = "short" | "medium" | "long";
-  type Tone = "professional" | "casual" | "funny" | "inspirational";
-  type ScheduleType = "now" | "schedule";
+// ─── Base URL centralisée ─────────────────────────────────────────────────────
+// En dev → https://localhost:7079
+// En prod → remplace par ton domaine ou utilise import.meta.env.VITE_API_URL
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
-  type ModalState = {
-    open: boolean;
-    step: Step;
-    topic: string;
-    hashtags: string;
-    captionLength: CaptionLength;
-    tone: Tone;
-    file: File | null;
-    fileName: string;
-    fileContent: string;
-    selectedPlatforms: string[];
-    scheduleType: ScheduleType;
-    scheduledAt: string;
-    generatedContent: string;
-    generatedImage: string;
-    loading: boolean;
-    error: string;
-    postId: number;
-    uploadedImages: string[];
-    uploadedVideo: string | null;
-  };
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-  const PLATFORMS = [
-    { id: "linkedin", label: "LinkedIn", color: "#0077b5", icon: "💼" },
-    { id: "twitter", label: "Twitter / X", color: "#1da1f2", icon: "𝕏" },
-    { id: "instagram", label: "Instagram", color: "#e1306c", icon: "📸" },
-    { id: "facebook", label: "Facebook", color: "#1877f2", icon: "f" },
-    { id: "tiktok", label: "TikTok", color: "#010101", icon: "🎵" },
-    { id: "threads", label: "Threads", color: "#000000", icon: "🧵" },
-  ];
+type Step = "form" | "generating" | "preview";
+type CaptionLength = "short" | "medium" | "long";
+type Tone = "professional" | "casual" | "funny" | "inspirational";
+type ScheduleType = "now" | "schedule";
 
-  const INITIAL_MODAL: ModalState = {
-    open: false,
-    step: "form",
-    topic: "",
-    hashtags: "",
-    captionLength: "medium",
-    tone: "professional",
-    file: null,
-    fileName: "",
-    fileContent: "",
-    selectedPlatforms: [],
-    scheduleType: "now",
-    scheduledAt: "",
-    generatedContent: "",
-    generatedImage: "",
-    loading: false,
-    error: "",
-    postId: 0,
-    uploadedImages: [],
-    uploadedVideo: null,
-  };
+type ModalState = {
+  open: boolean;
+  step: Step;
+  topic: string;
+  hashtags: string;
+  captionLength: CaptionLength;
+  tone: Tone;
+  file: File | null;
+  fileName: string;
+  fileContent: string;
+  selectedPlatforms: string[];
+  scheduleType: ScheduleType;
+  scheduledAt: string;
+  generatedContent: string;
+  generatedImage: string;
+  loading: boolean;
+  error: string;
+  postId: number;
+  uploadedImages: string[];
+  uploadedVideo: string | null;
+};
 
-  export default function Dashboard() {
-    const { logout, token } = useContext(AuthContext);
-    const navigate = useNavigate();
-    const [activeNav, setActiveNav] = useState("dashboard");
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+const PLATFORMS = [
+  { id: "linkedin",  label: "LinkedIn",   color: "#0077b5", icon: "💼" },
+  { id: "twitter",   label: "Twitter / X", color: "#1da1f2", icon: "𝕏" },
+  { id: "instagram", label: "Instagram",  color: "#e1306c", icon: "📸" },
+  { id: "facebook",  label: "Facebook",   color: "#1877f2", icon: "f"  },
+  { id: "tiktok",    label: "TikTok",     color: "#010101", icon: "🎵" },
+  { id: "threads",   label: "Threads",    color: "#000000", icon: "🧵" },
+];
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const imageInputRef = useRef<HTMLInputElement>(null);
-    const videoInputRef = useRef<HTMLInputElement>(null);
+const INITIAL_MODAL: ModalState = {
+  open: false,
+  step: "form",
+  topic: "",
+  hashtags: "",
+  captionLength: "medium",
+  tone: "professional",
+  file: null,
+  fileName: "",
+  fileContent: "",
+  selectedPlatforms: [],
+  scheduleType: "now",
+  scheduledAt: "",
+  generatedContent: "",
+  generatedImage: "",
+  loading: false,
+  error: "",
+  postId: 0,
+  uploadedImages: [],
+  uploadedVideo: null,
+};
 
-    const [modal, setModal] = useState<ModalState>(INITIAL_MODAL);
-    const [copyDone, setCopyDone] = useState(false);
-  const [posts, setPosts] = useState<any[]>([]);
-const [loadingPosts, setLoadingPosts] = useState(false);
+// ─── Nav items ────────────────────────────────────────────────────────────────
 
-    // Auth
-    let userEmail = "User";
-    let userInitial = "U";
-    if (token) {
-      try {
-        const decoded: any = jwtDecode(token);
-        userEmail = decoded.email || decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "User";
-        userInitial = userEmail.charAt(0).toUpperCase();
-      } catch {}
-    }
+const NAV_ITEMS = [
+  { icon: "📊", label: "Dashboard",  id: "dashboard" },
+  { icon: "🗂️", label: "Topics",     id: "topics"    },
+  { icon: "📝", label: "Posts",      id: "posts"     },
+  { icon: "📅", label: "Calendar",   id: "calendar"  },
+  { icon: "📈", label: "Analytics",  id: "analytics" },
+];
 
-    const handleLogout = () => {
-      logout();
-      navigate("/");
+const MANAGE_ITEMS = [
+  { icon: "🔗", label: "Connected Accounts", id: "accounts" },
+  { icon: "👥", label: "Team Members",        id: "team"     },
+  { icon: "⚙️", label: "Settings",            id: "settings" },
+];
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function Dashboard() {
+  const { logout, token } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const [activeNav, setActiveNav]               = useState("dashboard");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [selectedTopic, setSelectedTopic]       = useState<{ id: number; name: string } | null>(null);
+  const [modal, setModal]                       = useState<ModalState>(INITIAL_MODAL);
+  const [copyDone, setCopyDone]                 = useState(false);
+  const [posts, setPosts]                       = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts]         = useState(false);
+
+  const fileInputRef  = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  // ─── User info ──────────────────────────────────────────────────────────────
+
+  let userEmail   = "User";
+  let userInitial = "U";
+  if (token) {
+    try {
+      const decoded: any = jwtDecode(token);
+      userEmail   = decoded.email
+        ?? decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"]
+        ?? "User";
+      userInitial = userEmail.charAt(0).toUpperCase();
+    } catch {}
+  }
+
+  // ─── Responsive sidebar ─────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) setIsSidebarCollapsed(true);
     };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-    // Modal Helpers
-    const openModal = () => setModal({ ...INITIAL_MODAL, open: true });
-    const closeModal = () => setModal(m => ({ ...m, open: false }));
-    const setM = (patch: Partial<ModalState>) => setModal(m => ({ ...m, ...patch }));
+  // ─── Fetch posts ─────────────────────────────────────────────────────────────
+  // URL absolue avec API_BASE → plus de 404 causé par l'URL relative
 
-    const togglePlatform = (id: string) => {
-      setM({
-        selectedPlatforms: modal.selectedPlatforms.includes(id)
-          ? modal.selectedPlatforms.filter(p => p !== id)
-          : [...modal.selectedPlatforms, id],
-      });
-    };
-
-    // File Uploads
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => setM({ file, fileName: file.name, fileContent: ev.target?.result as string });
-      reader.readAsText(file);
-    };
-
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (!files) return;
-      const urls = Array.from(files).map(f => URL.createObjectURL(f));
-      setM({ uploadedImages: [...modal.uploadedImages, ...urls] });
-    };
-
-    const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      setM({ uploadedVideo: URL.createObjectURL(file) });
-    };
-
-    const removeImage = (idx: number) =>
-      setM({ uploadedImages: modal.uploadedImages.filter((_, i) => i !== idx) });
-
-    const copyCaption = () => {
-      navigator.clipboard.writeText(modal.generatedContent);
-      setCopyDone(true);
-      setTimeout(() => setCopyDone(false), 1800);
-    };
-
-    // Generate & Publish functions (placeholder - keep your original logic)
-    const handleGenerate = async () => { /* ... your original code ... */ };
-    const handleGenerateImage = async () => { /* ... your original code ... */ };
-    const handlePublish = async () => { /* ... your original code ... */ };
-    const handleSaveDraft = async () => { /* ... your original code ... */ };
-
-    // Navigation Items
-    const navItems = [
-      { icon: "📊", label: "Dashboard", id: "dashboard" },
-      { icon: "🗂️", label: "Topics",    id: "topics" },
-      { icon: "📝", label: "Posts", id: "posts" },
-      { icon: "📅", label: "Calendar", id: "calendar" },
-      { icon: "📈", label: "Analytics", id: "analytics" },
-    ];
-
-    const manageItems = [
-      { icon: "🔗", label: "Connected Accounts", id: "accounts" },
-      { icon: "👥", label: "Team Members", id: "team" },
-      { icon: "⚙️", label: "Settings", id: "settings" },
-    ];
-  const [selectedTopic, setSelectedTopic] = useState<{ id: number; name: string } | null>(null);
-
-    // Auto-collapse on mobile
-    useEffect(() => {
-      const handleResize = () => {
-        if (window.innerWidth < 768) {
-          setIsSidebarCollapsed(true);
-        }
-      };
-      handleResize();
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }, []);
-      const fetchPosts = async () => {
+  const fetchPosts = async () => {
     if (!token) return;
-
     setLoadingPosts(true);
     try {
-      const res = await fetch("https://localhost:7079/api/posts", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch(`${API_BASE}/api/posts`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       if (!res.ok) throw new Error("Failed to fetch posts");
-
       const data = await res.json();
       setPosts(data);
     } catch (err) {
@@ -198,350 +157,455 @@ const [loadingPosts, setLoadingPosts] = useState(false);
     } finally {
       setLoadingPosts(false);
     }
-};
+  };
 
-        const totalPosts = posts.length;
+  useEffect(() => {
+    fetchPosts();
+  }, [token]);
 
-  const publishedPosts = posts.filter(
-    (p) => p.status === "published"
-  ).length;
+  // ─── Stats ──────────────────────────────────────────────────────────────────
 
-  const scheduledPosts = posts.filter(
-    (p) => p.status === "scheduled"
-  ).length;
+  const totalPosts      = posts.length;
+  const publishedPosts  = posts.filter(p => p.status === "published").length;
+  const scheduledPosts  = posts.filter(p => p.status === "scheduled").length;
+  const drafts          = posts.filter(p => p.status === "draft").length;
+  const failedPosts     = posts.filter(p => p.status === "failed").length;
 
-  const drafts = posts.filter(
-    (p) => p.status === "draft"
-  ).length;
+  // ─── Modal helpers ──────────────────────────────────────────────────────────
 
-  const failedPosts = posts.filter(
-    (p) => p.status === "failed"
-  ).length;
+  const openModal  = () => setModal({ ...INITIAL_MODAL, open: true });
+  const closeModal = () => setModal(m => ({ ...m, open: false }));
+  const setM       = (patch: Partial<ModalState>) => setModal(m => ({ ...m, ...patch }));
 
-  const aiCredits = 42;
-useEffect(() => {
-  fetchPosts();
-}, [token]);
+  const togglePlatform = (id: string) =>
+    setM({
+      selectedPlatforms: modal.selectedPlatforms.includes(id)
+        ? modal.selectedPlatforms.filter(p => p !== id)
+        : [...modal.selectedPlatforms, id],
+    });
 
-    return (
-      <div className="flex h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 font-inter overflow-hidden">
-        
-        {/* Collapsible Sidebar with Smooth Animation */}
-        <motion.aside 
-          initial={false}
-          animate={{ 
-            width: isSidebarCollapsed ? 80 : 256,
-            transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
-          }}
-          className="bg-white/70 backdrop-blur-xl border-r border-gray-200 flex flex-col fixed h-full shadow-sm z-20 overflow-hidden"
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev =>
+      setM({ file, fileName: file.name, fileContent: ev.target?.result as string });
+    reader.readAsText(file);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const urls = Array.from(files).map(f => URL.createObjectURL(f));
+    setM({ uploadedImages: [...modal.uploadedImages, ...urls] });
+  };
+
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setM({ uploadedVideo: URL.createObjectURL(file) });
+  };
+
+  const removeImage = (idx: number) =>
+    setM({ uploadedImages: modal.uploadedImages.filter((_, i) => i !== idx) });
+
+  const copyCaption = () => {
+    navigator.clipboard.writeText(modal.generatedContent);
+    setCopyDone(true);
+    setTimeout(() => setCopyDone(false), 1800);
+  };
+
+  // ─── API actions ─────────────────────────────────────────────────────────────
+
+  const handleGenerate = async () => {
+    // Conserve ta logique existante
+  };
+
+  const handleGenerateImage = async () => {
+    // Conserve ta logique existante
+  };
+
+  const handlePublish = async () => {
+    // Conserve ta logique existante
+    await fetchPosts(); // Refresh après publication
+  };
+
+  const handleSaveDraft = async () => {
+    // Conserve ta logique existante
+    await fetchPosts(); // Refresh après sauvegarde
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  // ─── Render ──────────────────────────────────────────────────────────────────
+
+  return (
+    <div className="flex h-screen bg-white text-gray-900 font-inter overflow-hidden">
+
+      {/* ── Sidebar ──────────────────────────────────────────────────────────── */}
+  <motion.aside
+  initial={false}
+  animate={{ width: isSidebarCollapsed ? 64 : 220 }}
+  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+  className="bg-white flex flex-col fixed h-full z-20 overflow-hidden"
+  style={{ borderRight: "1px solid #f0f0f0", boxShadow: "2px 0 12px rgba(0,0,0,0.04)" }}
+>
+  {/* Toggle */}
+  <button
+    onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+    className="absolute -right-3 top-20 bg-white border border-gray-200 rounded-full p-1.5 shadow-sm hover:bg-gray-50 z-30 transition"
+  >
+    {isSidebarCollapsed
+      ? <FiChevronsRight size={15} className="text-gray-400" />
+      : <FiChevronsLeft  size={15} className="text-gray-400" />}
+  </button>
+
+  {/* User */}
+  <div className={`p-4 flex items-center gap-3 ${isSidebarCollapsed ? "justify-center" : ""}`}
+    style={{ borderBottom: "1px solid #f5f5f5" }}>
+    <div className="w-9 h-9 bg-gray-900 text-white flex items-center justify-center font-bold text-sm flex-shrink-0"
+      style={{ borderRadius: 10 }}>
+      {userInitial}
+    </div>
+    {!isSidebarCollapsed && (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <div className="text-sm font-semibold text-gray-900 truncate" style={{ maxWidth: 130 }}>
+          {userEmail}
+        </div>
+        <div className="text-xs text-gray-400 mt-0.5">Starter Plan</div>
+      </motion.div>
+    )}
+  </div>
+
+  {/* Nav */}
+  <nav className="flex-1 px-2 py-3 overflow-y-auto" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    {NAV_ITEMS.map(item => {
+      const isActive = activeNav === item.id;
+      return (
+        <motion.button
+          key={item.id}
+          onClick={() => setActiveNav(item.id)}
+          whileHover={{ x: isSidebarCollapsed ? 0 : 2 }}
+          whileTap={{ scale: 0.97 }}
+          className={`w-full flex items-center gap-3 text-sm transition-all relative
+            ${isSidebarCollapsed ? "justify-center px-0 py-2" : "px-2 py-2"}`}
+          style={{ borderRadius: 12, background: isActive ? "#f3f0ff" : "transparent" }}
         >
-          {/* Collapse Toggle Button */}
-          <button
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="absolute -right-3 top-20 bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:shadow-lg transition-all z-30"
-          >
-            {isSidebarCollapsed ? 
-              <FiChevronRight className="text-gray-600 text-sm" /> : 
-              <FiChevronLeft className="text-gray-600 text-sm" />
-            }
-          </button>
-
-          {/* User Section */}
-          <div className={`p-5 border-b flex items-center gap-3 transition-all duration-300 ${isSidebarCollapsed ? 'justify-center px-2' : ''}`}>
-            <div className="w-10 h-10 bg-gray-600 text-white rounded-2xl flex items-center justify-center font-bold text-xl flex-shrink-0">
-              {userInitial}
-            </div>
-            <AnimatePresence mode="wait">
-              {!isSidebarCollapsed && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="font-semibold text-gray-900 truncate max-w-[140px]">{userEmail}</div>
-                  <div className="text-xs text-gray-500">Personal Workspace</div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* New Post Button */}
-          <div className="p-4">
-            <button
-              onClick={openModal}
-              className={`w-full bg-gray-600 hover:bg-gray-700 text-white py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 ${isSidebarCollapsed ? 'px-2' : ''}`}
-              title={isSidebarCollapsed ? "New Post" : ""}
-            >
-              {isSidebarCollapsed ? "✏️" : "✏️ New Post"}
-            </button>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveNav(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all group relative ${
-                  activeNav === item.id
-                    ? "bg-gray-100 text-gray-700 font-semibold"
-                    : "hover:bg-gray-100 text-gray-700"
-                } ${isSidebarCollapsed ? 'justify-center px-2' : ''}`}
-                title={isSidebarCollapsed ? item.label : ""}
-              >
-                <span className="text-xl flex-shrink-0">{item.icon}</span>
-                <AnimatePresence mode="wait">
-                  {!isSidebarCollapsed && (
-                    <motion.span
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: 'auto' }}
-                      exit={{ opacity: 0, width: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="whitespace-nowrap overflow-hidden"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </button>
-            ))}
-
-            <AnimatePresence mode="wait">
-              {!isSidebarCollapsed && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="px-4 mt-6 mb-2 text-xs font-bold text-gray-400 uppercase tracking-widest"
-                >
-                  Manage
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {manageItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveNav(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all group relative ${
-                  activeNav === item.id ? "bg-gray-100 text-gray-700" : "hover:bg-gray-100 text-gray-700"
-                } ${isSidebarCollapsed ? 'justify-center px-2' : ''}`}
-                title={isSidebarCollapsed ? item.label : ""}
-              >
-                <span className="text-xl flex-shrink-0">{item.icon}</span>
-                <AnimatePresence mode="wait">
-                  {!isSidebarCollapsed && (
-                    <motion.span
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: 'auto' }}
-                      exit={{ opacity: 0, width: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="whitespace-nowrap overflow-hidden"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </button>
-            ))}
-          </nav>
-
-          {/* Bottom Section */}
-          <div className="p-4 border-t">
-            <AnimatePresence mode="wait">
-              {!isSidebarCollapsed ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="bg-gray-50 rounded-2xl p-4 text-sm"
-                >
-                  <div className="font-semibold mb-3">Starter Plan</div>
-                  <div className="space-y-3 text-xs">
-                    <div>🔗 Accounts: 9/10</div>
-                    <div>✨ AI Credits: 42/100</div>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex justify-center"
-                >
-                  <div className="w-8 h-8 bg-gray-50 rounded-xl flex items-center justify-center text-lg">
-                    📊
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
-            <button
-              onClick={handleLogout}
-              className={`w-full mt-4 py-2.5 text-gray-600 hover:text-red-600 transition-colors text-sm font-medium ${isSidebarCollapsed ? 'px-2' : ''}`}
-              title={isSidebarCollapsed ? "Logout" : ""}
-            >
-              {isSidebarCollapsed ? "🚪" : "Logout"}
-            </button>
-          </div>
-        </motion.aside>
-
-        {/* Main Content - Dynamic Margin */}
-        <motion.main 
-          animate={{ 
-            marginLeft: isSidebarCollapsed ? 80 : 256,
-            transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
-          }}
-          className="flex-1 overflow-auto"
-        >
-          <div className="p-6 md:p-10 max-w-7xl mx-auto">
-                 {activeNav === "dashboard" && (
-                  <>
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex flex-col gap-6 mb-10"
-                    >
-                      {/* TOP BAR - Perfectly Aligned */}
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-                        {/* LEFT SIDE */}
-                        <div>
-                          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
-                            Welcome back, {userEmail.split("@")[0]} 👋
-                          </h1>
-                          <p className="text-gray-500 mt-2">
-                            Let's create something beautiful today
-                          </p>
-                        </div>
-
-                        {/* RIGHT SIDE */}
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <button
-                            onClick={() => navigate("/")}
-                            className="flex items-center gap-2 bg-white/70 backdrop-blur-lg px-3 py-2 rounded-xl shadow-sm hover:scale-105 transition text-gray-700"
-                          >
-                            <FiArrowLeft />
-                            <span className="hidden sm:inline">Home</span>
-                          </button>
-
-                          {/* Menu Toggle for Mobile */}
-                          <button
-                            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                            className="md:hidden flex items-center gap-2 bg-white/70 backdrop-blur-lg p-3 rounded-xl shadow-sm hover:scale-105 transition text-gray-700"
-                          >
-                            <FiMenu />
-                          </button>
-
-                          {/* Notification */}
-                          <div className="bg-white/70 backdrop-blur-lg p-3 rounded-2xl shadow-sm hover:scale-105 transition cursor-pointer">
-                            <FiBell className="text-xl text-gray-700" />
-                          </div>
-
-                          {/* Search */}
-                          <div className="hidden lg:flex items-center gap-2 bg-white/70 backdrop-blur-lg px-4 py-2 rounded-2xl shadow-sm w-80">
-                            <FiSearch className="text-gray-400" />
-                            <input
-                              type="text"
-                              placeholder="Search posts..."
-                              className="bg-transparent outline-none text-sm w-full"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-
-                    {/* Stats Grid */}
-                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
-        {[
-          {
-            label: "Total Posts",
-            value: loadingPosts ? "..." : totalPosts,
-            icon: "📝",
-          },
-          {
-            label: "Published",
-            value: loadingPosts ? "..." : publishedPosts,
-            icon: "✅",
-          },
-          {
-            label: "Scheduled",
-            value: loadingPosts ? "..." : scheduledPosts,
-            icon: "📅",
-          },
-          {
-            label: "Drafts",
-            value: loadingPosts ? "..." : drafts,
-            icon: "🧾",
-          },
-          {
-            label: "Failed",
-            value: loadingPosts ? "..." : failedPosts,
-            icon: "❌",
-          },
-        ].map((stat, i) => (
+          {/* Icon bubble */}
           <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-xl p-6 shadow"
+            animate={{ background: isActive ? "#6366f1" : "#f5f5f5" }}
+            transition={{ duration: 0.2 }}
+            className="flex items-center justify-center flex-shrink-0"
+            style={{ width: 32, height: 32, borderRadius: 9, fontSize: 15 }}
           >
-            <div className="flex justify-between items-center">
-              <span className="text-2xl">{stat.icon}</span>
-              <span className="text-2xl font-bold">{stat.value}</span>
-            </div>
-            <p className="text-gray-500 mt-2">{stat.label}</p>
+            <span style={{ fontSize: 15 }}>{item.icon}</span>
           </motion.div>
-        ))}
-      </div>
-                  </>
-                  )}
 
-                  {activeNav === "topics" && !selectedTopic && (
-                    <TopicsView onSelectTopic={(id, name) => setSelectedTopic({ id, name })} />
-                  )}
+          {/* Label */}
+          {!isSidebarCollapsed && (
+            <motion.span
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              style={{ color: isActive ? "#6366f1" : "#555", fontWeight: isActive ? 600 : 500 }}
+            >
+              {item.label}
+            </motion.span>
+          )}
 
-                  {activeNav === "topics" && selectedTopic && (
-                    <TopicDetailView
-                      topicId={selectedTopic.id}
-                      topicName={selectedTopic.name}
-                      onBack={() => setSelectedTopic(null)}
-                    />
-                  )}
-                  {activeNav === "posts" && <PostsView />}
-                  
-                  {activeNav === "calendar" && <CalendarView posts={posts} />}
-                  
-                  {activeNav === "accounts" && (
-                    <div className="text-2xl font-bold">Connected Accounts</div>
-                  )}
+          {/* Active dot */}
+          {isActive && !isSidebarCollapsed && (
+            <motion.div
+              layoutId="activeDot"
+              className="ml-auto"
+              style={{ width: 6, height: 6, borderRadius: "50%", background: "#6366f1", flexShrink: 0 }}
+            />
+          )}
+        </motion.button>
+      );
+    })}
 
-                  {activeNav === "accounts" && <ConnectedAccountsView />}
+    {/* Manage section */}
+    {!isSidebarCollapsed
+      ? <div className="text-xs font-bold text-gray-300 uppercase tracking-widest px-2 pt-4 pb-1"
+          style={{ letterSpacing: "0.08em" }}>Manage</div>
+      : <div className="my-3" style={{ borderTop: "1px solid #f5f5f5" }} />
+    }
 
+    {MANAGE_ITEMS.map(item => {
+      const isActive = activeNav === item.id;
+      return (
+        <motion.button
+          key={item.id}
+          onClick={() => setActiveNav(item.id)}
+          whileHover={{ x: isSidebarCollapsed ? 0 : 2 }}
+          whileTap={{ scale: 0.97 }}
+          className={`w-full flex items-center gap-3 text-sm transition-all relative
+            ${isSidebarCollapsed ? "justify-center px-0 py-2" : "px-2 py-2"}`}
+          style={{ borderRadius: 12, background: isActive ? "#f3f0ff" : "transparent" }}
+        >
+          <motion.div
+            animate={{ background: isActive ? "#6366f1" : "#f5f5f5" }}
+            transition={{ duration: 0.2 }}
+            className="flex items-center justify-center flex-shrink-0"
+            style={{ width: 32, height: 32, borderRadius: 9, fontSize: 15 }}
+          >
+            <span style={{ fontSize: 15 }}>{item.icon}</span>
+          </motion.div>
+
+          {!isSidebarCollapsed && (
+            <motion.span
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              style={{ color: isActive ? "#6366f1" : "#555", fontWeight: isActive ? 600 : 500 }}
+            >
+              {item.label}
+            </motion.span>
+          )}
+
+          {isActive && !isSidebarCollapsed && (
+            <motion.div
+              layoutId="activeDotManage"
+              className="ml-auto"
+              style={{ width: 6, height: 6, borderRadius: "50%", background: "#6366f1", flexShrink: 0 }}
+            />
+          )}
+        </motion.button>
+      );
+    })}
+  </nav>
+
+  {/* Bottom — plan card avec progress bars */}
+  <div className="p-3" style={{ borderTop: "1px solid #f5f5f5" }}>
+    {!isSidebarCollapsed ? (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        className="rounded-xl p-3 mb-2 text-xs"
+        style={{ background: "#fafafa", border: "1px solid #f0f0f0" }}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <span className="font-semibold text-gray-800 text-xs">My plan</span>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: "#f3f0ff", color: "#6366f1" }}>Starter</span>
+        </div>
+
+        {/* Accounts bar */}
+        <div className="mb-2">
+          <div className="flex justify-between text-gray-400 mb-1" style={{ fontSize: 11 }}>
+            <span>Accounts</span><span>9/10</span>
           </div>
-        </motion.main>
+          <div className="h-1 rounded-full overflow-hidden" style={{ background: "#eee" }}>
+            <motion.div
+              initial={{ width: 0 }} animate={{ width: "90%" }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="h-full rounded-full" style={{ background: "#6366f1" }}
+            />
+          </div>
+        </div>
 
-        {/* Modal */}
-        <CreatePostModal
-          modal={modal}
-          setM={setM}
-          closeModal={closeModal}
-          handleGenerate={handleGenerate}
-          handlePublish={handlePublish}
-          handleSaveDraft={handleSaveDraft}
-          handleFileUpload={handleFileUpload}
-          handleImageUpload={handleImageUpload}
-          handleVideoUpload={handleVideoUpload}
-          handleGenerateImage={handleGenerateImage}
-          togglePlatform={togglePlatform}
-          removeImage={removeImage}
-          copyCaption={copyCaption}
-          fileInputRef={fileInputRef}
-          imageInputRef={imageInputRef}
-          videoInputRef={videoInputRef}
-          copyDone={copyDone}
-          PLATFORMS={PLATFORMS}
-        />
-      </div>
-    );
-  }
+        {/* Credits bar */}
+        <div>
+          <div className="flex justify-between text-gray-400 mb-1" style={{ fontSize: 11 }}>
+            <span>AI Credits</span><span>42/100</span>
+          </div>
+          <div className="h-1 rounded-full overflow-hidden" style={{ background: "#eee" }}>
+            <motion.div
+              initial={{ width: 0 }} animate={{ width: "42%" }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+              className="h-full rounded-full" style={{ background: "#10b981" }}
+            />
+          </div>
+        </div>
+      </motion.div>
+    ) : (
+      <div className="flex justify-center text-lg mb-2">📊</div>
+    )}
+
+    <motion.button
+      onClick={handleLogout}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+      className="w-full py-2 text-sm font-medium rounded-xl transition flex items-center justify-center gap-2"
+      style={{ color: "#aaa", background: "transparent" }}
+      onMouseEnter={e => { e.currentTarget.style.background = "#fff0f2"; e.currentTarget.style.color = "#e11d48"; }}
+      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#aaa"; }}
+    >
+      {isSidebarCollapsed ? "🚪" : <><span>🚪</span> Logout</>}
+    </motion.button>
+  </div>
+</motion.aside>
+
+      {/* ── Main ─────────────────────────────────────────────────────────────── */}
+      <motion.main
+        animate={{ marginLeft: isSidebarCollapsed ? 64 : 210 }}
+        className="flex-1 overflow-auto bg-white"
+      >
+        <div className="p-6 md:p-8 max-w-7xl mx-auto">
+
+          {/* ── DASHBOARD ────────────────────────────────────────────────────── */}
+          {activeNav === "dashboard" && (
+            <>
+              {/* Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
+                <div>
+                  <h1 className="text-2xl font-semibold text-gray-900">
+                    Welcome back, {userEmail.split("@")[0]} 👋
+                  </h1>
+                  <p className="text-gray-500 text-sm mt-1">
+                    Let's create something beautiful today
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 mt-4 md:mt-0">
+                  <button
+                    onClick={() => navigate("/")}
+                    className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 hover:border-gray-400 rounded-2xl transition"
+                  >
+                    <FiArrowLeft size={17} /> Home
+                  </button>
+
+                  <button
+                    onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                    className="md:hidden p-3 border border-gray-300 rounded-2xl hover:bg-gray-100"
+                  >
+                    <FiMenu size={19} />
+                  </button>
+
+                  <div className="p-3 border border-gray-300 rounded-2xl hover:bg-gray-100 cursor-pointer">
+                    <FiBell size={19} className="text-gray-700" />
+                  </div>
+
+                  <div className="hidden lg:flex items-center gap-3 border border-gray-300 px-4 py-2 rounded-2xl w-72 focus-within:border-gray-400">
+                    <FiSearch size={17} className="text-gray-500" />
+                    <input
+                      type="text"
+                      placeholder="Search posts..."
+                      className="bg-transparent outline-none text-sm w-full placeholder-gray-400"
+                    />
+                  </div>
+
+                  {/* Create Post button */}
+                  <button
+                    onClick={openModal}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-2xl hover:bg-gray-700 transition"
+                  >
+                    ✨ New Post
+                  </button>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                {[
+                  { label: "Total Posts", value: loadingPosts ? "…" : totalPosts,     icon: "📝" },
+                  { label: "Published",   value: loadingPosts ? "…" : publishedPosts, icon: "✅" },
+                  { label: "Scheduled",   value: loadingPosts ? "…" : scheduledPosts, icon: "📅" },
+                  { label: "Drafts",      value: loadingPosts ? "…" : drafts,         icon: "🧾" },
+                  { label: "Failed",      value: loadingPosts ? "…" : failedPosts,    icon: "❌" },
+                ].map((stat, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="bg-white border border-gray-200 rounded-2xl p-5 hover:border-gray-300 transition-all"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="text-2xl">{stat.icon}</span>
+                      <span className="text-3xl font-semibold text-gray-900">{stat.value}</span>
+                    </div>
+                    <p className="text-gray-500 text-sm mt-4">{stat.label}</p>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Quick calendar preview */}
+              {/* <div className="border border-gray-200 rounded-2xl overflow-hidden" style={{ height: 480 }}>
+                <CalendarView posts={posts} token={token ?? ""} apiBase={API_BASE} />
+              </div> */}
+            </>
+          )}
+
+          {/* ── TOPICS ───────────────────────────────────────────────────────── */}
+          {activeNav === "topics" && !selectedTopic && (
+            <TopicsView onSelectTopic={(id, name) => setSelectedTopic({ id, name })} />
+          )}
+          {activeNav === "topics" && selectedTopic && (
+           <TopicDetailView
+              topicId={selectedTopic.id}
+              topicName={selectedTopic.name}
+              onBack={() => setSelectedTopic(null)}
+            />
+          )}
+
+          {/* ── POSTS ────────────────────────────────────────────────────────── */}
+          {activeNav === "posts" && <PostsView />}
+
+          {/* ── CALENDAR ─────────────────────────────────────────────────────── */}
+          {activeNav === "calendar" && (
+            <div style={{ height: "calc(100vh - 130px)" }}>
+              {/*
+                ✅ FIX: on passe token + apiBase en props
+                CalendarView utilise ces valeurs pour construire
+                l'URL absolue → plus de 404
+              */}
+              <CalendarView
+                posts={posts}
+                token={token ?? ""}
+                apiBase={API_BASE}
+              />
+            </div>
+          )}
+
+          {/* ── ACCOUNTS ─────────────────────────────────────────────────────── */}
+          {activeNav === "accounts" && <ConnectedAccountsView />}
+
+          {/* ── ANALYTICS placeholder ────────────────────────────────────────── */}
+          {activeNav === "analytics" && (
+            <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+              <span className="text-5xl mb-4">📈</span>
+              <p className="text-lg font-medium">Analytics coming soon</p>
+            </div>
+          )}
+
+          {/* ── TEAM placeholder ─────────────────────────────────────────────── */}
+          {activeNav === "team" && (
+            <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+              <span className="text-5xl mb-4">👥</span>
+              <p className="text-lg font-medium">Team features coming soon</p>
+            </div>
+          )}
+
+          {/* ── SETTINGS placeholder ─────────────────────────────────────────── */}
+          {activeNav === "settings" && (
+            <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+              <span className="text-5xl mb-4">⚙️</span>
+              <p className="text-lg font-medium">Settings coming soon</p>
+            </div>
+          )}
+        </div>
+      </motion.main>
+
+      {/* ── Modal ────────────────────────────────────────────────────────────── */}
+      <CreatePostModal
+        modal={modal}
+        setM={setM}
+        closeModal={closeModal}
+        handleGenerate={handleGenerate}
+        handlePublish={handlePublish}
+        handleSaveDraft={handleSaveDraft}
+        handleFileUpload={handleFileUpload}
+        handleImageUpload={handleImageUpload}
+        handleVideoUpload={handleVideoUpload}
+        handleGenerateImage={handleGenerateImage}
+        togglePlatform={togglePlatform}
+        removeImage={removeImage}
+        copyCaption={copyCaption}
+        fileInputRef={fileInputRef}
+        imageInputRef={imageInputRef}
+        videoInputRef={videoInputRef}
+        copyDone={copyDone}
+        PLATFORMS={PLATFORMS}
+      />
+    </div>
+  );
+}
