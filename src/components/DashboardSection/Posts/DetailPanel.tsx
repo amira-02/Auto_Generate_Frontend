@@ -4,7 +4,8 @@ import ReactDOM from "react-dom";
 import {
   FiImage, FiFileText, FiClock, FiCheckCircle, FiAlertCircle,
   FiX, FiEdit3, FiUpload, FiSend, FiCalendar, FiRefreshCw,
-  FiZap, FiSave, FiLink, FiArrowLeft
+  FiZap, FiSave, FiLink, FiArrowLeft, FiHeart, FiMessageCircle,
+  FiShare2, FiBookmark, FiSmile
 } from "react-icons/fi";
 import type { Post } from "./PostsView";
 
@@ -22,39 +23,39 @@ const PLATFORM_META: Record<Platform, { label: string; color: string; bg: string
 };
 
 const STATUS_META = {
-  draft:     { label: "Draft",     color: "#d97706", bg: "#fffbeb", border: "#fde68a", dot: "#f59e0b", icon: "✏️" },
-  scheduled: { label: "Scheduled", color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe", dot: "#818cf8", icon: "📅" },
+  draft:     { label: "Draft",     color: "#6b7280", bg: "#f3f4f6", border: "#e5e7eb", dot: "#9ca3af", icon: "✏️" },
+  inreview:  { label: "In Review", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe", dot: "#60a5fa", icon: "🔎" },
+  approved:  { label: "Approved",  color: "#059669", bg: "#ecfdf5", border: "#a7f3d0", dot: "#34d399", icon: "✅" },
+  scheduled: { label: "Scheduled", color: "#8b5cf6", bg: "#f5f3ff", border: "#ddd6fe", dot: "#a78bfa", icon: "📅" },
   published: { label: "Published", color: "#059669", bg: "#ecfdf5", border: "#a7f3d0", dot: "#34d399", icon: "✅" },
   failed:    { label: "Failed",    color: "#dc2626", bg: "#fef2f2", border: "#fecaca", dot: "#f87171", icon: "❌" },
 };
 
-// ─── Light Palette ────────────────────────────────────────────────────────────
+// ─── Light Palette (Instagram-style, no purple) ───────────────────────────────
 const C = {
   bg:         "#ffffff",
   surface:    "#ffffff",
-  surfaceSub: "#f8f9ff",
-  border:     "#e8eaf2",
-  borderHi:   "#6366f1",
-  text:       "#111827",
-  textSub:    "#374151",
-  textMuted:  "#6b7280",
-  textDim:    "#9ca3af",
-  accent:     "#6366f1",
-  accentSoft: "#eef2ff",
-  accentGlow: "rgba(99,102,241,0.15)",
-  teal:       "#0d9488",
-  tealSoft:   "#f0fdfa",
-  rose:       "#e11d48",
-  roseSoft:   "#fff1f2",
-  amber:      "#d97706",
-  amberSoft:  "#fffbeb",
-  shadow:     "rgba(99,102,241,0.08)",
-  shadowLg:   "rgba(17,24,39,0.12)",
+  surfaceSub: "#fafafa",
+  border:     "#dbdbdb",
+  borderHi:   "#262626",
+  text:       "#262626",
+  textSub:    "#4a4a4a",
+  textMuted:  "#8e8e8e",
+  textDim:    "#c7c7c7",
+  accent:     "#0095f6",
+  accentSoft: "#e8f4fd",
+  accentGlow: "rgba(0,149,246,0.1)",
+  likeRed:    "#ed4956",
+  likeRedSoft: "#fef2f2",
+  shadow:     "rgba(0,0,0,0.05)",
+  shadowLg:   "rgba(0,0,0,0.15)",
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-export const normalizeStatus = (s: string): "draft" | "scheduled" | "published" | "failed" => {
+export const normalizeStatus = (s: string): "draft" | "inreview" | "approved" | "scheduled" | "published" | "failed" => {
   switch ((s ?? "").toUpperCase()) {
+    case "INREVIEW": return "inreview";
+    case "APPROVED": return "approved";
     case "SCHEDULED": return "scheduled";
     case "PUBLISHED": return "published";
     case "FAILED":    return "failed";
@@ -67,37 +68,62 @@ export function getMissing(post: Post) {
   if (!post.caption) m.push("caption");
   if (!post.imageUrl) m.push("media");
   if (!post.platforms || post.platforms.length === 0) m.push("platforms");
-  if (!post.scheduledAt && normalizeStatus(post.status) !== "published") m.push("schedule");
   return m;
 }
-export function getScore(post: Post) { return Math.round(((4 - getMissing(post).length) / 4) * 100); }
+
+export function getScore(post: Post) { 
+  return Math.round(((4 - getMissing(post).length) / 4) * 100); 
+}
+
 export function fmtDate(d: string | null) {
   if (!d) return null;
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  return new Date(d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
+
+export function fmtTime(d: string | null) {
+  if (!d) return null;
+  return new Date(d).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+}
+
 export function resolveImageUrl(url: string | null): string | null {
   if (!url) return null;
   if (url.startsWith("data:") || url.startsWith("http")) return url;
   return `${API_BASE}${url}`;
 }
 
+const extractCaptionFromChatResponse = (data: any): string => {
+  const candidate = data?.output ?? data?.reply ?? data?.message ?? data?.text ?? data?.caption;
+  if (typeof candidate === "string") {
+    try {
+      const parsed = JSON.parse(candidate);
+      return parsed?.finalCaption || parsed?.reply || parsed?.message || candidate;
+    } catch {
+      return candidate;
+    }
+  }
+  if (candidate && typeof candidate === "object") {
+    return candidate.finalCaption || candidate.reply || candidate.message || "";
+  }
+  return "";
+};
+
 // ─── Input style ──────────────────────────────────────────────────────────────
 const inputStyle: React.CSSProperties = {
-  width: "100%", padding: "10px 14px", borderRadius: 10,
-  border: `1.5px solid ${C.border}`,
+  width: "100%", padding: "10px 14px", borderRadius: 8,
+  border: `1px solid ${C.border}`,
   background: C.surfaceSub, color: C.text,
   fontSize: 13, fontFamily: "inherit",
   outline: "none", boxSizing: "border-box",
-  transition: "border-color 0.18s, box-shadow 0.18s",
+  transition: "border-color 0.18s",
 };
-const focusInput = (e: React.FocusEvent<any>) => {
+
+const focusInput = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
   e.currentTarget.style.borderColor = C.accent;
-  e.currentTarget.style.boxShadow = `0 0 0 3px ${C.accentGlow}`;
   e.currentTarget.style.background = C.bg;
 };
-const blurInput = (e: React.FocusEvent<any>) => {
+
+const blurInput = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
   e.currentTarget.style.borderColor = C.border;
-  e.currentTarget.style.boxShadow = "none";
   e.currentTarget.style.background = C.surfaceSub;
 };
 
@@ -111,117 +137,18 @@ function Btn({ color = C.accent, bg, children, disabled, onClick, style: extraSt
     <button onClick={onClick} disabled={disabled} style={{
       background: bg || "transparent",
       color: filled ? "#fff" : color,
-      border: `1.5px solid ${filled ? "transparent" : color + "55"}`,
-      borderRadius: 9, padding: "8px 14px",
-      fontSize: 12, fontWeight: 700, letterSpacing: "0.02em",
+      border: filled ? "none" : `1px solid ${color}40`,
+      borderRadius: 8, padding: "8px 16px",
+      fontSize: 12, fontWeight: 600,
       cursor: disabled ? "not-allowed" : "pointer",
       opacity: disabled ? 0.5 : 1,
       display: "inline-flex", alignItems: "center", gap: 6,
-      fontFamily: "inherit", transition: "all 0.16s",
+      fontFamily: "inherit", transition: "all 0.2s",
       ...(extraStyle || {}),
     }}
-      onMouseEnter={e => {
-        if (!disabled) {
-          e.currentTarget.style.background = filled ? color + "dd" : color + "12";
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = filled ? `0 4px 14px ${color}44` : `0 2px 8px ${color}22`;
-        }
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background = bg || "transparent";
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
     >
       {children}
     </button>
-  );
-}
-
-// ─── Score Ring ───────────────────────────────────────────────────────────────
-function ScoreRing({ score }: { score: number }) {
-  const color = score === 100 ? "#059669" : score >= 50 ? C.accent : C.amber;
-  const r = 26; const circ = 2 * Math.PI * r;
-  return (
-    <div style={{ position: "relative", width: 68, height: 68, flexShrink: 0 }}>
-      <svg width={68} height={68} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={34} cy={34} r={r} fill="none" stroke={C.border} strokeWidth={5} />
-        <motion.circle
-          cx={34} cy={34} r={r} fill="none"
-          stroke={color} strokeWidth={5} strokeLinecap="round"
-          strokeDasharray={circ}
-          initial={{ strokeDashoffset: circ }}
-          animate={{ strokeDashoffset: circ - (score / 100) * circ }}
-          transition={{ duration: 1, ease: "easeOut" }}
-        />
-      </svg>
-      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
-        <span style={{ fontSize: 14, fontWeight: 800, color, lineHeight: 1 }}>{score}</span>
-        <span style={{ fontSize: 8, color: C.textDim, fontWeight: 600 }}>%</span>
-      </div>
-    </div>
-  );
-}
-
-// ─── Section ──────────────────────────────────────────────────────────────────
-function Section({ title, icon, status, children }: {
-  title: string; icon: React.ReactNode; status: "ok" | "missing" | "warning"; children: React.ReactNode;
-}) {
-  const dotColor = { ok: "#059669", missing: C.rose, warning: C.amber }[status];
-  const dotBg = { ok: "#ecfdf5", missing: C.roseSoft, warning: C.amberSoft }[status];
-  return (
-    <div style={{ marginBottom: 26 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 13 }}>
-        <span style={{ color: C.accent }}>{icon}</span>
-        <span style={{ fontSize: 10, fontWeight: 800, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-          {title}
-        </span>
-        <div style={{ flex: 1, height: 1, background: C.border, marginLeft: 4 }} />
-        <div style={{ width: 7, height: 7, borderRadius: "50%", background: dotColor, boxShadow: `0 0 0 3px ${dotBg}` }} />
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// ─── Platform Badge ───────────────────────────────────────────────────────────
-function PlatformBadge({ platform }: { platform: Platform }) {
-  const m = PLATFORM_META[platform];
-  if (!m) return null;
-  return (
-    <span style={{
-      fontSize: 11, fontWeight: 600, padding: "4px 11px", borderRadius: 20,
-      background: m.bg, color: m.color, border: `1px solid ${m.color}22`,
-      display: "inline-flex", alignItems: "center", gap: 5,
-    }}>
-      <span style={{ fontSize: 10 }}>{m.icon}</span>{m.label}
-    </span>
-  );
-}
-
-// ─── Toast ────────────────────────────────────────────────────────────────────
-function Toast({ msg, type }: { msg: string; type: "success" | "error" }) {
-  const isOk = type === "success";
-  return ReactDOM.createPortal(
-    <motion.div
-      initial={{ opacity: 0, y: 16, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 16, scale: 0.95 }}
-      style={{
-        position: "fixed", bottom: 28, right: 28, zIndex: 999999,
-        background: isOk ? "#ecfdf5" : "#fef2f2",
-        color: isOk ? "#059669" : "#dc2626",
-        borderRadius: 13, padding: "12px 18px",
-        fontSize: 13, fontWeight: 700,
-        border: `1.5px solid ${isOk ? "#a7f3d0" : "#fecaca"}`,
-        boxShadow: `0 8px 28px ${isOk ? "rgba(5,150,105,0.12)" : "rgba(220,38,38,0.12)"}`,
-        display: "flex", alignItems: "center", gap: 9,
-      }}
-    >
-      {isOk ? <FiCheckCircle size={15} /> : <FiAlertCircle size={15} />}
-      {msg}
-    </motion.div>,
-    document.body
   );
 }
 
@@ -252,7 +179,7 @@ function ImageGeneratePreview({ post, token, onConfirm, onCancel }: {
   return (
     <div style={{ marginTop: 12 }}>
       <textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={3}
-        placeholder="Describe the image…"
+        placeholder="Describe the image you want to generate..."
         style={{ ...inputStyle, resize: "none" }}
         onFocus={focusInput} onBlur={blurInput} />
       <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
@@ -263,32 +190,72 @@ function ImageGeneratePreview({ post, token, onConfirm, onCancel }: {
           ))}
         </select>
         <Btn color={C.accent} bg={C.accent} onClick={handleGenerate} disabled={loading}>
-          <FiZap size={12} /> {loading ? "Generating…" : "Generate"}
+          <FiZap size={12} /> {loading ? "Generating..." : "Generate"}
         </Btn>
         <Btn color={C.textMuted} onClick={onCancel}>Cancel</Btn>
       </div>
       {error && (
-        <div style={{ marginTop: 10, background: C.roseSoft, border: `1px solid #fecaca`, borderRadius: 9, padding: "10px 13px", fontSize: 12, color: C.rose }}>
+        <div style={{ marginTop: 10, background: C.likeRedSoft, border: `1px solid #fecaca`, borderRadius: 8, padding: "10px 13px", fontSize: 12, color: C.likeRed }}>
           ❌ {error}
         </div>
       )}
       {loading && (
-        <div style={{ marginTop: 16, textAlign: "center", padding: "28px", background: C.surfaceSub, borderRadius: 14, border: `1px dashed ${C.border}` }}>
+        <div style={{ marginTop: 16, textAlign: "center", padding: "28px", background: C.surfaceSub, borderRadius: 12, border: `1px dashed ${C.border}` }}>
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.4, repeat: Infinity, ease: "linear" }} style={{ fontSize: 28, marginBottom: 8 }}>🎨</motion.div>
-          <div style={{ fontSize: 13, color: C.textMuted }}>AI is painting your image…</div>
-          <div style={{ fontSize: 11, color: C.textDim, marginTop: 4 }}>Usually 15–30 seconds</div>
+          <div style={{ fontSize: 13, color: C.textMuted }}>AI is painting your image...</div>
         </div>
       )}
       {previewUrl && !loading && (
         <div style={{ marginTop: 14 }}>
           <img src={previewUrl} alt="Generated" style={{ width: "100%", borderRadius: 12, display: "block", maxHeight: 240, objectFit: "cover", border: `2px solid ${C.accent}` }} />
           <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-            <Btn color={C.teal} bg={C.teal} onClick={() => onConfirm(previewUrl)}><FiCheckCircle size={12} /> Use This</Btn>
+            <Btn color="#059669" bg="#059669" onClick={() => onConfirm(previewUrl)}><FiCheckCircle size={12} /> Use This</Btn>
             <Btn color={C.accent} onClick={handleGenerate} disabled={loading}><FiRefreshCw size={12} /> Retry</Btn>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Platform Badge ───────────────────────────────────────────────────────────
+function PlatformBadge({ platform }: { platform: Platform }) {
+  const m = PLATFORM_META[platform];
+  if (!m) return null;
+  return (
+    <span style={{
+      fontSize: 11, fontWeight: 600, padding: "4px 11px", borderRadius: 6,
+      background: m.bg, color: m.color, border: `1px solid ${m.color}22`,
+      display: "inline-flex", alignItems: "center", gap: 5,
+    }}>
+      <span style={{ fontSize: 10 }}>{m.icon}</span>{m.label}
+    </span>
+  );
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function Toast({ msg, type }: { msg: string; type: "success" | "error" }) {
+  const isOk = type === "success";
+  return ReactDOM.createPortal(
+    <motion.div
+      initial={{ opacity: 0, y: 16, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 16, scale: 0.95 }}
+      style={{
+        position: "fixed", bottom: 28, right: 28, zIndex: 999999,
+        background: isOk ? "#ecfdf5" : "#fef2f2",
+        color: isOk ? "#059669" : "#dc2626",
+        borderRadius: 10, padding: "12px 18px",
+        fontSize: 13, fontWeight: 600,
+        border: `1px solid ${isOk ? "#a7f3d0" : "#fecaca"}`,
+        boxShadow: `0 4px 12px rgba(0,0,0,0.1)`,
+        display: "flex", alignItems: "center", gap: 9,
+      }}
+    >
+      {isOk ? <FiCheckCircle size={15} /> : <FiAlertCircle size={15} />}
+      {msg}
+    </motion.div>,
+    document.body
   );
 }
 
@@ -299,7 +266,6 @@ export type DetailPanelProps = {
 
 export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPanelProps) {
   const missing = getMissing(post);
-  const score = getScore(post);
   const statusKey = normalizeStatus(post.status);
   const status = STATUS_META[statusKey];
 
@@ -309,6 +275,8 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
   const [hashtagsDraft, setHashtagsDraft] = useState(post.hashtags || "");
   const [savingCaption, setSavingCaption] = useState(false);
   const [generatingCaption, setGeneratingCaption] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const [imageMode, setImageMode] = useState<"none" | "upload" | "url" | "generate">("none");
   const [imageUrlDraft, setImageUrlDraft] = useState("");
@@ -319,9 +287,11 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
   const [scheduledDraft, setScheduledDraft] = useState(
     post.scheduledAt ? new Date(post.scheduledAt).toISOString().slice(0, 16) : ""
   );
+  const [statusDraft, setStatusDraft] = useState(post.status || "draft");
   const [platformsDraft, setPlatformsDraft] = useState<Platform[]>(post.platforms || []);
   const [savingParams, setSavingParams] = useState(false);
   const [toastState, setToastState] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+  const canApprove = !!post.caption?.trim() && !!post.imageUrl;
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToastState({ msg, type });
@@ -346,7 +316,10 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
     setEditingCaption(false); setImageMode("none");
     setPlatformsDraft(post.platforms || []);
     setScheduledDraft(post.scheduledAt ? new Date(post.scheduledAt).toISOString().slice(0, 16) : "");
+    setStatusDraft(post.status || "draft");
     setEditingParams(false);
+    setLiked(false);
+    setSaved(false);
   }, [post.id]);
 
   const headers = (isJson = true) => ({
@@ -373,11 +346,17 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
     try {
       const res = await fetch(`${API_BASE}/api/posts/chat`, {
         method: "POST", headers: headers(),
-        body: JSON.stringify({ topicId: post.topicId, message: `Generate a ${toneDraft} caption for a post about ${post.topicName}`, toneOfVoice: toneDraft, hashtags: hashtagsDraft }),
+        body: JSON.stringify({
+          topicId: post.topicId,
+          message: `Generate a ${toneDraft} caption for a post about ${post.topicName}`,
+          toneOfVoice: toneDraft,
+          hashtags: hashtagsDraft,
+          platforms: post.platforms ?? [],
+        }),
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      const generated = data?.output ?? data?.text ?? data?.caption ?? "";
+      const generated = extractCaptionFromChatResponse(data);
       if (generated) { setCaptionDraft(generated); setEditingCaption(true); showToast("Caption generated!"); }
     } catch (e: any) { showToast(e.message || "Failed", "error"); }
     finally { setGeneratingCaption(false); }
@@ -418,14 +397,27 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
   };
 
   const handleSaveParams = async () => {
+    if (statusDraft === "approved" && !canApprove) {
+      showToast("Caption + image are required before Approved.", "error");
+      return;
+    }
     setSavingParams(true);
     try {
       const res = await fetch(`${API_BASE}/api/posts/${post.id}/params`, {
         method: "PATCH", headers: headers(),
-        body: JSON.stringify({ scheduledAt: scheduledDraft ? new Date(scheduledDraft).toISOString() : null, platforms: platformsDraft }),
+        body: JSON.stringify({
+          scheduledAt: scheduledDraft ? new Date(scheduledDraft).toISOString() : null,
+          platforms: platformsDraft,
+          status: statusDraft,
+        }),
       });
       if (!res.ok) throw new Error(await res.text());
-      onUpdate({ ...post, platforms: platformsDraft, scheduledAt: scheduledDraft ? new Date(scheduledDraft).toISOString() : null });
+      onUpdate({
+        ...post,
+        status: statusDraft,
+        platforms: platformsDraft,
+        scheduledAt: scheduledDraft ? new Date(scheduledDraft).toISOString() : null,
+      });
       setEditingParams(false); showToast("Settings saved!");
     } catch (e: any) { showToast(e.message || "Error", "error"); }
     finally { setSavingParams(false); }
@@ -440,15 +432,28 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
   };
 
   const handleSchedule = async () => {
-    if (!scheduledDraft) { showToast("Pick a date first", "error"); return; }
+    if (!scheduledDraft) {
+      showToast("Pick a date first", "error");
+      return;
+    }
+    if (statusKey !== "approved") {
+      showToast("Post must be Approved before Scheduled.", "error");
+      return;
+    }
     try {
       const res = await fetch(`${API_BASE}/api/posts/${post.id}/schedule`, {
-        method: "POST", headers: headers(),
+        method: "POST",
+        headers: headers(),
         body: JSON.stringify({ scheduledAt: new Date(scheduledDraft).toISOString() }),
       });
       if (!res.ok) throw new Error(await res.text());
-      onUpdate(await res.json()); setEditingParams(false); showToast("Scheduled! 📅");
-    } catch (e: any) { showToast(e.message || "Error", "error"); }
+      const updatedPost = await res.json();
+      onUpdate(updatedPost);
+      setEditingParams(false);
+      showToast(`Scheduled for ${new Date(scheduledDraft).toLocaleString()}! 📅`);
+    } catch (e: any) {
+      showToast(e.message || "Error scheduling post", "error");
+    }
   };
 
   const ALL_PLATFORMS: Platform[] = ["instagram", "linkedin", "twitter", "facebook", "tiktok", "threads"];
@@ -456,6 +461,13 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
     setPlatformsDraft(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
 
   const resolvedImageUrl = resolveImageUrl(post.imageUrl);
+
+  // Mock user data (safe access)
+  const mockUser = {
+    username: (post as any).user?.username || "creator",
+    avatar: (post as any).user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.topicName || "User")}&background=0095f6&color=fff`,
+    name: (post as any).user?.name || "Content Creator"
+  };
 
   const overlay = (
     <motion.div
@@ -467,315 +479,440 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
       style={{
         position: "fixed", top: 0, left: 0,
         width: "100vw", height: "100vh",
-        background: "rgba(15, 20, 50, 0.45)",
-        backdropFilter: "blur(10px)",
+        background: "rgba(0, 0, 0, 0.85)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        zIndex: 9999, padding: "16px", boxSizing: "border-box",
+        zIndex: 9999,
       }}
     >
       <motion.div
         key="dp-card"
-        initial={{ scale: 0.94, opacity: 0, y: 28 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.94, opacity: 0, y: 28 }}
-        transition={{ type: "spring", stiffness: 340, damping: 30 }}
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ duration: 0.2 }}
         onClick={e => e.stopPropagation()}
         style={{
           background: C.bg,
-          borderRadius: 24,
-          border: `1px solid ${C.border}`,
-          boxShadow: `0 24px 60px -8px ${C.shadowLg}, 0 4px 16px -4px ${C.shadow}`,
-          width: "100%", maxWidth: 560,
-          maxHeight: "92vh",
+          borderRadius: 0,
+          width: "auto",
+          maxWidth: "90vw",
+          height: "auto",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: window.innerWidth < 768 ? "column" : "row",
           overflow: "hidden",
-          display: "flex", flexDirection: "column",
-          fontFamily: "'DM Sans', system-ui, sans-serif",
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
         }}
       >
-        {/* ── Header ── */}
+        {/* LEFT SIDE: IMAGE */}
         <div style={{
-          flexShrink: 0, position: "relative", overflow: "hidden",
-          padding: "24px 24px 20px",
-          background: `linear-gradient(135deg, #f0f4ff 0%, #fafbff 60%, #f5f0ff 100%)`,
-          borderBottom: `1px solid ${C.border}`,
+          flex: "1 1 auto",
+          background: "#000",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minWidth: window.innerWidth < 768 ? "auto" : "300px",
         }}>
-          {/* Decorative blobs */}
-          <div style={{
-            position: "absolute", top: -40, right: -40, width: 180, height: 180,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%)",
-            pointerEvents: "none",
-          }} />
-          <div style={{
-            position: "absolute", bottom: -20, left: 40, width: 120, height: 120,
-            borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(13,148,136,0.08) 0%, transparent 70%)",
-            pointerEvents: "none",
-          }} />
-
-          {/* Top bar */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, position: "relative" }}>
-            <button onClick={onClose} style={{
-              background: "rgba(255,255,255,0.8)", border: `1px solid ${C.border}`,
-              borderRadius: 9, padding: "6px 12px", cursor: "pointer",
-              display: "flex", alignItems: "center", gap: 5,
-              color: C.textMuted, fontSize: 12, fontWeight: 600,
-              transition: "all 0.15s", backdropFilter: "blur(4px)",
-            }}
-              onMouseEnter={e => { e.currentTarget.style.background = C.accentSoft; e.currentTarget.style.color = C.accent; e.currentTarget.style.borderColor = C.accent + "44"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.8)"; e.currentTarget.style.color = C.textMuted; e.currentTarget.style.borderColor = C.border; }}
-            >
-              <FiArrowLeft size={13} /> Back
-            </button>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {/* Status pill */}
-              <div style={{
-                background: status.bg, color: status.color,
-                padding: "5px 12px", borderRadius: 20,
-                fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
-                display: "flex", alignItems: "center", gap: 6,
-                border: `1px solid ${status.border}`,
-              }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: status.dot }} />
-                {status.label}
-              </div>
-
-              <button onClick={onClose} style={{
-                background: "rgba(255,255,255,0.8)", border: `1px solid ${C.border}`,
-                borderRadius: 8, width: 32, height: 32, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: C.textMuted, transition: "all 0.15s",
+          {resolvedImageUrl ? (
+            <img
+              src={resolvedImageUrl}
+              alt={post.caption || "Post image"}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "85vh",
+                width: "auto",
+                height: "auto",
+                objectFit: "contain",
+                display: "block",
               }}
-                onMouseEnter={e => { e.currentTarget.style.background = C.roseSoft; e.currentTarget.style.color = C.rose; e.currentTarget.style.borderColor = C.rose + "33"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.8)"; e.currentTarget.style.color = C.textMuted; e.currentTarget.style.borderColor = C.border; }}
-              >
-                <FiX size={14} />
-              </button>
-            </div>
-          </div>
-
-          {/* Score + title */}
-          <div style={{ display: "flex", alignItems: "center", gap: 18, position: "relative" }}>
-            <ScoreRing score={score} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 10, fontWeight: 800, color: C.accent, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>
-                Post Details
-              </div>
-              <h2 style={{
-                margin: 0, fontSize: 20, fontWeight: 800, color: C.text,
-                letterSpacing: "-0.02em", lineHeight: 1.2,
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            />
+          ) : (
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 60,
+              color: C.textDim,
+            }}>
+              <FiImage size={48} />
+              <p style={{ marginTop: 16, fontSize: 14 }}>No image yet</p>
+              <button onClick={() => setImageMode("upload")} style={{
+                marginTop: 12,
+                background: C.accent,
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: 8,
+                color: "#fff",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 600,
               }}>
-                {post.topicName}
-              </h2>
-              <div style={{ marginTop: 5, fontSize: 11, color: C.textDim }}>
-                Created {fmtDate(post.createdAt)}
-              </div>
-            </div>
-          </div>
-
-          {/* Missing warnings */}
-          {missing.length > 0 && (
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 14 }}>
-              {missing.map(m => (
-                <span key={m} style={{
-                  fontSize: 10, padding: "3px 10px", borderRadius: 20,
-                  background: C.amberSoft, color: C.amber,
-                  border: `1px solid #fde68a`, fontWeight: 700, letterSpacing: "0.04em",
-                }}>
-                  ⚠ missing {m}
-                </span>
-              ))}
+                Upload Image
+              </button>
             </div>
           )}
         </div>
 
-        {/* ── Scrollable Body ── */}
+        {/* RIGHT SIDE: INFO PANEL */}
         <div style={{
-          overflowY: "auto", flex: 1, padding: "24px",
+          width: window.innerWidth < 768 ? "100%" : "400px",
+          maxWidth: "400px",
           background: C.bg,
-          scrollbarWidth: "thin",
-          scrollbarColor: `${C.border} transparent`,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
         }}>
-
-          {/* Caption */}
-          <Section title="Caption" icon={<FiFileText size={13} />} status={post.caption ? "ok" : "missing"}>
-            {editingCaption ? (
-              <div>
-                <textarea value={captionDraft} onChange={e => setCaptionDraft(e.target.value)} rows={4}
-                  style={{ ...inputStyle, resize: "vertical", marginBottom: 12 }}
-                  onFocus={focusInput} onBlur={blurInput} />
-                <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-                  <select value={toneDraft} onChange={e => setToneDraft(e.target.value)}
-                    style={{ ...inputStyle, width: "auto", padding: "7px 11px", cursor: "pointer" }}>
-                    {["Casual","Professional","Funny","Inspirational","Educational"].map(t => (
-                      <option key={t}>{t}</option>
-                    ))}
-                  </select>
-                  <input value={hashtagsDraft} onChange={e => setHashtagsDraft(e.target.value)}
-                    placeholder="#hashtags"
-                    style={{ ...inputStyle, flex: 1, padding: "7px 11px" }}
-                    onFocus={focusInput} onBlur={blurInput} />
-                </div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <Btn color={C.teal} bg={C.teal} onClick={handleSaveCaption} disabled={savingCaption}>
-                    <FiSave size={12} /> {savingCaption ? "Saving…" : "Save"}
-                  </Btn>
-                  <Btn color={C.accent} onClick={handleGenerateCaption} disabled={generatingCaption}>
-                    <FiZap size={12} /> {generatingCaption ? "Generating…" : "AI Generate"}
-                  </Btn>
-                  <Btn color={C.textMuted} onClick={() => setEditingCaption(false)}>Cancel</Btn>
-                </div>
-              </div>
-            ) : (
-              <div>
-                {post.caption
-                  ? (
-                    <div style={{
-                      background: C.surfaceSub, borderRadius: 12,
-                      padding: "13px 16px", marginBottom: 14,
-                      borderLeft: `3px solid ${C.accent}`,
-                    }}>
-                      <p style={{ fontSize: 13, color: C.textSub, lineHeight: 1.65, margin: 0 }}>{post.caption}</p>
-                    </div>
-                  )
-                  : <p style={{ fontSize: 13, color: C.textDim, margin: "0 0 14px", fontStyle: "italic" }}>No caption yet — add one to get started.</p>
-                }
-                <Btn color={C.accent} onClick={() => setEditingCaption(true)}>
-                  <FiEdit3 size={12} /> Edit Caption
-                </Btn>
-              </div>
-            )}
-          </Section>
-
-          {/* Media */}
-          <Section title="Media" icon={<FiImage size={13} />} status={post.imageUrl ? "ok" : "missing"}>
-            {resolvedImageUrl && (
-              <div style={{ marginBottom: 14, borderRadius: 14, overflow: "hidden", border: `1px solid ${C.border}`, boxShadow: `0 2px 8px ${C.shadow}` }}>
-                <img src={resolvedImageUrl} alt="Post media"
-                  style={{ width: "100%", display: "block", maxHeight: 210, objectFit: "cover" }} />
-              </div>
-            )}
-            {imageMode === "none" && (
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <Btn color={C.accent} onClick={() => setImageMode("upload")}><FiUpload size={12} /> Upload</Btn>
-                <Btn color={C.accent} onClick={() => setImageMode("url")}><FiLink size={12} /> Add URL</Btn>
-                <Btn color="#7c3aed" onClick={() => setImageMode("generate")}><FiZap size={12} /> AI Generate</Btn>
-              </div>
-            )}
-            {imageMode === "upload" && (
-              <div>
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: "none" }} />
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Btn color={C.accent} bg={C.accent} onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
-                    <FiUpload size={12} /> {uploadingImage ? "Uploading…" : "Choose File"}
-                  </Btn>
-                  <Btn color={C.textMuted} onClick={() => setImageMode("none")}>Cancel</Btn>
-                </div>
-              </div>
-            )}
-            {imageMode === "url" && (
-              <div>
-                <input value={imageUrlDraft} onChange={e => setImageUrlDraft(e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                  style={{ ...inputStyle, marginBottom: 10 }}
-                  onFocus={focusInput} onBlur={blurInput} />
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Btn color={C.teal} bg={C.teal} onClick={handleSetImageUrl} disabled={uploadingImage}>
-                    {uploadingImage ? "Saving…" : "Set URL"}
-                  </Btn>
-                  <Btn color={C.textMuted} onClick={() => setImageMode("none")}>Cancel</Btn>
-                </div>
-              </div>
-            )}
-            {imageMode === "generate" && (
-              <ImageGeneratePreview post={post} token={token} onConfirm={handleImageConfirmed} onCancel={() => setImageMode("none")} />
-            )}
-          </Section>
-
-          {/* Distribution */}
-          <Section title="Distribution" icon={<FiClock size={13} />} status={post.platforms?.length ? "ok" : "missing"}>
-            {editingParams ? (
-              <div>
-                <label style={{ fontSize: 11, fontWeight: 800, color: C.textMuted, letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 10 }}>Platforms</label>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
-                  {ALL_PLATFORMS.map(p => {
-                    const sel = platformsDraft.includes(p);
-                    const m = PLATFORM_META[p];
-                    return (
-                      <button key={p} onClick={() => togglePlatform(p)} style={{
-                        padding: "6px 13px", borderRadius: 20, fontSize: 11, fontWeight: 700,
-                        background: sel ? m.bg : C.surfaceSub,
-                        border: `1.5px solid ${sel ? m.color + "55" : C.border}`,
-                        color: sel ? m.color : C.textMuted,
-                        cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5,
-                        transition: "all 0.15s",
-                      }}>
-                        <span style={{ fontSize: 11 }}>{m.icon}</span>{m.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <label style={{ fontSize: 11, fontWeight: 800, color: C.textMuted, letterSpacing: "0.08em", textTransform: "uppercase", display: "block", marginBottom: 8 }}>Schedule Date</label>
-                <input type="datetime-local" value={scheduledDraft} onChange={e => setScheduledDraft(e.target.value)}
-                  style={{ ...inputStyle, marginBottom: 14 }}
-                  onFocus={focusInput} onBlur={blurInput} />
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Btn color={C.teal} bg={C.teal} onClick={handleSaveParams} disabled={savingParams}>
-                    <FiSave size={12} /> {savingParams ? "Saving…" : "Save Changes"}
-                  </Btn>
-                  <Btn color={C.textMuted} onClick={() => setEditingParams(false)}>Cancel</Btn>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-                  {post.platforms?.map(p => <PlatformBadge key={p} platform={p} />)}
-                  {(!post.platforms || post.platforms.length === 0) && (
-                    <span style={{ fontSize: 12, color: C.textDim, fontStyle: "italic" }}>No platforms selected</span>
-                  )}
-                </div>
-                {post.scheduledAt && (
-                  <div style={{
-                    fontSize: 12, color: C.accent, marginBottom: 12,
-                    display: "inline-flex", alignItems: "center", gap: 6,
-                    background: C.accentSoft, padding: "5px 11px", borderRadius: 20,
-                    border: `1px solid ${C.accent}22`,
-                  }}>
-                    <FiCalendar size={11} /> {fmtDate(post.scheduledAt)}
-                  </div>
-                )}
-                <div>
-                  <Btn color={C.accent} onClick={() => setEditingParams(true)}>
-                    <FiEdit3 size={12} /> Configure
-                  </Btn>
-                </div>
-              </div>
-            )}
-          </Section>
-
-          {/* ── Action Footer ── */}
+          {/* Header */}
           <div style={{
-            display: "flex", gap: 10, paddingTop: 20,
-            borderTop: `1px solid ${C.border}`, flexWrap: "wrap",
+            padding: "14px 16px",
+            borderBottom: `1px solid ${C.border}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}>
-            {statusKey === "draft" && (
-              <Btn color={C.accent} bg={C.accent} onClick={handleSchedule}>
-                <FiCalendar size={13} /> Schedule Post
-              </Btn>
-            )}
-            {statusKey === "scheduled" && (
-              <Btn color={C.teal} bg={C.teal} onClick={handlePublish}>
-                <FiSend size={13} /> Publish Now
-              </Btn>
-            )}
-            {(statusKey === "draft" || statusKey === "scheduled") && (
-              <Btn color={C.teal} onClick={handlePublish}>
-                <FiSend size={13} /> Publish
-              </Btn>
-            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <img
+                src={mockUser.avatar}
+                alt={mockUser.username}
+                style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }}
+              />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>
+                  {mockUser.username}
+                </div>
+                <div style={{ fontSize: 11, color: C.textMuted }}>
+                  {post.topicName}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{
+                background: status.bg, color: status.color,
+                padding: "4px 8px", borderRadius: 6,
+                fontSize: 10, fontWeight: 600,
+              }}>
+                {status.label}
+              </div>
+              <button onClick={onClose} style={{
+                background: "transparent", border: "none",
+                cursor: "pointer", color: C.textMuted,
+                padding: 4, display: "flex",
+              }}>
+                <FiX size={18} />
+              </button>
+            </div>
           </div>
+
+          {/* Scrollable content */}
+          <div style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "16px",
+          }}>
+            {/* Caption Section */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <FiFileText size={14} color={C.textMuted} />
+                <span style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Caption
+                </span>
+                {!post.caption && <span style={{ fontSize: 10, color: "#dc2626", marginLeft: "auto" }}>⚠ Required</span>}
+              </div>
+              {editingCaption ? (
+                <div>
+                  <textarea value={captionDraft} onChange={e => setCaptionDraft(e.target.value)} rows={4}
+                    style={{ ...inputStyle, resize: "vertical", marginBottom: 12 }}
+                    onFocus={focusInput} onBlur={blurInput} placeholder="Write a caption..." />
+                  <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                    <select value={toneDraft} onChange={e => setToneDraft(e.target.value)}
+                      style={{ ...inputStyle, width: "auto", padding: "7px 11px", cursor: "pointer" }}>
+                      {["Casual","Professional","Funny","Inspirational","Educational"].map(t => (
+                        <option key={t}>{t}</option>
+                      ))}
+                    </select>
+                    <input value={hashtagsDraft} onChange={e => setHashtagsDraft(e.target.value)}
+                      placeholder="#hashtags"
+                      style={{ ...inputStyle, flex: 1, padding: "7px 11px" }}
+                      onFocus={focusInput} onBlur={blurInput} />
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <Btn color="#059669" bg="#059669" onClick={handleSaveCaption} disabled={savingCaption}>
+                      <FiSave size={12} /> {savingCaption ? "Saving..." : "Save"}
+                    </Btn>
+                    <Btn color={C.accent} onClick={handleGenerateCaption} disabled={generatingCaption}>
+                      <FiZap size={12} /> {generatingCaption ? "Generating..." : "AI Generate"}
+                    </Btn>
+                    <Btn color={C.textMuted} onClick={() => setEditingCaption(false)}>Cancel</Btn>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {post.caption ? (
+                    <div style={{
+                      background: C.surfaceSub,
+                      borderRadius: 8,
+                      padding: "12px",
+                      fontSize: 13,
+                      lineHeight: 1.5,
+                      color: C.textSub,
+                    }}>
+                      <p style={{ margin: 0 }}>{post.caption}</p>
+                      {post.hashtags && (
+                        <p style={{ margin: "8px 0 0 0", fontSize: 12, color: C.accent }}>{post.hashtags}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ padding: "12px", background: C.surfaceSub, borderRadius: 8, textAlign: "center" }}>
+                      <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>No caption yet</p>
+                    </div>
+                  )}
+                  <button onClick={() => setEditingCaption(true)} style={{
+                    marginTop: 10,
+                    background: "transparent",
+                    border: "none",
+                    color: C.accent,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    padding: 0,
+                  }}>
+                    <FiEdit3 size={12} style={{ marginRight: 4 }} /> Edit caption
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Media Section */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <FiImage size={14} color={C.textMuted} />
+                <span style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Media
+                </span>
+                {!post.imageUrl && <span style={{ fontSize: 10, color: "#dc2626", marginLeft: "auto" }}>⚠ Required</span>}
+              </div>
+              {imageMode === "none" && (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <Btn color={C.accent} onClick={() => setImageMode("upload")}><FiUpload size={12} /> Upload</Btn>
+                  <Btn color={C.accent} onClick={() => setImageMode("url")}><FiLink size={12} /> Add URL</Btn>
+                  <Btn color={C.accent} onClick={() => setImageMode("generate")}><FiZap size={12} /> AI Generate</Btn>
+                </div>
+              )}
+              {imageMode === "upload" && (
+                <div>
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: "none" }} />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <Btn color={C.accent} bg={C.accent} onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
+                      <FiUpload size={12} /> {uploadingImage ? "Uploading..." : "Choose File"}
+                    </Btn>
+                    <Btn color={C.textMuted} onClick={() => setImageMode("none")}>Cancel</Btn>
+                  </div>
+                </div>
+              )}
+              {imageMode === "url" && (
+                <div>
+                  <input value={imageUrlDraft} onChange={e => setImageUrlDraft(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    style={{ ...inputStyle, marginBottom: 10 }}
+                    onFocus={focusInput} onBlur={blurInput} />
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <Btn color="#059669" bg="#059669" onClick={handleSetImageUrl} disabled={uploadingImage}>
+                      {uploadingImage ? "Saving..." : "Set URL"}
+                    </Btn>
+                    <Btn color={C.textMuted} onClick={() => setImageMode("none")}>Cancel</Btn>
+                  </div>
+                </div>
+              )}
+              {imageMode === "generate" && (
+                <ImageGeneratePreview post={post} token={token} onConfirm={handleImageConfirmed} onCancel={() => setImageMode("none")} />
+              )}
+            </div>
+
+            {/* Distribution Section */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <FiClock size={14} color={C.textMuted} />
+                <span style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Distribution
+                </span>
+                {!post.platforms?.length && <span style={{ fontSize: 10, color: "#dc2626", marginLeft: "auto" }}>⚠ Required</span>}
+              </div>
+              {editingParams ? (
+                <div>
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, display: "block", marginBottom: 8 }}>Platforms</label>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {ALL_PLATFORMS.map(p => {
+                        const sel = platformsDraft.includes(p);
+                        const m = PLATFORM_META[p];
+                        return (
+                          <button key={p} onClick={() => togglePlatform(p)} style={{
+                            padding: "6px 12px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                            background: sel ? m.bg : C.surfaceSub,
+                            border: `1px solid ${sel ? m.color + "55" : C.border}`,
+                            color: sel ? m.color : C.textMuted,
+                            cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5,
+                            transition: "all 0.15s",
+                          }}>
+                            <span>{m.icon}</span>{m.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, display: "block", marginBottom: 8 }}>Schedule (optional)</label>
+                    <input type="datetime-local" value={scheduledDraft} onChange={e => setScheduledDraft(e.target.value)}
+                      style={inputStyle}
+                      onFocus={focusInput} onBlur={blurInput} />
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ fontSize: 12, fontWeight: 500, color: C.textMuted, display: "block", marginBottom: 8 }}>Status</label>
+                    <select
+                      value={statusDraft}
+                      onChange={e => setStatusDraft(e.target.value)}
+                      style={{ ...inputStyle, cursor: "pointer" }}
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="inreview">In Review</option>
+                      <option value="approved" disabled={!canApprove}>Approved</option>
+                      <option value="scheduled">Scheduled</option>
+                      <option value="published">Published</option>
+                      <option value="failed">Failed</option>
+                    </select>
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <Btn color="#059669" bg="#059669" onClick={handleSaveParams} disabled={savingParams}>
+                      <FiSave size={12} /> {savingParams ? "Saving..." : "Save Changes"}
+                    </Btn>
+                    <Btn color={C.textMuted} onClick={() => setEditingParams(false)}>Cancel</Btn>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                    {post.platforms?.map(p => <PlatformBadge key={p} platform={p} />)}
+                    {(!post.platforms || post.platforms.length === 0) && (
+                      <span style={{ fontSize: 12, color: C.textDim }}>No platforms selected</span>
+                    )}
+                  </div>
+                  {post.scheduledAt && (
+                    <div style={{
+                      fontSize: 12, color: C.textMuted, marginBottom: 12,
+                      display: "flex", alignItems: "center", gap: 6,
+                    }}>
+                      <FiCalendar size={12} /> Scheduled for {fmtDate(post.scheduledAt)} at {fmtTime(post.scheduledAt)}
+                    </div>
+                  )}
+                  <button onClick={() => setEditingParams(true)} style={{
+                    background: "transparent",
+                    border: "none",
+                    color: C.accent,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    padding: 0,
+                  }}>
+                    <FiEdit3 size={12} style={{ marginRight: 4 }} /> Configure
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Action buttons (Instagram-style) */}
+          <div style={{
+            borderTop: `1px solid ${C.border}`,
+            padding: "12px 16px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 16 }}>
+                <button onClick={() => setLiked(!liked)} style={{
+                  background: "transparent", border: "none", cursor: "pointer",
+                  color: liked ? C.likeRed : C.textMuted, fontSize: 24,
+                }}>
+                  <FiHeart fill={liked ? C.likeRed : "none"} size={24} />
+                </button>
+                <button style={{ background: "transparent", border: "none", cursor: "pointer", color: C.textMuted }}>
+                  <FiMessageCircle size={24} />
+                </button>
+                <button style={{ background: "transparent", border: "none", cursor: "pointer", color: C.textMuted }}>
+                  <FiShare2 size={24} />
+                </button>
+              </div>
+              <button onClick={() => setSaved(!saved)} style={{
+                background: "transparent", border: "none", cursor: "pointer",
+                color: C.textMuted,
+              }}>
+                <FiBookmark fill={saved ? C.text : "none"} size={24} />
+              </button>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>124 likes</span>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>{mockUser.username}</span>
+              <span style={{ fontSize: 13, marginLeft: 8, color: C.textSub }}>
+                {post.caption?.substring(0, 100) || "No caption yet"}
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: C.textMuted, marginBottom: 12 }}>
+              View all 12 comments
+            </div>
+            <div style={{ fontSize: 10, color: C.textMuted }}>
+              {fmtDate(post.createdAt)} · See translation
+            </div>
+            <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 12, borderTop: `1px solid ${C.border}`, paddingTop: 12 }}>
+              <FiSmile size={20} color={C.textMuted} />
+              <input
+                type="text"
+                placeholder="Add a comment..."
+                style={{
+                  flex: 1,
+                  border: "none",
+                  outline: "none",
+                  fontSize: 13,
+                  background: "transparent",
+                }}
+              />
+              <button style={{
+                background: "transparent",
+                border: "none",
+                color: C.accent,
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: "pointer",
+                opacity: 0.7,
+              }}>
+                Post
+              </button>
+            </div>
+          </div>
+
+          {/* Action footer for publishing */}
+          {(statusKey === "draft" || statusKey === "approved" || statusKey === "scheduled") && (
+            <div style={{
+              borderTop: `1px solid ${C.border}`,
+              padding: "12px 16px",
+              display: "flex",
+              gap: 8,
+            }}>
+              {statusKey === "approved" && (
+                <Btn color={C.accent} bg={C.accent} onClick={() => {
+                  if (scheduledDraft) handleSchedule();
+                  else handlePublish();
+                }}>
+                  <FiSend size={13} /> {scheduledDraft ? "Schedule Post" : "Publish Now"}
+                </Btn>
+              )}
+              {(statusKey === "draft" || statusKey === "scheduled") && canApprove && (
+                <Btn color={C.accent} onClick={handlePublish}>
+                  <FiSend size={13} /> Publish
+                </Btn>
+              )}
+            </div>
+          )}
         </div>
       </motion.div>
     </motion.div>

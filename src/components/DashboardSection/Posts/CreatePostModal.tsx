@@ -18,6 +18,8 @@ type BotResponse = {
   output?: string;
 };
 
+type PostStatus = "Draft" | "InReview" | "Approved" | "Scheduled" | "Published" | "Failed";
+
 type Props = {
   modal: any;
   setM: (data: any) => void;
@@ -27,38 +29,25 @@ type Props = {
   handleFileUpload: any;
   handleImageUpload: any;
   handleVideoUpload: any;
-  handleGenerateImage?: any;
-  handleGenerate?: () => void;
   togglePlatform: any;
   removeImage: any;
-  copyCaption?: () => void;
   fileInputRef: any;
   imageInputRef: any;
   videoInputRef: any;
-  copyDone?: boolean;
   PLATFORMS: any[];
 };
 
 const API_URL = "https://localhost:7079/api/posts/chat";
 const SAVE_URL = "https://localhost:7079/api/posts/save";
-
-const chip = (selected: boolean, color = "#3b82f6"): CSSProperties => ({
-  padding: "6px 11px", borderRadius: 20, fontSize: 11,
-  fontWeight: selected ? 700 : 400, border: "1px solid",
-  borderColor: selected ? color : "#d1d5db",
-  background: selected ? color + "18" : "#fff",
-  color: selected ? color : "#6b7280",
-  cursor: "pointer", transition: "all .15s",
-});
+const GENERATE_IMAGE_URL = "https://localhost:7079/api/images/generate";
+const POSTS_URL = "https://localhost:7079/api/posts";
 
 const S: { [key: string]: CSSProperties } = {
-  col: { padding: 16, display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" },
-  divider: { borderRight: "1px solid #e5e7eb" },
-  colTitle: { fontSize: 13, fontWeight: 700, color: "#111827" },
-  label: { fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 4, display: "block" },
+  label: { fontSize: 11, fontWeight: 600, color: "#374151", marginBottom: 4, display: "block" },
   input: {
     width: "100%", padding: "8px 10px", borderRadius: 8,
-    border: "1px solid #d1d5db", fontSize: 13, outline: "none", boxSizing: "border-box",
+    border: "1px solid #e5e7eb", fontSize: 12, outline: "none", boxSizing: "border-box",
+    background: "#fafafa", transition: "all 0.2s",
   },
 };
 
@@ -80,17 +69,14 @@ const buildBotMessage = (raw: any): { msg: ChatMessage; response: BotResponse } 
   const response = parseBotResponse(raw);
   const captions: Record<string, string> = {};
   const p = response?.platform_posts ?? {};
-  if (p?.Instagram?.caption)          captions["Instagram"]      = p.Instagram.caption;
-  if (p?.LinkedIn?.post)              captions["LinkedIn"]       = p.LinkedIn.post;
-  if (p?.Facebook?.post)              captions["Facebook"]       = p.Facebook.post;
-  if (p?.["X-Twitter"]?.post)         captions["X-Twitter"]      = p["X-Twitter"].post;
-  if (p?.TikTok?.caption)             captions["TikTok"]         = p.TikTok.caption;
-  if (p?.Threads?.text_post)          captions["Threads"]        = p.Threads.text_post;
-  if (p?.YouTube_Shorts?.description) captions["YouTube_Shorts"] = p.YouTube_Shorts.description;
+  if (p?.Instagram?.caption) captions["Instagram"] = p.Instagram.caption;
+  if (p?.LinkedIn?.post) captions["LinkedIn"] = p.LinkedIn.post;
+  if (p?.Facebook?.post) captions["Facebook"] = p.Facebook.post;
+  if (p?.["X-Twitter"]?.post) captions["X-Twitter"] = p["X-Twitter"].post;
 
   const msg: ChatMessage = {
     id: crypto.randomUUID(), role: "bot",
-    content: response?.reply || response?.message || "Voici tes captions ✨",
+    content: response?.reply || response?.message || "Voici ta caption ✨",
     captions: Object.keys(captions).length > 0 ? captions : null,
     confirmed: false,
   };
@@ -100,7 +86,7 @@ const buildBotMessage = (raw: any): { msg: ChatMessage; response: BotResponse } 
 export default function CreatePostModal(props: Props) {
   const {
     modal, setM, closeModal,
-    handlePublish, handleSaveDraft,
+    handleSaveDraft, handlePublish,
     handleFileUpload, handleImageUpload, handleVideoUpload,
     togglePlatform, removeImage,
     fileInputRef, imageInputRef, videoInputRef,
@@ -113,7 +99,11 @@ export default function CreatePostModal(props: Props) {
   const [confirmedCaption, setConfirmedCaption] = useState<string | null>(null);
   const [activePlatformTab, setActivePlatformTab] = useState<string>("Instagram");
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [postStatus, setPostStatus] = useState<PostStatus>("Draft");
+  const [imagePrompt, setImagePrompt] = useState("");
+  const [imageStyle, setImageStyle] = useState("realistic");
+  const [generatingImage, setGeneratingImage] = useState(false);
+  
   const sessionId = useRef<string>(crypto.randomUUID());
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
@@ -128,15 +118,13 @@ export default function CreatePostModal(props: Props) {
       setChatLoading(false);
       setConfirmedCaption(null);
       setActivePlatformTab("Instagram");
-      setSaved(false);
+      setPostStatus("Draft");
+      setImagePrompt("");
+      setImageStyle("realistic");
+      setM({ generatedImage: "", success: "", error: "" });
       sessionId.current = crypto.randomUUID();
     }
   }, [modal.open]);
-
-  // ── debug: log topicId chaque fois qu'il change ──
-  useEffect(() => {
-    console.log("[CreatePostModal] topicId =", modal.topicId);
-  }, [modal.topicId]);
 
   const callChat = async (messageText: string) => {
     const topicId = Number(modal.topicId);
@@ -168,10 +156,7 @@ export default function CreatePostModal(props: Props) {
         }),
       });
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`${res.status} — ${errText}`);
-      }
+      if (!res.ok) throw new Error(await res.text());
 
       const data = await res.json();
       const { msg, response } = buildBotMessage(data);
@@ -191,7 +176,7 @@ export default function CreatePostModal(props: Props) {
     } catch (err: any) {
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(), role: "bot",
-        content: `❌ Erreur : ${err.message || "Connexion impossible."}`,
+        content: `❌ Erreur : ${err.message}`,
         captions: null,
       }]);
     } finally {
@@ -201,22 +186,21 @@ export default function CreatePostModal(props: Props) {
 
   const handleGenerate = async () => {
     if (!modal.topic && !modal.fileContent) {
-      setM({ error: "Ajoute un sujet ou un fichier." }); return;
+      setM({ error: "Ajoute un sujet ou un fichier." });
+      return;
     }
     if (modal.selectedPlatforms.length === 0) {
-      setM({ error: "Sélectionne au moins une plateforme." }); return;
+      setM({ error: "Sélectionne au moins une plateforme." });
+      return;
     }
     setM({ error: "" });
-    setSaved(false);
-    setConfirmedCaption(null);
 
-    const initialPrompt = `Génère une caption pour les paramètres suivants :
+    const initialPrompt = `Génère une caption pour :
 - Sujet : ${modal.topic || "(voir fichier)"}
 - Ton : ${modal.tone}
 - Longueur : ${modal.captionLength}
 - Hashtags : ${modal.hashtags}
-- Plateformes : ${modal.selectedPlatforms.join(", ")}
-${modal.fileContent ? `- Contenu du fichier : ${modal.fileContent.slice(0, 500)}` : ""}`;
+- Plateformes : ${modal.selectedPlatforms.join(", ")}`;
 
     setMessages([{ id: crypto.randomUUID(), role: "user", content: initialPrompt }]);
     await callChat(initialPrompt);
@@ -237,37 +221,156 @@ ${modal.fileContent ? `- Contenu du fichier : ${modal.fileContent.slice(0, 500)}
     setMessages(prev => prev.map(m => m.id === msgId ? { ...m, confirmed: true } : m));
   };
 
-  const saveCaption = async () => {
-    if (!confirmedCaption) return;
-    setSaving(true);
+  const generateImage = async () => {
+    if (!imagePrompt.trim()) {
+      setM({ error: "Entre un prompt pour générer l'image." });
+      return;
+    }
+
+    setGeneratingImage(true);
     try {
-      const res = await fetch(SAVE_URL, {
+      const res = await fetch(GENERATE_IMAGE_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
-          caption: confirmedCaption,
-          sessionId: sessionId.current,
-          topicId: Number(modal.topicId) || 0,
-          userId: 0,   // backend uses JWT, this is ignored by AllowAnonymous endpoint — see note below
-          tone: modal.tone,
-          captionLength: modal.captionLength,
-          platforms: modal.selectedPlatforms,
-          hashtags: modal.hashtags,
+          prompt: imagePrompt,
+          topicId: modal.topicId,
+          style: imageStyle,
         }),
       });
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText);
-      }
-      setSaved(true);
+
+      if (!res.ok) throw new Error("Erreur génération");
+
+      const data = await res.json();
+      const imageUrl = data.imageUrl || data.url;
+      const currentImages = modal.uploadedImages || [];
+      setM({
+        generatedImage: imageUrl,
+        uploadedImages: imageUrl ? [imageUrl, ...currentImages.filter((u: string) => u !== imageUrl)] : currentImages,
+      });
+      setImagePrompt("");
     } catch (err: any) {
-      alert(`❌ Erreur sauvegarde : ${err.message}`);
+      setM({ error: `❌ ${err.message}` });
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
+  const getAuthToken = () => localStorage.getItem("token") || "";
+
+  const findExistingDraftPostId = async (caption: string, topicId: number): Promise<number | null> => {
+    const token = getAuthToken();
+    const res = await fetch(POSTS_URL, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+
+    const posts = await res.json();
+    const existing = (posts as any[]).find(
+      p =>
+        Number(p.topicId) === Number(topicId) &&
+        (p.status || "").toLowerCase() === "draft" &&
+        (p.caption || "").trim() === caption.trim()
+    );
+    return existing?.id ? Number(existing.id) : null;
+  };
+
+  const setPostImageUrl = async (postId: number, imageUrl: string) => {
+    if (!imageUrl) return;
+    const token = getAuthToken();
+    await fetch(`https://localhost:7079/api/posts/${postId}/images/url`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ url: imageUrl }),
+    });
+  };
+
+  const savePostWithStatus = async (status: PostStatus) => {
+    if (!confirmedCaption && status !== "Draft") {
+      setM({ error: "Confirme d'abord une caption." });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const finalCaption = confirmedCaption || modal.generatedContent || "";
+      const imageToSave =
+        modal.generatedImage ||
+        (modal.uploadedImages || []).find((url: string) => typeof url === "string" && url.startsWith("http")) ||
+        "";
+
+      // Si n8n a déjà créé un Draft après "yes/save it", on réutilise ce même post
+      if (status === "Draft" && finalCaption.trim()) {
+        const existingDraftPostId = await findExistingDraftPostId(finalCaption, Number(modal.topicId) || 0);
+        if (existingDraftPostId) {
+          await setPostImageUrl(existingDraftPostId, imageToSave);
+          setM({ postId: existingDraftPostId });
+          setPostStatus(status);
+          await handleSaveDraft();
+          return;
+        }
+      }
+
+      const effectiveStatus: PostStatus =
+        modal.scheduleDate && modal.scheduleTime && status === "Draft" ? "Scheduled" : status;
+
+      const payload: any = {
+        caption: finalCaption,
+        sessionId: sessionId.current,
+        topicId: Number(modal.topicId) || 0,
+        tone: modal.tone,
+        captionLength: modal.captionLength,
+        platforms: modal.selectedPlatforms,
+        hashtags: modal.hashtags,
+        status: effectiveStatus,
+        imageUrl: imageToSave,
+      };
+
+      if (effectiveStatus === "Scheduled" && modal.scheduleDate && modal.scheduleTime) {
+        payload.scheduledFor = `${modal.scheduleDate}T${modal.scheduleTime}:00`;
+      }
+
+      const res = await fetch(SAVE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      setPostStatus(effectiveStatus);
+      if (effectiveStatus === "Draft") {
+        await handleSaveDraft();
+        return;
+      }
+
+      setM({ success: `Post sauvegardé en tant que ${effectiveStatus}` });
+
+      if (effectiveStatus === "Published") {
+        await handlePublish();
+      }
+    } catch (err: any) {
+      setM({ error: `❌ ${err.message}` });
     } finally {
       setSaving(false);
     }
+  };
+
+  const getStatusColor = (status: PostStatus): string => {
+    const colors = {
+      Draft: "#6b7280", InReview: "#f59e0b", Approved: "#10b981",
+      Scheduled: "#3b82f6", Published: "#8b5cf6", Failed: "#ef4444",
+    };
+    return colors[status];
   };
 
   if (!modal.open) return null;
@@ -279,7 +382,7 @@ ${modal.fileContent ? `- Contenu du fichier : ${modal.fileContent.slice(0, 500)}
       justifyContent: "center", padding: 20, zIndex: 1000,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        background: "#fff", width: "95vw", maxWidth: 1380, height: "90vh",
+        background: "#fff", width: "95vw", maxWidth: 1480, height: "90vh",
         borderRadius: 20, display: "flex", flexDirection: "column",
         overflow: "hidden", boxShadow: "0 25px 60px rgba(0,0,0,0.25)",
       }}>
@@ -292,11 +395,17 @@ ${modal.fileContent ? `- Contenu du fichier : ${modal.fileContent.slice(0, 500)}
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>✨ Create Post</h2>
-            {/* debug badge — retire en prod */}
-            {modal.topicId
-              ? <span style={{ fontSize: 11, background: "#d1fae5", color: "#065f46", padding: "2px 8px", borderRadius: 20 }}>topic #{modal.topicId}</span>
-              : <span style={{ fontSize: 11, background: "#fee2e2", color: "#991b1b", padding: "2px 8px", borderRadius: 20 }}>⚠ no topicId</span>
-            }
+            {modal.topicId && (
+              <span style={{ fontSize: 11, background: "#d1fae5", color: "#065f46", padding: "2px 8px", borderRadius: 20 }}>
+                topic #{modal.topicId}
+              </span>
+            )}
+            <span style={{
+              fontSize: 11, background: getStatusColor(postStatus) + "20",
+              color: getStatusColor(postStatus), padding: "2px 8px", borderRadius: 20, fontWeight: 600,
+            }}>
+              {postStatus}
+            </span>
           </div>
           <button onClick={closeModal} style={{ background: "transparent", border: "none", fontSize: 20, cursor: "pointer", color: "#6b7280" }}>✕</button>
         </div>
@@ -304,66 +413,79 @@ ${modal.fileContent ? `- Contenu du fichier : ${modal.fileContent.slice(0, 500)}
         {/* 3-COLUMN BODY */}
         <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
 
-          {/* COL 1 — SETTINGS */}
-          <div style={{ ...S.col, ...S.divider, width: 280, minWidth: 260, flexShrink: 0 }}>
-            <div style={S.colTitle}>⚙️ Settings</div>
-
-            <div>
-              <label style={S.label}>Sujet / Topic</label>
+          {/* ========== COL 1 - SETTINGS ========== */}
+          <div style={{ width: 280, minWidth: 260, flexShrink: 0, background: "#f9fafb", padding: 16, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            
+            <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                <span>📝</span> Contenu
+              </div>
               <textarea rows={3} placeholder="De quoi parle ce post ?"
-                value={modal.topic}
-                onChange={e => setM({ topic: e.target.value, error: "" })}
-                style={{ ...S.input, resize: "vertical" as const }}
-              />
-            </div>
-
-            <div>
-              <label style={S.label}>Fichier <span style={{ fontWeight: 400, color: "#9ca3af" }}>(PDF / TXT)</span></label>
-              <div onClick={() => fileInputRef.current?.click()} style={{
-                border: "1.5px dashed #d1d5db", borderRadius: 8, padding: "12px",
-                textAlign: "center" as const, cursor: "pointer", fontSize: 12, color: "#6b7280",
-              }}>
-                {modal.fileName ? `✅ ${modal.fileName}` : "📄 Cliquer pour upload"}
-              </div>
-              <input ref={fileInputRef} type="file" accept=".txt,.pdf" onChange={handleFileUpload} style={{ display: "none" }} />
-            </div>
-
-            <div>
-              <label style={S.label}>Longueur de caption</label>
-              <div style={{ display: "flex", gap: 6 }}>
-                {(["short", "medium", "long"] as const).map(v => (
-                  <button key={v} onClick={() => setM({ captionLength: v })}
-                    style={{ ...chip(modal.captionLength === v), flex: 1, fontSize: 11 }}>
-                    {v.charAt(0).toUpperCase() + v.slice(1)}
-                  </button>
-                ))}
+                value={modal.topic} onChange={e => setM({ topic: e.target.value, error: "" })}
+                style={{ ...S.input, resize: "vertical" }} />
+              <div style={{ marginTop: 12 }}>
+                <div onClick={() => fileInputRef.current?.click()} style={{
+                  border: "2px dashed #e5e7eb", borderRadius: 12, padding: "12px", textAlign: "center",
+                  cursor: "pointer", fontSize: 12, color: "#6b7280", background: "#fafafa",
+                }}>
+                  {modal.fileName ? `✅ ${modal.fileName}` : "📄 Cliquer pour uploader"}
+                </div>
+                <input ref={fileInputRef} type="file" accept=".txt,.pdf" onChange={handleFileUpload} hidden />
               </div>
             </div>
 
-            <div>
-              <label style={S.label}>Ton</label>
-              <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 6 }}>
-                {(["professional", "casual", "funny", "inspirational"] as const).map(v => (
-                  <button key={v} onClick={() => setM({ tone: v })} style={chip(modal.tone === v)}>
-                    {v.charAt(0).toUpperCase() + v.slice(1)}
-                  </button>
-                ))}
+            <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                <span>🎨</span> Style
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={S.label}>Longueur</label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {(["short", "medium", "long"] as const).map(v => (
+                    <button key={v} onClick={() => setM({ captionLength: v })} style={{
+                      flex: 1, padding: "6px", borderRadius: 10, border: "1px solid",
+                      borderColor: modal.captionLength === v ? "#3b82f6" : "#e5e7eb",
+                      background: modal.captionLength === v ? "#eff6ff" : "#fff",
+                      color: modal.captionLength === v ? "#3b82f6" : "#6b7280", fontSize: 11, cursor: "pointer",
+                    }}>
+                      {v === "short" ? "Courte" : v === "medium" ? "Moyenne" : "Longue"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={S.label}>Ton</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {(["professional", "casual", "funny", "inspirational"] as const).map(v => (
+                    <button key={v} onClick={() => setM({ tone: v })} style={{
+                      padding: "6px 12px", borderRadius: 20, border: "1px solid",
+                      borderColor: modal.tone === v ? "#3b82f6" : "#e5e7eb",
+                      background: modal.tone === v ? "#eff6ff" : "#fff",
+                      color: modal.tone === v ? "#3b82f6" : "#6b7280", fontSize: 11, cursor: "pointer",
+                    }}>
+                      {v === "professional" ? "Pro" : v === "casual" ? "Détendu" : v === "funny" ? "Drôle" : "Inspi"}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div>
-              <label style={S.label}>Hashtags</label>
+            <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                <span>🏷️</span> Hashtags & Plateformes
+              </div>
               <input placeholder="#automation #n8n #ai" value={modal.hashtags}
-                onChange={e => setM({ hashtags: e.target.value })} style={S.input} />
-            </div>
-
-            <div>
-              <label style={S.label}>Plateformes</label>
-              <div style={{ display: "flex", flexWrap: "wrap" as const, gap: 6 }}>
+                onChange={e => setM({ hashtags: e.target.value })} style={{ ...S.input, marginBottom: 12 }} />
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                 {PLATFORMS.map(p => {
                   const sel = modal.selectedPlatforms.includes(p.id);
                   return (
-                    <button key={p.id} onClick={() => togglePlatform(p.id)} style={chip(sel, p.color)}>
+                    <button key={p.id} onClick={() => togglePlatform(p.id)} style={{
+                      padding: "6px 12px", borderRadius: 20, border: "1px solid",
+                      borderColor: sel ? p.color : "#e5e7eb", background: sel ? p.color + "18" : "#fff",
+                      color: sel ? p.color : "#6b7280", fontSize: 11, cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 4,
+                    }}>
                       {p.icon} {p.label}
                     </button>
                   );
@@ -371,205 +493,245 @@ ${modal.fileContent ? `- Contenu du fichier : ${modal.fileContent.slice(0, 500)}
               </div>
             </div>
 
-            {modal.error && (
-              <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "10px 12px", fontSize: 12, color: "#dc2626" }}>
-                ⚠️ {modal.error}
-              </div>
-            )}
+          
 
-            <button onClick={handleGenerate}
-              disabled={(!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0 || chatLoading}
+            {modal.error && <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 12, padding: 12, fontSize: 12, color: "#dc2626", display: "flex", alignItems: "center", gap: 8 }}>⚠️ {modal.error}</div>}
+            {modal.success && <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", borderRadius: 12, padding: 12, fontSize: 12, color: "#059669", display: "flex", alignItems: "center", gap: 8 }}>✅ {modal.success}</div>}
+
+            <button onClick={handleGenerate} disabled={(!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0 || chatLoading}
               style={{
-                marginTop: "auto", padding: "12px", borderRadius: 9, border: "none",
-                background: ((!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0 || chatLoading) ? "#9ca3af" : "#3b82f6",
-                color: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 700,
+                padding: "14px", borderRadius: 12, border: "none", marginTop: "auto",
+                background: ((!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0 || chatLoading) ? "#e5e7eb" : "#3b82f6",
+                color: ((!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0 || chatLoading) ? "#9ca3af" : "#fff",
+                cursor: "pointer", fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               }}>
-              {chatLoading ? "⏳ Génération..." : "✨ Générer"}
+              {chatLoading ? "⏳ Génération..." : "✨ Générer la caption"}
             </button>
           </div>
 
-          {/* COL 2 — CHATBOT */}
-          <div style={{ ...S.col, flex: 1, ...S.divider, gap: 0, padding: 0 }}>
-            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f3f4f6", fontWeight: 700, fontSize: 13, color: "#111" }}>
-              💬 Assistant Caption
-            </div>
+          {/* ========== COL 2 - CHATBOT (même design que les autres composants) ========== */}
+       
+        <div style={{ background: "#fff",width: 880, borderRadius: 50, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+  
+  {/* Header Chatbot */}
+  <div style={{ padding: "16px 20px", background: "#fff", borderBottom: "1px solid #e5e7eb", display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ width: 36, height: 36, borderRadius: 12, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <span style={{ fontSize: 20 }}>💬</span>
+    </div>
+    <div>
+      <div style={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>Assistant Caption</div>
+      <div style={{ fontSize: 11, color: "#6b7280" }}>Affine ta caption avec l'IA</div>
+    </div>
+  </div>
 
-            <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 14 }}>
-              {messages.length === 0 && (
-                <div style={{ textAlign: "center", color: "#9ca3af", fontSize: 13, marginTop: 40 }}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>🤖</div>
-                  Configure tes settings et clique <strong>Générer</strong>.<br />
-                  Tu pourras ensuite affiner la caption ici.
-                </div>
-              )}
+  {/* Messages Container */}
+  <div style={{ flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: 16, scrollbarWidth: "none", msOverflowStyle: "none" }}>
+    {messages.length === 0 && (
+      <div style={{ textAlign: "center", padding: "60px 20px", background: "#fff", borderRadius: 16, border: "1px solid #e5e7eb" }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>💬</div>
+        <div style={{ fontWeight: 700, fontSize: 14, color: "#374151", marginBottom: 8 }}>Prêt à créer ta caption ?</div>
+        <div style={{ fontSize: 12, color: "#6b7280" }}>Configure tes paramètres et clique sur Générer</div>
+      </div>
+    )}
 
-              {messages.map(msg => (
-                <div key={msg.id} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", width: "100%" }}>
-                  <div style={{
-                    maxWidth: "82%", padding: "10px 14px",
-                    borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
-                    background: msg.role === "user" ? "#3b82f6" : "#f3f4f6",
-                    color: msg.role === "user" ? "#fff" : "#111",
-                    fontSize: 13, lineHeight: 1.55, whiteSpace: "pre-wrap",
+    {messages.map(msg => (
+      <div key={msg.id} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", width: "100%" }}>
+        <div style={{
+          maxWidth: "85%", padding: "12px 16px",
+          borderRadius: msg.role === "user" ? "20px 20px 4px 20px" : "20px 20px 20px 4px",
+          background: msg.role === "user" ? "#3b82f6" : "#fff",
+          color: msg.role === "user" ? "#fff" : "#111827", fontSize: 13, lineHeight: 1.55,
+          boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: msg.role === "bot" ? "1px solid #e5e7eb" : "none",
+        }}>
+          {msg.content}
+        </div>
+
+        {msg.role === "bot" && msg.captions && Object.keys(msg.captions).length > 0 && (
+          <div style={{ marginTop: 12, maxWidth: "95%", width: "100%" }}>
+            {Object.keys(msg.captions).length > 1 && (
+              <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+                {Object.keys(msg.captions).map(platform => (
+                  <button key={platform} onClick={() => setActivePlatformTab(platform)} style={{
+                    padding: "6px 14px", borderRadius: 20, border: "1px solid",
+                    borderColor: activePlatformTab === platform ? "#3b82f6" : "#e5e7eb",
+                    background: activePlatformTab === platform ? "#eff6ff" : "#fff",
+                    color: activePlatformTab === platform ? "#3b82f6" : "#6b7280", fontSize: 11, fontWeight: 600, cursor: "pointer",
                   }}>
-                    {msg.content}
-                  </div>
-
-                  {msg.role === "bot" && msg.captions && Object.keys(msg.captions).length > 0 && (
-                    <div style={{ marginTop: 8, maxWidth: "90%", width: "100%" }}>
-                      {Object.keys(msg.captions).length > 1 && (
-                        <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" as const }}>
-                          {Object.keys(msg.captions).map(platform => (
-                            <button key={platform} onClick={() => setActivePlatformTab(platform)} style={{
-                              padding: "4px 10px", borderRadius: 12, border: "1px solid",
-                              borderColor: activePlatformTab === platform ? "#3b82f6" : "#d1d5db",
-                              background: activePlatformTab === platform ? "#3b82f6" : "#fff",
-                              color: activePlatformTab === platform ? "#fff" : "#6b7280",
-                              fontSize: 11, fontWeight: 600, cursor: "pointer",
-                            }}>
-                              {platform}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      <div style={{
-                        background: msg.confirmed ? "#f0fdf4" : "#fff",
-                        border: msg.confirmed ? "2px solid #22c55e" : "1.5px solid #e5e7eb",
-                        borderRadius: 10, padding: "12px 14px",
-                        fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap", color: "#111",
-                      }}>
-                        {msg.captions?.[activePlatformTab] ?? Object.values(msg.captions)[0] ?? "Aucune caption disponible"}
-                      </div>
-
-                      {!msg.confirmed ? (
-                        <button onClick={() => confirmCaption(msg.captions!, msg.id)} style={{
-                          marginTop: 8, padding: "8px 18px", background: "#22c55e", color: "#fff",
-                          border: "none", borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer",
-                        }}>
-                          ✅ Confirmer cette caption
-                        </button>
-                      ) : (
-                        <div style={{ marginTop: 8, color: "#22c55e", fontWeight: 700, fontSize: 12 }}>✅ Caption confirmée</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {chatLoading && (
-                <div style={{ display: "flex", alignItems: "flex-start" }}>
-                  <div style={{ background: "#f3f4f6", borderRadius: "16px 16px 16px 4px", padding: "10px 16px", fontSize: 13, color: "#6b7280" }}>
-                    ⏳ Génération en cours...
-                  </div>
-                </div>
-              )}
-              <div ref={chatBottomRef} />
-            </div>
-
-            <div style={{ padding: "12px 16px", borderTop: "1px solid #e5e7eb", display: "flex", gap: 8 }}>
-              <input value={userInput} onChange={e => setUserInput(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleUserSend(); } }}
-                placeholder="Ex: rends-la plus courte, ajoute de l'humour..."
-                style={{ ...S.input, flex: 1 }}
-                disabled={chatLoading || messages.length === 0 || saved}
-              />
-              <button onClick={handleUserSend}
-                disabled={chatLoading || !userInput.trim() || messages.length === 0 || saved}
-                style={{
-                  padding: "8px 16px", background: "#3b82f6", color: "#fff",
-                  border: "none", borderRadius: 8, fontWeight: 700, cursor: "pointer",
-                  opacity: (!userInput.trim() || chatLoading || messages.length === 0 || saved) ? 0.5 : 1,
-                }}>
-                ➤
-              </button>
-            </div>
-          </div>
-
-          {/* COL 3 — PREVIEW */}
-          <div style={{ ...S.col, width: 300, minWidth: 260, flexShrink: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>📱 Preview</div>
-
-            <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, overflow: "hidden", fontSize: 12 }}>
-              <div style={{ background: "#fafafa", padding: "8px 12px", display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#e5e7eb" }} />
-                <span style={{ fontWeight: 700, fontSize: 12 }}>your_brand</span>
-              </div>
-              {modal.uploadedImages?.[0] ? (
-                <img src={modal.uploadedImages[0]} style={{ width: "100%", aspectRatio: "1", objectFit: "cover" }} alt="Preview" />
-              ) : (
-                <div style={{ width: "100%", aspectRatio: "1", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af", fontSize: 13 }}>
-                  📸 Aucune image
-                </div>
-              )}
-              <div style={{ padding: "10px 12px" }}>
-                <p style={{ margin: 0, fontSize: 12, lineHeight: 1.5, whiteSpace: "pre-wrap", color: "#111" }}>
-                  {modal.generatedContent || "Ta caption apparaîtra ici..."}
-                </p>
-              </div>
-            </div>
-
-            {confirmedCaption && (
-              <div style={{ background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8, padding: "10px 12px", fontSize: 12, color: "#166534", fontWeight: 600 }}>
-                {saved ? "💾 Caption sauvegardée !" : (
-                  <button onClick={saveCaption} disabled={saving} style={{
-                    width: "100%", padding: "8px", background: "#22c55e", color: "#fff",
-                    border: "none", borderRadius: 8, fontWeight: 700, fontSize: 12,
-                    cursor: saving ? "not-allowed" : "pointer",
-                  }}>
-                    {saving ? "Sauvegarde..." : "💾 Sauvegarder la caption"}
+                    {platform}
                   </button>
-                )}
-              </div>
-            )}
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <button onClick={() => imageInputRef.current?.click()} style={{ padding: "10px 16px", borderRadius: 9, border: "none", background: "#f3f4f6", color: "#374151", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
-                📸 Upload Image
-              </button>
-              <button onClick={() => videoInputRef.current?.click()} style={{ padding: "10px 16px", borderRadius: 9, border: "none", background: "#f3f4f6", color: "#374151", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
-                🎥 Upload Vidéo
-              </button>
-            </div>
-
-            <input ref={imageInputRef} type="file" onChange={handleImageUpload} hidden />
-            <input ref={videoInputRef} type="file" onChange={handleVideoUpload} hidden />
-
-            {modal.uploadedImages?.length > 0 && (
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" as const }}>
-                {modal.uploadedImages.map((img: string, i: number) => (
-                  <div key={i} style={{ position: "relative" }}>
-                    <img src={img} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 6 }} alt={`Upload ${i}`} />
-                    <button onClick={() => removeImage(i)} style={{
-                      position: "absolute", top: -5, right: -5, background: "red", color: "#fff",
-                      border: "none", borderRadius: "50%", width: 18, height: 18, cursor: "pointer", fontSize: 11,
-                    }}>×</button>
-                  </div>
                 ))}
               </div>
             )}
-
-            <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
-              <button onClick={handlePublish} disabled={!saved} style={{
-                padding: "12px", borderRadius: 9, border: "none",
-                background: saved ? "#3b82f6" : "#9ca3af", color: "#fff",
-                fontWeight: 700, fontSize: 13, cursor: saved ? "pointer" : "not-allowed",
-              }}>
-                🚀 Publier
-              </button>
-              <button onClick={handleSaveDraft} disabled={!confirmedCaption} style={{
-                padding: "10px", borderRadius: 9, border: "1px solid #d1d5db",
-                background: confirmedCaption ? "#fff" : "#f9fafb",
-                color: confirmedCaption ? "#374151" : "#9ca3af",
-                fontWeight: 600, fontSize: 13, cursor: confirmedCaption ? "pointer" : "not-allowed",
-              }}>
-                💾 Sauvegarder brouillon
-              </button>
+            <div style={{
+              background: msg.confirmed ? "#f0fdf4" : "#fff",
+              border: msg.confirmed ? "2px solid #22c55e" : "1px solid #e5e7eb",
+              borderRadius: 12, padding: "16px", fontSize: 13, lineHeight: 1.6,
+            }}>
+              {msg.captions?.[activePlatformTab] ?? Object.values(msg.captions)[0]}
             </div>
+            {!msg.confirmed ? (
+              <button onClick={() => confirmCaption(msg.captions!, msg.id)} style={{
+                marginTop: 12, padding: "8px 20px", background: "#22c55e", color: "#fff",
+                border: "none", borderRadius: 10, fontWeight: 600, fontSize: 12, cursor: "pointer",
+              }}>✅ Confirmer cette caption</button>
+            ) : (
+              <div style={{ marginTop: 12, padding: "8px 16px", background: "#f0fdf4", borderRadius: 10, color: "#166534", fontWeight: 600, fontSize: 12 }}>✅ Caption confirmée</div>
+            )}
           </div>
+        )}
+      </div>
+    ))}
 
+    {chatLoading && (
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+        <div style={{ background: "#fff", borderRadius: "20px 20px 20px 4px", padding: "12px 18px", border: "1px solid #e5e7eb", display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #e5e7eb", borderTopColor: "#3b82f6", animation: "spin 0.8s linear infinite" }} />
+          <span>Génération en cours...</span>
         </div>
       </div>
+    )}
+    <div ref={chatBottomRef} />
+  </div>
+
+  {/* Input Container */}
+  <div style={{ padding: "16px 20px", background: "#fff", borderTop: "1px solid #e5e7eb" }}>
+    <div style={{ display: "flex", gap: 12 }}>
+      <textarea value={userInput} onChange={e => setUserInput(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleUserSend(); } }}
+        placeholder="Ex: rends-la plus courte, ajoute des emojis..."
+        rows={2} disabled={chatLoading || messages.length === 0}
+        style={{ flex: 1, padding: "10px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 13, resize: "none", fontFamily: "inherit", background: "#fafafa" }} />
+      <button onClick={handleUserSend} disabled={chatLoading || !userInput.trim() || messages.length === 0}
+        style={{
+          padding: "10px 20px", background: (!userInput.trim() || chatLoading || messages.length === 0) ? "#e5e7eb" : "#3b82f6",
+          color: (!userInput.trim() || chatLoading || messages.length === 0) ? "#9ca3af" : "#fff",
+          border: "none", borderRadius: 12, fontWeight: 700, cursor: "pointer",
+        }}>Envoyer</button>
+    </div>
+  </div>
+</div>
+             
+
+
+
+
+
+
+
+             
+          {/* ========== COL 3 - MEDIA & ACTIONS ========== */}
+          <div style={{ width: 340, minWidth: 300, flexShrink: 0, background: "#f9fafb", padding: 16, display: "flex", flexDirection: "column", gap: 16, overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            
+            {/* Médias */}
+            <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>🎬 Médias du post</div>
+              <div onClick={() => imageInputRef.current?.click()} style={{
+                border: "2px dashed #e5e7eb", borderRadius: 12, background: "#fafafa", minHeight: 200,
+                display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", cursor: "pointer",
+              }}>
+                {modal.uploadedImages?.[0] ? (
+                  <>
+                    <img src={modal.uploadedImages[0]} style={{ width: "100%", height: "100%", objectFit: "cover", position: "absolute" }} alt="Preview" />
+                    <div style={{ position: "absolute", bottom: 8, right: 8, background: "rgba(0,0,0,0.7)", borderRadius: 20, padding: "4px 8px", fontSize: 11, color: "#fff" }}>
+                      📸 {modal.uploadedImages.length}
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ textAlign: "center", padding: 20 }}>
+                    <div style={{ fontSize: 48, marginBottom: 8 }}>📸</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 4 }}>Aucun média</div>
+                    <div style={{ fontSize: 11, color: "#6b7280" }}>Clique pour uploader</div>
+                  </div>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <button onClick={() => imageInputRef.current?.click()} style={{ flex: 1, padding: "8px", borderRadius: 10, border: "1px solid #e5e7eb", background: "#fff", fontSize: 12, cursor: "pointer" }}>📸 Image</button>
+                <button onClick={() => videoInputRef.current?.click()} style={{ flex: 1, padding: "8px", borderRadius: 10, border: "1px solid #e5e7eb", background: "#fff", fontSize: 12, cursor: "pointer" }}>🎥 Vidéo</button>
+              </div>
+              {modal.uploadedImages?.length > 1 && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#6b7280", marginBottom: 8 }}>Autres médias</div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {modal.uploadedImages.slice(1).map((img: string, i: number) => (
+                      <div key={i} style={{ position: "relative", width: 60, height: 60 }}>
+                        <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} alt="" />
+                        <button onClick={() => removeImage(i + 1)} style={{ position: "absolute", top: -6, right: -6, background: "#ef4444", color: "#fff", border: "2px solid #fff", borderRadius: "50%", width: 20, height: 20, cursor: "pointer", fontSize: 11 }}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Génération IA Image */}
+            <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>✨ Générer une image IA</div>
+              <textarea rows={2} placeholder="Ex: une jeune femme souriante avec un smartphone..."
+                value={imagePrompt} onChange={e => setImagePrompt(e.target.value)}
+                style={{ ...S.input, resize: "vertical", marginBottom: 8 }} />
+              <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                {["realistic", "artistic", "cartoon", "minimalist"].map(style => (
+                  <button key={style} onClick={() => setImageStyle(style)} style={{
+                    flex: 1, padding: "4px", borderRadius: 20, border: "1px solid",
+                    borderColor: imageStyle === style ? "#3b82f6" : "#e5e7eb",
+                    background: imageStyle === style ? "#eff6ff" : "#fff",
+                    color: imageStyle === style ? "#3b82f6" : "#6b7280", fontSize: 10, cursor: "pointer",
+                  }}>{style}</button>
+                ))}
+              </div>
+              <button onClick={generateImage} disabled={generatingImage || !imagePrompt.trim()}
+                style={{
+                  width: "100%", padding: "10px", borderRadius: 10, border: "none",
+                  background: (!imagePrompt.trim() || generatingImage) ? "#e5e7eb" : "#3b82f6",
+                  color: (!imagePrompt.trim() || generatingImage) ? "#9ca3af" : "#fff", fontWeight: 600, cursor: "pointer",
+                }}>{generatingImage ? "⏳ Génération..." : "🎨 Générer"}</button>
+            </div>
+
+            {/* Actions & Statut */}
+            <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>📋 Actions</div>
+              
+              <button onClick={() => savePostWithStatus("Draft")} disabled={saving}
+                style={{ width: "100%", padding: "10px", borderRadius: 10, border: "1px solid #e5e7eb", background: "#fff", color: "#6b7280", fontWeight: 600, marginBottom: 8, cursor: "pointer" }}>
+                📄 Sauvegarder en Draft
+              </button>
+              
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <button onClick={() => savePostWithStatus("InReview")} disabled={!confirmedCaption || saving}
+                  style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", background: (!confirmedCaption || saving) ? "#e5e7eb" : "#f59e0b", color: "#fff", fontWeight: 600, cursor: "pointer" }}>🔍 InReview</button>
+                <button onClick={() => savePostWithStatus("Approved")} disabled={!confirmedCaption || saving}
+                  style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", background: (!confirmedCaption || saving) ? "#e5e7eb" : "#10b981", color: "#fff", fontWeight: 600, cursor: "pointer" }}>✅ Approved</button>
+              </div>
+              
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => savePostWithStatus("Scheduled")} disabled={!confirmedCaption || saving || (!modal.scheduleDate && !modal.scheduleTime)}
+                  style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", background: (!confirmedCaption || saving || (!modal.scheduleDate && !modal.scheduleTime)) ? "#e5e7eb" : "#3b82f6", color: "#fff", fontWeight: 600, cursor: "pointer" }}>📅 Scheduled</button>
+                <button onClick={() => savePostWithStatus("Published")} disabled={!confirmedCaption || saving}
+                  style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", background: (!confirmedCaption || saving) ? "#e5e7eb" : "#3b82f6", color: "#fff", fontWeight: 600, cursor: "pointer" }}>🚀 Published</button>
+              </div>
+            </div>
+
+          <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                <span>📅</span> Planification
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input type="date" value={modal.scheduleDate || ""} onChange={e => setM({ scheduleDate: e.target.value })}
+                  style={{ ...S.input, flex: 1 }} />
+                <input type="time" value={modal.scheduleTime || ""} onChange={e => setM({ scheduleTime: e.target.value })}
+                  style={{ ...S.input, flex: 1 }} />
+              </div>
+            </div>
+            <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageUpload} hidden multiple />
+            <input ref={videoInputRef} type="file" accept="video/*" onChange={handleVideoUpload} hidden />
+          </div>
+        </div>
+      </div>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        ::-webkit-scrollbar { display: none; }
+        * { scrollbar-width: none; -ms-overflow-style: none; }
+      `}</style>
     </div>
   );
 }
