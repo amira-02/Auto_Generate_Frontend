@@ -11,6 +11,7 @@ import PostsView from "../components/DashboardSection/Posts/PostsView";
 import TopicsView from "../components/DashboardSection/Topics/TopicsView";
 import TopicDetailView from "../components/DashboardSection/Topics/TopicDetailView";
 import ConnectedAccountsView from "../components/DashboardSection/SocialAccounts/ConnectedAccountsView";
+import Analytics from "../components/DashboardSection/Analytics/Analyse";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
@@ -246,28 +247,6 @@ export default function Dashboard() {
           gap: 4, overflow: "hidden",
         }}
       >
-
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
- <IconBtn
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-            >
-              {sidebarOpen
-                ? <FiChevronsLeft size={16} />
-                : <FiChevronsRight size={16} />
-              }
-            </IconBtn>
-
-
- {/* 🏠 Home */}
-            <IconBtn
-              onClick={() => navigate("/")}
-              title="Back to home page"
-            >
-              <FiHome size={15} />
-            </IconBtn>
-
-</div>
         {/* Logo */}
         <div style={{
           display: "flex", alignItems: "center", gap: 10, marginBottom: 24,
@@ -410,7 +389,95 @@ export default function Dashboard() {
       {/* ── Main ────────────────────────────────────────────────────────── */}
       <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
 
-        
+        {/* ── Top bar ───────────────────────────────────────────────────── */}
+        <div style={{
+          margin: "16px 24px 0",
+          padding: "10px 16px",
+          background: "#fff",
+          borderRadius: 14,
+          border: "1px solid #f0f0f0",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexShrink: 0, gap: 10,
+        }}>
+
+          {/* Left — toggle + home + title */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+
+            {/* ◀▶ Sidebar toggle */}
+            <IconBtn
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+            >
+              {sidebarOpen
+                ? <FiChevronsLeft size={16} />
+                : <FiChevronsRight size={16} />
+              }
+            </IconBtn>
+
+            {/* 🏠 Home */}
+            <IconBtn
+              onClick={() => navigate("/")}
+              title="Back to home page"
+            >
+              <FiHome size={15} />
+            </IconBtn>
+
+            {/* Divider */}
+            <div style={{ width: 1, height: 20, background: "#f0f0f0", margin: "0 4px" }} />
+
+            {/* Page title */}
+            <div>
+              <h1 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.2px" }}>
+                {activeNav === "dashboard" && `Good day, ${userEmail.split("@")[0]} 👋`}
+                {activeNav === "topics"    && (selectedTopic ? selectedTopic.name : "Topics")}
+                {activeNav === "posts"     && "Posts"}
+                {activeNav === "calendar"  && "Calendar"}
+                {activeNav === "analytics" && "Analytics"}
+                {activeNav === "accounts"  && "Connected Accounts"}
+                {activeNav === "settings"  && "Settings"}
+              </h1>
+              <p style={{ margin: 0, fontSize: 11, color: "#94a3b8" }}>
+                {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+              </p>
+            </div>
+          </div>
+
+          {/* Right — search + new post */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* Search */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              background: "#f8f9fb", borderRadius: 10,
+              padding: "7px 14px", border: "1px solid #f0f0f0",
+            }}>
+              <span style={{ fontSize: 13, color: "#94a3b8" }}>⌕</span>
+              <input
+                placeholder="Search..."
+                style={{
+                  border: "none", background: "transparent", outline: "none",
+                  fontSize: 13, color: "#374151", width: 150,
+                }}
+              />
+            </div>
+
+            {/* New Post */}
+            <motion.button
+              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+              onClick={() => setModal({ ...INITIAL_MODAL, open: true })}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "8px 16px", borderRadius: 10, border: "none",
+                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                color: "#fff", fontSize: 13, fontWeight: 600,
+                cursor: "pointer", boxShadow: "0 4px 12px rgba(99,102,241,0.25)",
+                flexShrink: 0,
+              }}
+            >
+              + New Post
+            </motion.button>
+          </div>
+        </div>
 
         {/* ── Content ───────────────────────────────────────────────────── */}
         <div style={{ flex: 1, padding: "20px 24px", overflow: "auto" }}>
@@ -510,16 +577,19 @@ export default function Dashboard() {
               </motion.div>
             )}
 
-            {/* PLACEHOLDERS */}
-            {(activeNav === "analytics" || activeNav === "settings") && (
-              <motion.div key={activeNav} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            {/* ANALYTICS */}
+            {activeNav === "analytics" && (
+              <motion.div key="analytics" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <Analytics />
+              </motion.div>
+            )}
+
+            {/* SETTINGS placeholder */}
+            {activeNav === "settings" && (
+              <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "60vh" }}>
-                <div style={{ fontSize: 48, marginBottom: 14 }}>
-                  {activeNav === "analytics" ? "📈" : "⚙️"}
-                </div>
-                <p style={{ fontSize: 15, fontWeight: 500, color: "#64748b", margin: 0 }}>
-                  {activeNav === "analytics" ? "Analytics" : "Settings"} coming soon
-                </p>
+                <div style={{ fontSize: 48, marginBottom: 14 }}>⚙️</div>
+                <p style={{ fontSize: 15, fontWeight: 500, color: "#64748b", margin: 0 }}>Settings coming soon</p>
                 <p style={{ fontSize: 13, color: "#94a3b8", marginTop: 6 }}>We're working on something great</p>
               </motion.div>
             )}
