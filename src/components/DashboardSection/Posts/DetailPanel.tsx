@@ -52,6 +52,14 @@ const C = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+
+
+  const parsePlatforms = (p: any): Platform[] => {
+  if (!p) return [];
+  if (Array.isArray(p)) return p;
+  try { return JSON.parse(p); } catch { return []; }
+};
 export const normalizeStatus = (s: string): "draft" | "inreview" | "approved" | "scheduled" | "published" | "failed" => {
   switch ((s ?? "").toUpperCase()) {
     case "INREVIEW": return "inreview";
@@ -67,7 +75,7 @@ export function getMissing(post: Post) {
   const m: string[] = [];
   if (!post.caption) m.push("caption");
   if (!post.imageUrl) m.push("media");
-  if (!post.platforms || post.platforms.length === 0) m.push("platforms");
+  if (parsePlatforms(post.platforms).length === 0) m.push("platforms");
   return m;
 }
 
@@ -106,6 +114,10 @@ const extractCaptionFromChatResponse = (data: any): string => {
   }
   return "";
 };
+
+
+
+
 
 // ─── Input style ──────────────────────────────────────────────────────────────
 const inputStyle: React.CSSProperties = {
@@ -297,6 +309,17 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
     setToastState({ msg, type });
     setTimeout(() => setToastState(null), 3000);
   };
+const [currentImageIndex, setCurrentImageIndex] = useState(0);
+ 
+// 2. Ajoute cette ligne pour parser les images du post :
+const postImages = (() => {
+  // imageUrls vient du backend comme array, imageUrl comme string
+  const urls = (post as any).imageUrls as string[] | undefined;
+  if (Array.isArray(urls) && urls.length > 0) return urls;
+  if (post.imageUrl) return [post.imageUrl];
+  return [];
+})();
+
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -314,7 +337,7 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
     setToneDraft(post.tone || "Casual");
     setHashtagsDraft(post.hashtags || "");
     setEditingCaption(false); setImageMode("none");
-    setPlatformsDraft(post.platforms || []);
+    setPlatformsDraft(parsePlatforms(post.platforms));
     setScheduledDraft(post.scheduledAt ? new Date(post.scheduledAt).toISOString().slice(0, 16) : "");
     setStatusDraft(post.status || "draft");
     setEditingParams(false);
@@ -327,19 +350,145 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
     "Authorization": `Bearer ${token}`,
   });
 
-  const handleSaveCaption = async () => {
-    setSavingCaption(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/posts/${post.id}/caption`, {
-        method: "PATCH", headers: headers(),
-        body: JSON.stringify({ content: captionDraft, tone: toneDraft, hashtags: hashtagsDraft, generatedBy: "manual" }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      onUpdate({ ...post, caption: captionDraft, tone: toneDraft, hashtags: hashtagsDraft });
-      setEditingCaption(false); showToast("Caption saved!");
-    } catch (e: any) { showToast(e.message || "Error", "error"); }
-    finally { setSavingCaption(false); }
-  };
+ // ─── PATCH à appliquer dans DetailPanel.tsx ──────────────────────────────────
+// Remplace les deux fonctions existantes par celles-ci
+
+// ── 1. handleSaveCaption ──────────────────────────────────────────────────────
+// Quand on sauvegarde la caption → repasse en InReview + annule scheduling
+
+const handleSaveCaption = async () => {
+  setSavingCaption(true);
+  try {
+    // a) Sauvegarde la caption
+    const res = await fetch(`${API_BASE}/api/posts/${post.id}/caption`, {
+      method: "PATCH", headers: headers(),
+      body: JSON.stringify({
+        content:     captionDraft,
+        tone:        toneDraft,
+        hashtags:    hashtagsDraft,
+        generatedBy: "manual",
+      }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    // b) Repasse en InReview + annule scheduledAt
+    await fetch(`${API_BASE}/api/posts/${post.id}/params`, {
+      method: "PATCH", headers: headers(),
+      body: JSON.stringify({
+        status:      "inreview",
+        scheduledAt: null,       // ← annule la planification
+        platforms:   post.platforms ?? [],
+      }),
+    });
+
+    onUpdate({
+      ...post,
+      caption:     captionDraft,
+      tone:        toneDraft,
+      hashtags:    hashtagsDraft,
+      status:      "inreview",
+      scheduledAt: null,         // ← retiré du calendrier
+    });
+
+    setEditingCaption(false);
+    showToast("Caption saved — status reset to In Review 🔍");
+  } catch (e: any) {
+    showToast(e.message || "Error", "error");
+  } finally {
+    setSavingCaption(false);
+  }
+};
+
+// ── 2. handleFileChange ───────────────────────────────────────────────────────
+// Quand on change l'image → repasse en InReview + annule scheduling
+
+const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  setUploadingImage(true);
+  try {
+    // a) Upload l'image
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch(`${API_BASE}/api/posts/${post.id}/images/upload`, {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${token}` },
+      body: fd,
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const { url } = await res.json();
+
+    // b) Repasse en InReview + annule scheduledAt
+    await fetch(`${API_BASE}/api/posts/${post.id}/params`, {
+      method: "PATCH", headers: headers(),
+      body: JSON.stringify({
+        status:      "inreview",
+        scheduledAt: null,
+        platforms:   post.platforms ?? [],
+      }),
+    });
+
+    onUpdate({
+      ...post,
+      imageUrl:    url,
+      status:      "inreview",
+      scheduledAt: null,
+    });
+
+    setImageMode("none");
+    showToast("Image updated — status reset to In Review 🔍");
+  } catch (e: any) {
+    showToast(e.message || "Upload failed", "error");
+  } finally {
+    setUploadingImage(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+};
+
+// ── 3. handleSetImageUrl ──────────────────────────────────────────────────────
+// Quand on change l'image via URL → même logique
+
+const handleSetImageUrl = async () => {
+  if (!imageUrlDraft.trim()) return;
+  setUploadingImage(true);
+  try {
+    const res = await fetch(`${API_BASE}/api/posts/${post.id}/images/url`, {
+      method: "POST", headers: headers(),
+      body: JSON.stringify({ url: imageUrlDraft }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    // Repasse en InReview + annule scheduledAt
+    await fetch(`${API_BASE}/api/posts/${post.id}/params`, {
+      method: "PATCH", headers: headers(),
+      body: JSON.stringify({
+        status:      "inreview",
+        scheduledAt: null,
+        platforms:   post.platforms ?? [],
+      }),
+    });
+
+    onUpdate({
+      ...post,
+      imageUrl:    imageUrlDraft,
+      status:      "inreview",
+      scheduledAt: null,
+    });
+
+    setImageUrlDraft("");
+    setImageMode("none");
+    showToast("Image updated — status reset to In Review 🔍");
+  } catch (e: any) {
+    showToast(e.message || "Error", "error");
+  } finally {
+    setUploadingImage(false);
+  }
+};
+
+
+
+
+
 
   const handleGenerateCaption = async () => {
     setGeneratingCaption(true);
@@ -351,7 +500,7 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
           message: `Generate a ${toneDraft} caption for a post about ${post.topicName}`,
           toneOfVoice: toneDraft,
           hashtags: hashtagsDraft,
-          platforms: post.platforms ?? [],
+          platforms: parsePlatforms(post.platforms),
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -362,35 +511,7 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
     finally { setGeneratingCaption(false); }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    setUploadingImage(true);
-    try {
-      const fd = new FormData(); fd.append("file", file);
-      const res = await fetch(`${API_BASE}/api/posts/${post.id}/images/upload`, {
-        method: "POST", headers: { "Authorization": `Bearer ${token}` }, body: fd,
-      });
-      if (!res.ok) throw new Error(await res.text());
-      onUpdate({ ...post, imageUrl: (await res.json()).url });
-      setImageMode("none"); showToast("Image uploaded!");
-    } catch (e: any) { showToast(e.message || "Upload failed", "error"); }
-    finally { setUploadingImage(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
-  };
-
-  const handleSetImageUrl = async () => {
-    if (!imageUrlDraft.trim()) return;
-    setUploadingImage(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/posts/${post.id}/images/url`, {
-        method: "POST", headers: headers(), body: JSON.stringify({ url: imageUrlDraft }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      onUpdate({ ...post, imageUrl: imageUrlDraft });
-      setImageUrlDraft(""); setImageMode("none"); showToast("Image set!");
-    } catch (e: any) { showToast(e.message || "Error", "error"); }
-    finally { setUploadingImage(false); }
-  };
-
+ 
   const handleImageConfirmed = (dataUrl: string) => {
     onUpdate({ ...post, imageUrl: dataUrl });
     setImageMode("none"); showToast("Image saved!");
@@ -506,53 +627,111 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
       >
         {/* LEFT SIDE: IMAGE */}
         <div style={{
-          flex: "1 1 auto",
-          background: "#000",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minWidth: window.innerWidth < 768 ? "auto" : "300px",
-        }}>
-          {resolvedImageUrl ? (
-            <img
-              src={resolvedImageUrl}
-              alt={post.caption || "Post image"}
-              style={{
-                maxWidth: "100%",
-                maxHeight: "85vh",
-                width: "auto",
-                height: "auto",
-                objectFit: "contain",
-                display: "block",
-              }}
-            />
-          ) : (
-            <div style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 60,
-              color: C.textDim,
-            }}>
-              <FiImage size={48} />
-              <p style={{ marginTop: 16, fontSize: 14 }}>No image yet</p>
-              <button onClick={() => setImageMode("upload")} style={{
-                marginTop: 12,
-                background: C.accent,
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: 8,
-                color: "#fff",
-                cursor: "pointer",
-                fontSize: 13,
-                fontWeight: 600,
-              }}>
-                Upload Image
-              </button>
-            </div>
-          )}
-        </div>
+  flex: "1 1 auto",
+  background: "#000",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minWidth: window.innerWidth < 768 ? "auto" : "300px",
+  position: "relative",
+}}>
+  {postImages.length > 0 ? (
+    <>
+      {/* Current image */}
+      <img
+        src={resolveImageUrl(postImages[currentImageIndex]) ?? ""}
+        alt={post.caption || "Post image"}
+        style={{
+          maxWidth: "100%",
+          maxHeight: "85vh",
+          width: "auto",
+          height: "auto",
+          objectFit: "contain",
+          display: "block",
+          transition: "opacity 0.2s",
+        }}
+      />
+ 
+      {/* Navigation arrows - only if multiple images */}
+      {postImages.length > 1 && (
+        <>
+          <button
+            onClick={() => setCurrentImageIndex(i => Math.max(0, i - 1))}
+            disabled={currentImageIndex === 0}
+            style={{
+              position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,0.85)", border: "none",
+              cursor: currentImageIndex === 0 ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 16, opacity: currentImageIndex === 0 ? 0.4 : 1,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            }}
+          >‹</button>
+ 
+          <button
+            onClick={() => setCurrentImageIndex(i => Math.min(postImages.length - 1, i + 1))}
+            disabled={currentImageIndex === postImages.length - 1}
+            style={{
+              position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+              width: 32, height: 32, borderRadius: "50%",
+              background: "rgba(255,255,255,0.85)", border: "none",
+              cursor: currentImageIndex === postImages.length - 1 ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 16, opacity: currentImageIndex === postImages.length - 1 ? 0.4 : 1,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            }}
+          >›</button>
+ 
+          {/* Dots indicator */}
+          <div style={{
+            position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)",
+            display: "flex", gap: 6,
+          }}>
+            {postImages.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentImageIndex(idx)}
+                style={{
+                  width: idx === currentImageIndex ? 18 : 6,
+                  height: 6, borderRadius: 3,
+                  background: idx === currentImageIndex ? "#fff" : "rgba(255,255,255,0.5)",
+                  border: "none", cursor: "pointer", padding: 0,
+                  transition: "all 0.2s",
+                }}
+              />
+            ))}
+          </div>
+ 
+          {/* Counter */}
+          <div style={{
+            position: "absolute", top: 12, right: 12,
+            background: "rgba(0,0,0,0.6)", borderRadius: 12,
+            padding: "3px 10px", fontSize: 11, color: "#fff", fontWeight: 600,
+          }}>
+            {currentImageIndex + 1} / {postImages.length}
+          </div>
+        </>
+      )}
+    </>
+  ) : (
+    <div style={{
+      display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      padding: 60, color: C.textDim,
+    }}>
+      <FiImage size={48} />
+      <p style={{ marginTop: 16, fontSize: 14 }}>No image yet</p>
+      <button onClick={() => setImageMode("upload")} style={{
+        marginTop: 12, background: C.accent, border: "none",
+        padding: "8px 16px", borderRadius: 8, color: "#fff",
+        cursor: "pointer", fontSize: 13, fontWeight: 600,
+      }}>
+        Upload Image
+      </button>
+    </div>
+  )}
+</div>
 
         {/* RIGHT SIDE: INFO PANEL */}
         <div style={{
@@ -792,7 +971,7 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
               ) : (
                 <div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-                    {post.platforms?.map(p => <PlatformBadge key={p} platform={p} />)}
+                    {parsePlatforms(post.platforms).map(p => <PlatformBadge key={p} platform={p} />)}
                     {(!post.platforms || post.platforms.length === 0) && (
                       <span style={{ fontSize: 12, color: C.textDim }}>No platforms selected</span>
                     )}
@@ -916,6 +1095,7 @@ export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPa
         </div>
       </motion.div>
     </motion.div>
+    
   );
 
   return (

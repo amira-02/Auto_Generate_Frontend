@@ -1,6 +1,9 @@
 import { useState, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiPlus, FiTrash2, FiGrid, FiX, FiSearch, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { 
+  FiPlus, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, 
+  FiFolder, FiHash, FiCalendar, FiTrendingUp, FiX, FiHome
+} from "react-icons/fi";
 import { AuthContext } from "../../../hooks/AuthContext";
 import { toast } from "react-toastify";
 
@@ -17,12 +20,12 @@ type Topic = {
 };
 
 const PLATFORMS = [
-  { id: "instagram", label: "Instagram", color: "#e1306c" },
-  { id: "linkedin",  label: "LinkedIn",  color: "#0077b5" },
-  { id: "twitter",   label: "Twitter/X", color: "#1da1f2" },
-  { id: "facebook",  label: "Facebook",  color: "#1877f2" },
-  { id: "tiktok",    label: "TikTok",    color: "#010101" },
-  { id: "threads",   label: "Threads",   color: "#000000" },
+  { id: "instagram", label: "Instagram", color: "#e1306c", gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" },
+  { id: "linkedin",  label: "LinkedIn",  color: "#0077b5", gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" },
+  { id: "twitter",   label: "Twitter/X", color: "#1da1f2", gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" },
+  { id: "facebook",  label: "Facebook",  color: "#1877f2", gradient: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)" },
+  { id: "tiktok",    label: "TikTok",    color: "#010101", gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" },
+  { id: "threads",   label: "Threads",   color: "#000000", gradient: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)" },
 ];
 
 type Props = {
@@ -39,9 +42,10 @@ export default function TopicsView({ onSelectTopic }: Props) {
   const [error, setError]           = useState("");
   const [search, setSearch]         = useState("");
   const [page, setPage]             = useState(1);
+  const [selectedPlatform, setSelectedPlatform] = useState<string>("all");
 
   useEffect(() => { fetchTopics(); }, [token]);
-  useEffect(() => { setPage(1); }, [search]);
+  useEffect(() => { setPage(1); }, [search, selectedPlatform]);
 
   const fetchTopics = async () => {
     if (!token) return;
@@ -66,396 +70,574 @@ export default function TopicsView({ onSelectTopic }: Props) {
       setTopics(prev => [created, ...prev]);
       setShowCreate(false);
       setForm({ name: "", description: "", platform: "" });
-      toast.success("Topic created!");
+      toast.success("✨ Topic created successfully!");
     } catch { setError("Failed to create topic"); }
     finally { setCreating(false); }
   };
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm("Delete this topic and all its posts?")) return;
+    if (!confirm("⚠️ Delete this topic and all its posts? This action cannot be undone.")) return;
     try {
       await fetch(`${API}/api/topics/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       setTopics(prev => prev.filter(t => t.id !== id));
-      toast.success("Topic deleted ✅");
+      toast.success("🗑️ Topic deleted");
     } catch { toast.error("Failed to delete topic"); }
   };
 
-  // ── Filter & Pagination ──────────────────────────────────────────────────────
+  const filtered = topics.filter(t => {
+    const matchesSearch = !search ||
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      (t.description ?? "").toLowerCase().includes(search.toLowerCase());
+    const matchesPlatform = selectedPlatform === "all" || t.platform === selectedPlatform;
+    return matchesSearch && matchesPlatform;
+  });
 
-  const filtered   = topics.filter(t =>
-    !search ||
-    t.name.toLowerCase().includes(search.toLowerCase()) ||
-    (t.description ?? "").toLowerCase().includes(search.toLowerCase())
-  );
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  // ── Stats ────────────────────────────────────────────────────────────────────
-
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  
   const totalPosts = topics.reduce((sum, t) => sum + (t.postCount || 0), 0);
-  const avgPosts   = topics.length > 0 ? Math.round(totalPosts / topics.length) : 0;
+  const avgPosts = topics.length > 0 ? Math.round(totalPosts / topics.length) : 0;
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
+  const platformStats = PLATFORMS.map(platform => ({
+    ...platform,
+    count: topics.filter(t => t.platform === platform.id).length,
+    posts: topics.filter(t => t.platform === platform.id).reduce((sum, t) => sum + (t.postCount || 0), 0),
+  })).filter(p => p.count > 0);
 
   return (
-    <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
-
-      {/* ── Top Bar ─────────────────────────────────────────────────────────── */}
-      <div style={{
-        background: "#fff", borderRadius: 14,
-        border: "1px solid #f0f0f0",
-        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-        padding: "12px 18px",
-        display: "flex", alignItems: "center", gap: 12,
-        marginBottom: 20, flexWrap: "wrap",
-      }}>
-
-        {/* Stats pills */}
-        <div style={{ display: "flex", gap: 8 }}>
-          {[
-            { label: "Topics",     value: topics.length, accent: "#6366f1" },
-            { label: "Posts",      value: totalPosts,    accent: "#10b981" },
-            { label: "Avg / Topic",value: avgPosts,      accent: "#f59e0b" },
-          ].map(({ label, value, accent }) => (
-            <div key={label} style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "5px 12px", borderRadius: 20,
-              background: accent + "10", border: `1px solid ${accent}20`,
-            }}>
-              <div style={{ width: 5, height: 5, borderRadius: "50%", background: accent }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{value}</span>
-              <span style={{ fontSize: 11, color: "#94a3b8" }}>{label}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Divider */}
-        <div style={{ width: 1, height: 24, background: "#f0f0f0" }} />
-
-        {/* Search */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8,
-          background: "#f8f9fb", borderRadius: 10,
-          padding: "7px 14px", border: "1px solid #f0f0f0",
-          flex: 1, minWidth: 180, maxWidth: 280,
+    <div style={{ background: "#f5f7fa", minHeight: "100vh", padding: "40px 32px", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      
+      {/* Controls Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        style={{
+          background: "white", borderRadius: 24, padding: "16px 24px",
+          marginBottom: 32, boxShadow: "0 1px 2px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.05)",
+          display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap",
+        }}
+      >
+        <div style={{ 
+          display: "flex", alignItems: "center", gap: 10, flex: 1,
+          background: "#f9fafb", padding: "8px 16px", borderRadius: 40,
+          border: "1px solid #e5e7eb"
         }}>
-          <FiSearch size={14} color="#94a3b8" />
+          <FiSearch size={20} color="#9ca3af" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search topics..."
-            style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, color: "#374151", width: "100%" }}
+            style={{ 
+              flex: 1, border: "none", background: "transparent", 
+              outline: "none", fontSize: 14, color: "#374151",
+              padding: "4px 0"
+            }}
           />
           {search && (
-            <button onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 0, display: "flex" }}>
-              <FiX size={13} />
+            <button onClick={() => setSearch("")} style={{
+              background: "#e5e7eb", border: "none", borderRadius: 20,
+              cursor: "pointer", padding: "4px 8px", display: "flex",
+              alignItems: "center", gap: 4, fontSize: 12, color: "#6b7280"
+            }}>
+              <FiX size={14} /> Clear
             </button>
           )}
         </div>
 
-        {/* Spacer */}
-        <div style={{ flex: 1 }} />
+        <div style={{ display: "flex", gap: 8, overflowX: "auto", flexWrap: "wrap" }}>
+          <button
+            onClick={() => setSelectedPlatform("all")}
+            style={{
+              padding: "8px 20px", borderRadius: 40, fontSize: 13, fontWeight: 500,
+              background: selectedPlatform === "all" ? "#667eea" : "transparent",
+              color: selectedPlatform === "all" ? "white" : "#6b7280",
+              border: selectedPlatform === "all" ? "none" : "1px solid #e5e7eb",
+              cursor: "pointer", transition: "all 0.2s",
+            }}
+          >
+            All Topics
+          </button>
+          {PLATFORMS.map(p => (
+            <button
+              key={p.id}
+              onClick={() => setSelectedPlatform(p.id)}
+              style={{
+                padding: "8px 20px", borderRadius: 40, fontSize: 13, fontWeight: 500,
+                background: selectedPlatform === p.id ? p.color : "transparent",
+                color: selectedPlatform === p.id ? "white" : "#6b7280",
+                border: `1px solid ${selectedPlatform === p.id ? p.color : "#e5e7eb"}`,
+                cursor: "pointer", transition: "all 0.2s",
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
 
-        {/* New Topic button */}
         <motion.button
-          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
           onClick={() => { setShowCreate(true); setError(""); }}
           style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "9px 18px", borderRadius: 10, border: "none",
-            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-            color: "#fff", fontSize: 13, fontWeight: 600,
-            cursor: "pointer", boxShadow: "0 4px 12px rgba(99,102,241,0.25)",
-            flexShrink: 0,
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "10px 24px", borderRadius: 40, border: "none",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white", fontSize: 14, fontWeight: 600,
+            cursor: "pointer", boxShadow: "0 4px 12px rgba(102,126,234,0.3)",
+            whiteSpace: "nowrap",
           }}
         >
-          <FiPlus size={15} /> New Topic
+          <FiPlus size={18} /> New Topic
         </motion.button>
-      </div>
+      </motion.div>
 
-      {/* ── Search result info ───────────────────────────────────────────────── */}
-      {search && (
-        <div style={{ fontSize: 12, color: "#94a3b8", marginBottom: 14, paddingLeft: 2 }}>
-          {filtered.length} result{filtered.length !== 1 ? "s" : ""} for «{search}»
+      {/* Stats Cards */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        style={{
+          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: 20, marginBottom: 32,
+        }}
+      >
+        {[
+          { label: "Total Topics", value: topics.length, icon: FiFolder, color: "#667eea", bg: "#e0e7ff" },
+          { label: "Total Posts", value: totalPosts, icon: FiHash, color: "#f59e0b", bg: "#fed7aa" },
+          { label: "Avg Posts/Topic", value: avgPosts, icon: FiTrendingUp, color: "#10b981", bg: "#d1fae5" },
+          { label: "Active Platforms", value: platformStats.length, icon: FiHome, color: "#ef4444", bg: "#fee2e2" },
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: idx * 0.05 }}
+            style={{
+              background: "white", borderRadius: 20, padding: "20px 24px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.02), 0 8px 24px -12px rgba(0,0,0,0.1)",
+              border: "1px solid rgba(226, 232, 240, 0.8)", backdropFilter: "blur(10px)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: 14, background: stat.bg,
+                display: "flex", alignItems: "center", justifyContent: "center"
+              }}>
+                <stat.icon size={24} color={stat.color} />
+              </div>
+              <span style={{ fontSize: 28, fontWeight: 700, color: "#1f2937" }}>{stat.value}</span>
+            </div>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "#6b7280", margin: 0 }}>{stat.label}</p>
+          </motion.div>
+        ))}
+      </motion.div>
+
+      {/* Platform Chips (if filtered) */}
+      {selectedPlatform !== "all" && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{
+            background: `linear-gradient(135deg, ${PLATFORMS.find(p => p.id === selectedPlatform)?.color}15, transparent)`,
+            borderRadius: 16, padding: "12px 20px", borderLeft: `4px solid ${PLATFORMS.find(p => p.id === selectedPlatform)?.color}`
+          }}>
+            <span style={{ fontWeight: 600, color: "#1f2937", fontSize: 14 }}>
+              Showing topics for <span style={{ color: PLATFORMS.find(p => p.id === selectedPlatform)?.color }}>
+                {PLATFORMS.find(p => p.id === selectedPlatform)?.label}
+              </span>
+            </span>
+          </div>
         </div>
       )}
 
-      {/* ── Create Modal ─────────────────────────────────────────────────────── */}
+      {/* Search Info */}
+      {search && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          style={{ fontSize: 13, color: "#6b7280", marginBottom: 20, fontWeight: 500 }}>
+          Found {filtered.length} topic{filtered.length !== 1 ? "s" : ""} matching "{search}"
+        </motion.div>
+      )}
+
+      {/* Loading */}
+      {loading && (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px" }}>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            style={{
+              width: 48, height: 48, borderRadius: "50%",
+              border: "3px solid #e5e7eb", borderTopColor: "#667eea"
+            }}
+          />
+          <p style={{ marginTop: 16, color: "#6b7280", fontSize: 14 }}>Loading your topics...</p>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && topics.length === 0 && (
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+          style={{
+            background: "white", borderRadius: 32, padding: "80px 40px",
+            textAlign: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.02), 0 8px 24px -12px rgba(0,0,0,0.1)"
+          }}
+        >
+          <div style={{ fontSize: 80, marginBottom: 24 }}>📚</div>
+          <h3 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 8px", color: "#1f2937" }}>No topics created yet</h3>
+          <p style={{ color: "#6b7280", marginBottom: 32, fontSize: 14 }}>Start organizing your content by creating your first topic</p>
+          <button onClick={() => setShowCreate(true)} style={{
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white", border: "none", borderRadius: 40, padding: "12px 32px",
+            fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex",
+            alignItems: "center", gap: 8,
+          }}>
+            <FiPlus size={18} /> Create Your First Topic
+          </button>
+        </motion.div>
+      )}
+
+      {/* No Results */}
+      {!loading && topics.length > 0 && filtered.length === 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          style={{
+            background: "white", borderRadius: 24, padding: "60px 40px",
+            textAlign: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.05)"
+          }}
+        >
+          <div style={{ fontSize: 64, marginBottom: 16 }}>🔍</div>
+          <h4 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 6px", color: "#1f2937" }}>No matching topics</h4>
+          <p style={{ fontSize: 13, color: "#6b7280" }}>Try adjusting your search or filters</p>
+        </motion.div>
+      )}
+
+      {/* Topics Grid */}
+      {!loading && paginated.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          style={{
+            display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gap: 24, marginBottom: 40,
+          }}
+        >
+          <AnimatePresence>
+            {paginated.map((topic, idx) => {
+              const platform = PLATFORMS.find(p => p.id === topic.platform);
+              const postDensity = topic.postCount > 50 ? "🔥 High" : topic.postCount > 20 ? "📈 Medium" : "🌱 Low";
+              
+              return (
+                <motion.div
+                  key={topic.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: idx * 0.05 }}
+                  whileHover={{ y: -6 }}
+                  onClick={() => onSelectTopic(topic.id, topic.name)}
+                  style={{
+                    background: "white", borderRadius: 20, overflow: "hidden",
+                    cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.05)",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    border: "1px solid rgba(226, 232, 240, 0.6)"
+                  }}
+                >
+                  <div style={{ padding: "20px 20px 16px" }}>
+                    {/* Header Row */}
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
+                      <div style={{
+                        width: 48, height: 48, borderRadius: 14,
+                        background: platform ? `${platform.color}15` : "#f3f4f6",
+                        display: "flex", alignItems: "center", justifyContent: "center"
+                      }}>
+                        <FiFolder size={24} color={platform?.color || "#9ca3af"} />
+                      </div>
+                      <button
+                        onClick={(e) => handleDelete(topic.id, e)}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#d1d5db")}
+                        style={{
+                          background: "transparent", border: "none", cursor: "pointer",
+                          color: "#d1d5db", padding: 6, borderRadius: 8,
+                          transition: "all 0.2s", display: "flex"
+                        }}
+                      >
+                        <FiTrash2 size={18} />
+                      </button>
+                    </div>
+
+                    {/* Title */}
+                    <h3 style={{
+                      fontSize: 16, fontWeight: 700, margin: "8px 0 6px",
+                      color: "#111827", lineHeight: 1.4
+                    }}>
+                      {topic.name}
+                    </h3>
+
+                    {/* Description */}
+                    {topic.description && (
+                      <p style={{
+                        fontSize: 13, color: "#6b7280", lineHeight: 1.5,
+                        margin: "0 0 12px", display: "-webkit-box",
+                        WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden"
+                      }}>
+                        {topic.description}
+                      </p>
+                    )}
+
+                    {/* Stats Row */}
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: 12,
+                      paddingTop: 12, borderTop: "1px solid #f3f4f6"
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <FiHash size={14} color="#9ca3af" />
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+                          {topic.postCount} posts
+                        </span>
+                      </div>
+                      <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#d1d5db" }} />
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <FiCalendar size={14} color="#9ca3af" />
+                        <span style={{ fontSize: 12, color: "#6b7280" }}>
+                          {new Date(topic.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Footer Badges */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14 }}>
+                      <span style={{
+                        fontSize: 11, fontWeight: 600, padding: "4px 10px",
+                        borderRadius: 20, background: platform ? `${platform.color}12` : "#f3f4f6",
+                        color: platform?.color || "#6b7280"
+                      }}>
+                        {platform?.label || "Uncategorized"}
+                      </span>
+                      <span style={{
+                        fontSize: 11, color: topic.postCount > 50 ? "#f59e0b" : topic.postCount > 20 ? "#10b981" : "#9ca3af",
+                        fontWeight: 500
+                      }}>
+                        {postDensity}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </motion.div>
+      )}
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            gap: 8, marginTop: 32, paddingBottom: 40,
+          }}
+        >
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            style={{
+              width: 40, height: 40, borderRadius: 12, border: "1px solid #e5e7eb",
+              background: "white", cursor: page === 1 ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: page === 1 ? "#d1d5db" : "#374151", transition: "all 0.2s",
+            }}
+          >
+            <FiChevronLeft size={18} />
+          </button>
+
+          <div style={{ display: "flex", gap: 6 }}>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) pageNum = i + 1;
+              else if (page <= 3) pageNum = i + 1;
+              else if (page >= totalPages - 2) pageNum = totalPages - 4 + i;
+              else pageNum = page - 2 + i;
+              
+              if (pageNum < 1 || pageNum > totalPages) return null;
+              
+              return (
+                <button key={pageNum} onClick={() => setPage(pageNum)} style={{
+                  width: 40, height: 40, borderRadius: 12, cursor: "pointer",
+                  background: page === pageNum ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" : "white",
+                  color: page === pageNum ? "white" : "#374151",
+                  fontWeight: page === pageNum ? 700 : 500, fontSize: 14,
+                  border: page === pageNum ? "none" : "1px solid #e5e7eb",
+                  transition: "all 0.2s",
+                }}>
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            style={{
+              width: 40, height: 40, borderRadius: 12, border: "1px solid #e5e7eb",
+              background: "white", cursor: page === totalPages ? "not-allowed" : "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: page === totalPages ? "#d1d5db" : "#374151",
+            }}
+          >
+            <FiChevronRight size={18} />
+          </button>
+        </motion.div>
+      )}
+
+      {/* Create Modal - Modern Design */}
       <AnimatePresence>
         {showCreate && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={() => setShowCreate(false)}
             style={{
-              position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
-              backdropFilter: "blur(6px)", display: "flex",
+              position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+              backdropFilter: "blur(8px)", display: "flex",
               alignItems: "center", justifyContent: "center", zIndex: 1000,
+              padding: 20
             }}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
               onClick={e => e.stopPropagation()}
               style={{
-                background: "#fff", borderRadius: 20, padding: "28px 28px 24px",
-                width: "100%", maxWidth: 460,
-                boxShadow: "0 24px 64px rgba(0,0,0,0.12)",
+                background: "white", borderRadius: 32, padding: "32px",
+                width: "100%", maxWidth: 500, position: "relative",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.15)",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#0f172a" }}>New Topic</h2>
-                  <p style={{ margin: "3px 0 0", fontSize: 12, color: "#94a3b8" }}>Organize your content by subject</p>
-                </div>
-                <button onClick={() => setShowCreate(false)}
-                  style={{ background: "#f8f9fb", border: "1px solid #f0f0f0", borderRadius: 8, cursor: "pointer", color: "#64748b", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <FiX size={15} />
-                </button>
+              {/* Modal Header */}
+              <div style={{ marginBottom: 24 }}>
+                <h2 style={{ fontSize: 24, fontWeight: 700, margin: "0 0 6px", color: "#111827" }}>
+                  Create New Topic
+                </h2>
+                <p style={{ fontSize: 14, color: "#6b7280", margin: 0 }}>
+                  Organize your content around specific themes
+                </p>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {/* Form */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6, display: "block" }}>Topic Name *</label>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 8, display: "block" }}>
+                    Topic Name <span style={{ color: "#ef4444" }}>*</span>
+                  </label>
                   <input
-                    autoFocus value={form.name}
+                    autoFocus
+                    value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder="e.g. Product Launch, Italian Recipes…"
-                    style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", boxSizing: "border-box", transition: "border .15s" }}
-                    onFocus={e => e.target.style.borderColor = "#6366f1"}
+                    placeholder="e.g., Product Launch, Marketing Tips..."
+                    style={{
+                      width: "100%", padding: "12px 16px", borderRadius: 16,
+                      border: "2px solid #e5e7eb", fontSize: 14,
+                      outline: "none", transition: "all 0.2s",
+                      boxSizing: "border-box"
+                    }}
+                    onFocus={e => e.target.style.borderColor = "#667eea"}
                     onBlur={e => e.target.style.borderColor = "#e5e7eb"}
                     onKeyDown={e => e.key === "Enter" && handleCreate()}
                   />
                 </div>
 
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 6, display: "block" }}>Description</label>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 8, display: "block" }}>
+                    Description
+                  </label>
                   <textarea
                     value={form.description}
                     onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                    placeholder="What will this topic be about?"
+                    placeholder="Describe what this topic covers..."
                     rows={3}
-                    style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e5e7eb", fontSize: 14, outline: "none", resize: "vertical", boxSizing: "border-box", transition: "border .15s", fontFamily: "inherit" }}
-                    onFocus={e => e.target.style.borderColor = "#6366f1"}
+                    style={{
+                      width: "100%", padding: "12px 16px", borderRadius: 16,
+                      border: "2px solid #e5e7eb", fontSize: 14, outline: "none",
+                      resize: "vertical", boxSizing: "border-box", fontFamily: "inherit"
+                    }}
+                    onFocus={e => e.target.style.borderColor = "#667eea"}
                     onBlur={e => e.target.style.borderColor = "#e5e7eb"}
                   />
                 </div>
 
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8, display: "block" }}>Primary Platform</label>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {/* <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 12, display: "block" }}>
+                    Platform
+                  </label>
+                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                     {PLATFORMS.map(p => {
-                      const sel = form.platform === p.id;
+                      const isSelected = form.platform === p.id;
                       return (
-                        <button key={p.id}
-                          onClick={() => setForm(f => ({ ...f, platform: sel ? "" : p.id }))}
+                        <motion.button
+                          key={p.id}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setForm(f => ({ ...f, platform: isSelected ? "" : p.id }))}
                           style={{
-                            padding: "5px 13px", borderRadius: 20, fontSize: 12,
-                            border: `1.5px solid ${sel ? p.color : "#e5e7eb"}`,
-                            background: sel ? p.color + "12" : "#fff",
-                            color: sel ? p.color : "#64748b",
-                            fontWeight: sel ? 600 : 400, cursor: "pointer", transition: "all .15s",
+                            padding: "8px 20px", borderRadius: 40, fontSize: 13,
+                            fontWeight: isSelected ? 600 : 500,
+                            border: `2px solid ${isSelected ? p.color : "#e5e7eb"}`,
+                            background: isSelected ? `${p.color}15` : "transparent",
+                            color: isSelected ? p.color : "#6b7280",
+                            cursor: "pointer", transition: "all 0.2s",
                           }}
-                        >{p.label}</button>
+                        >
+                          {p.label}
+                        </motion.button>
                       );
                     })}
                   </div>
+                </div> */}
+
+                {error && (
+                  <div style={{
+                    background: "#fee2e2", padding: "12px 16px",
+                    borderRadius: 12, color: "#dc2626", fontSize: 13, fontWeight: 500
+                  }}>
+                    ⚠️ {error}
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+                  <button
+                    onClick={() => setShowCreate(false)}
+                    style={{
+                      flex: 1, padding: "12px", borderRadius: 40,
+                      border: "2px solid #e5e7eb", background: "white",
+                      fontSize: 14, fontWeight: 600, cursor: "pointer",
+                      color: "#6b7280", transition: "all 0.2s",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreate}
+                    disabled={creating}
+                    style={{
+                      flex: 1, padding: "12px", borderRadius: 40, border: "none",
+                      background: creating ? "#d1d5db" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      color: creating ? "#9ca3af" : "white", fontSize: 14,
+                      fontWeight: 600, cursor: creating ? "not-allowed" : "pointer",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {creating ? "Creating..." : "Create Topic"}
+                  </button>
                 </div>
-
-                {error && <div style={{ color: "#dc2626", fontSize: 12, background: "#fef2f2", padding: "9px 12px", borderRadius: 8 }}>{error}</div>}
-
-                <button
-                  onClick={handleCreate} disabled={creating}
-                  style={{
-                    padding: "12px", borderRadius: 10, border: "none",
-                    background: creating ? "#e5e7eb" : "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                    color: creating ? "#9ca3af" : "#fff",
-                    fontSize: 14, fontWeight: 600, cursor: creating ? "not-allowed" : "pointer",
-                    marginTop: 4, boxShadow: creating ? "none" : "0 4px 12px rgba(99,102,241,0.25)",
-                  }}
-                >
-                  {creating ? "Creating…" : "Create Topic"}
-                </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* ── Loading ───────────────────────────────────────────────────────────── */}
-      {loading && (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "80px 20px", color: "#94a3b8" }}>
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#6366f1", marginBottom: 10 }}
-          />
-          <span style={{ fontSize: 13 }}>Loading topics…</span>
-        </div>
-      )}
-
-      {/* ── Empty ────────────────────────────────────────────────────────────── */}
-      {!loading && topics.length === 0 && (
-        <div style={{ textAlign: "center", padding: "80px 20px", background: "#fff", borderRadius: 16, border: "1.5px dashed #e5e7eb" }}>
-          <div style={{ fontSize: 44, marginBottom: 14 }}>🗂️</div>
-          <h3 style={{ margin: "0 0 6px", fontSize: 16, fontWeight: 600, color: "#1e293b" }}>No topics yet</h3>
-          <p style={{ color: "#94a3b8", marginBottom: 20, fontSize: 13 }}>Create your first topic to get started</p>
-          <button onClick={() => setShowCreate(true)} style={{
-            background: "#0f172a", color: "white", border: "none", borderRadius: 10,
-            padding: "10px 20px", fontSize: 13, fontWeight: 600, cursor: "pointer",
-            display: "inline-flex", alignItems: "center", gap: 6,
-          }}>
-            <FiPlus size={14} /> Create First Topic
-          </button>
-        </div>
-      )}
-
-      {/* ── No results ───────────────────────────────────────────────────────── */}
-      {!loading && topics.length > 0 && filtered.length === 0 && (
-        <div style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8", fontSize: 13, background: "#fff", borderRadius: 14, border: "1px solid #f0f0f0" }}>
-          No topics match «{search}»
-        </div>
-      )}
-
-      {/* ── Grid — full width ────────────────────────────────────────────────── */}
-      {!loading && paginated.length > 0 && (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-          gap: 14,
-        }}>
-          <AnimatePresence>
-            {paginated.map((topic, i) => {
-              const plat = PLATFORMS.find(p => p.id === topic.platform);
-              return (
-                <motion.div
-                  key={topic.id}
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: i * 0.03, type: "spring", stiffness: 340 }}
-                  whileHover={{ y: -3 }}
-                  onClick={() => onSelectTopic(topic.id, topic.name)}
-                  className="group"
-                  style={{
-                    background: "#fff", border: "1px solid #f0f0f0",
-                    borderRadius: 14, padding: "18px 16px", cursor: "pointer",
-                    transition: "box-shadow .15s, border-color .15s",
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px -6px rgba(0,0,0,0.1)"; (e.currentTarget as HTMLElement).style.borderColor = "#e2e8f0"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; (e.currentTarget as HTMLElement).style.borderColor = "#f0f0f0"; }}
-                >
-                  {/* Top row */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 10,
-                      background: plat ? plat.color + "12" : "#f1f5f9",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      <FiGrid size={17} color={plat?.color ?? "#94a3b8"} />
-                    </div>
-                    <button
-                      onClick={e => handleDelete(topic.id, e)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                      style={{ background: "none", border: "none", color: "#e2e8f0", padding: 4, borderRadius: 6, cursor: "pointer" }}
-                      onMouseEnter={e => (e.currentTarget.style.color = "#ef4444")}
-                      onMouseLeave={e => (e.currentTarget.style.color = "#e2e8f0")}
-                    >
-                      <FiTrash2 size={14} />
-                    </button>
-                  </div>
-
-                  {/* Name */}
-                  <h3 style={{ fontSize: 14, fontWeight: 700, margin: "0 0 5px", color: "#0f172a", lineHeight: 1.3 }}>
-                    {topic.name}
-                  </h3>
-
-                  {/* Description */}
-                  {topic.description && (
-                    <p style={{
-                      fontSize: 12, color: "#64748b", lineHeight: 1.5, margin: 0,
-                      display: "-webkit-box", WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical", overflow: "hidden",
-                    }}>
-                      {topic.description}
-                    </p>
-                  )}
-
-                  {/* Footer */}
-                  <div style={{
-                    marginTop: 14, paddingTop: 10, borderTop: "1px solid #f5f5f5",
-                    display: "flex", justifyContent: "space-between", alignItems: "center",
-                  }}>
-                    <span style={{ fontSize: 11, color: "#94a3b8" }}>
-                      <strong style={{ color: "#374151", fontWeight: 600 }}>{topic.postCount}</strong> posts
-                    </span>
-                    {plat ? (
-                      <span style={{
-                        fontSize: 10, padding: "2px 8px", borderRadius: 20,
-                        background: plat.color + "12", color: plat.color, fontWeight: 600,
-                      }}>
-                        {plat.label}
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: 10, color: "#cbd5e1" }}>
-                        {new Date(topic.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* ── Pagination ───────────────────────────────────────────────────────── */}
-      {filtered.length > PAGE_SIZE && (
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 6, marginTop: 24,
-        }}>
-          <button
-            onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-            style={{
-              width: 32, height: 32, borderRadius: 8, border: "1px solid #f0f0f0",
-              background: "#fff", cursor: page === 1 ? "not-allowed" : "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: page === 1 ? "#cbd5e1" : "#374151",
-            }}
-          >
-            <FiChevronLeft size={15} />
-          </button>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
-            <button key={n} onClick={() => setPage(n)} style={{
-              width: 32, height: 32, borderRadius: 8, cursor: "pointer",
-              background: page === n ? "#6366f1" : "#fff",
-              color: page === n ? "#fff" : "#374151",
-              fontWeight: page === n ? 700 : 400, fontSize: 13,
-              border: page === n ? "none" : "1px solid #f0f0f0",
-            }}>
-              {n}
-            </button>
-          ))}
-
-          <button
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-            style={{
-              width: 32, height: 32, borderRadius: 8, border: "1px solid #f0f0f0",
-              background: "#fff", cursor: page === totalPages ? "not-allowed" : "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: page === totalPages ? "#cbd5e1" : "#374151",
-            }}
-          >
-            <FiChevronRight size={15} />
-          </button>
-
-          <span style={{ fontSize: 12, color: "#94a3b8", marginLeft: 4 }}>
-            {filtered.length} topics · page {page}/{totalPages}
-          </span>
-        </div>
-      )}
     </div>
   );
 }

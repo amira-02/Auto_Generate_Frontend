@@ -106,25 +106,49 @@ export default function TopicDetailView({ topicId, topicName, onBack }: Props) {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+
+    for (const file of files) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        // Always upload to /api/images/upload-temp to get a real Cloudinary URL
+        const res = await fetch(`${API}/api/images/upload-temp`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        const fullUrl = data.url?.startsWith("http") ? data.url : `${API}${data.url}`;
+        setM((m: any) => ({ ...m, uploadedImages: [...m.uploadedImages, fullUrl] }));
+      } catch (err: any) {
+        toast.error(`Upload failed: ${err.message}`);
+      }
+    }
+  };
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
-    const currentPostId = modal.postId;
-    if (!currentPostId) { setM({ uploadedImages: [...modal.uploadedImages, URL.createObjectURL(file)] }); return; }
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch(`${API}/api/posts/${currentPostId}/images/upload`, {
-        method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form,
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`${API}/api/images/upload-temp`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      const fullUrl = data.url.startsWith("http") ? data.url : `${API}${data.url}`;
-      setM({ uploadedImages: [...modal.uploadedImages, fullUrl] });
-    } catch (err: any) { alert(`Erreur upload : ${err.message}`); }
-  };
-
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    setM({ uploadedVideo: URL.createObjectURL(file) });
+      const fullUrl = data.url?.startsWith("http") ? data.url : `${API}${data.url}`;
+      setM({ uploadedVideo: fullUrl });
+      toast.success("Video uploaded ✅");
+    } catch (err: any) {
+      toast.error(`Video upload failed: ${err.message}`);
+    }
   };
 
   const handleSaveDraft = async () => {
@@ -138,6 +162,12 @@ export default function TopicDetailView({ topicId, topicName, onBack }: Props) {
     await fetchTopic();
   };
 
+
+  const parsePlatforms = (p: any): string[] => {
+  if (!p) return [];
+  if (Array.isArray(p)) return p;
+  try { return JSON.parse(p); } catch { return []; }
+};
   const handleDeletePost = async (postId: number, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!confirm("Delete this post?")) return;
@@ -401,7 +431,10 @@ export default function TopicDetailView({ topicId, topicName, onBack }: Props) {
                     {/* Platform icons */}
                     {(post.platforms ?? []).length > 0 && (
                       <div style={{ position: "absolute", top: 8, right: 8, display: "flex", gap: 3 }}>
-                        {(post.platforms ?? []).slice(0, 2).map(pid => {
+                        {(Array.isArray(post.platforms)
+  ? post.platforms
+  : (() => { try { return JSON.parse(post.platforms ?? "[]"); } catch { return []; } })()
+).slice(0, 2).map((pid: string) => {
                           const p = PLATFORMS.find(x => x.id === pid);
                           return p ? (
                             <div key={pid} style={{
