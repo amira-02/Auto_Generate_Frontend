@@ -1,5 +1,5 @@
 // Analytics/OverviewTab.tsx
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../../../hooks/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -122,6 +122,249 @@ function PlatformCard({ color, platformKey, name, sub, badge, stats, chartData, 
   );
 }
 
+function PostActivityCalendar({ posts }: { posts: Post[] }) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const offset = (firstDay.getDay() + 6) % 7; // Mon=0
+  const days = Array.from({ length: lastDay.getDate() }, (_, i) => i + 1);
+
+  // Count posts per day
+  const postsByDay: Record<number, number> = {};
+  posts.forEach((p) => {
+    const d = new Date(p.createdAt);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const day = d.getDate();
+      postsByDay[day] = (postsByDay[day] || 0) + 1;
+    }
+  });
+
+  const maxCount = Math.max(...Object.values(postsByDay), 1);
+  const today = now.getDate();
+
+  const getCircleStyle = (day: number): React.CSSProperties => {
+    const count = postsByDay[day] || 0;
+    const intensity = count / maxCount;
+    const isToday = day === today;
+    if (isToday) {
+      return {
+        width: 32, height: 32, borderRadius: "50%",
+        background: "#6366f1", color: "#fff",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 12, fontWeight: 700, cursor: "default",
+      };
+    }
+    if (count === 0) {
+      return {
+        width: 32, height: 32, borderRadius: "50%",
+        background: "#f1f5f9", color: "#94a3b8",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 12, fontWeight: 400, cursor: "default",
+      };
+    }
+    const alpha = 0.3 + intensity * 0.7;
+    return {
+      width: 32, height: 32, borderRadius: "50%",
+      background: `rgba(99,102,241,${alpha})`,
+      color: intensity > 0.5 ? "#fff" : "#4f46e5",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: 12, fontWeight: 600, cursor: "default",
+      position: "relative",
+    };
+  };
+
+  const monthName = now.toLocaleString("en-US", { month: "long", year: "numeric" });
+  const stats = [
+    { label: "Posts", value: posts.filter((p) => { const d = new Date(p.createdAt); return d.getMonth() === month; }).length },
+    { label: "Published", value: posts.filter((p) => { const d = new Date(p.createdAt); return d.getMonth() === month && p.status?.toLowerCase() === "published"; }).length },
+    { label: "Scheduled", value: posts.filter((p) => p.status?.toLowerCase() === "scheduled").length },
+  ];
+
+  return (
+    <div style={{ ...card, height: "100%", minHeight: 305 }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>Post Activity</div>
+          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{monthName}</div>
+        </div>
+        <div style={{ display: "flex", gap: 16 }}>
+          {stats.map((s) => (
+            <div key={s.label} style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: "#0f172a", letterSpacing: "-1px" }}>{s.value}</div>
+              <div style={{ fontSize: 10, color: "#94a3b8" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Day labels */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4, marginBottom: 6 }}>
+        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+          <div key={i} style={{ textAlign: "center", fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 4 }}>
+        {Array(offset).fill(null).map((_, i) => <div key={`e${i}`} />)}
+        {days.map((day) => (
+          <div key={day} style={{ display: "flex", justifyContent: "center" }}>
+            <div style={getCircleStyle(day)}>
+              {day}
+              {(postsByDay[day] || 0) > 0 && day !== today && (
+                <div style={{
+                  position: "absolute", top: -2, right: -2,
+                  width: 12, height: 12, borderRadius: "50%",
+                  background: "#10b981", border: "2px solid #fff",
+                  fontSize: 7, color: "#fff", fontWeight: 700,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>{postsByDay[day]}</div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Post Schedule (right panel like reference)
+function PostSchedule({ posts }: { posts: Post[] }) {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const windowStart = new Date(now);
+  windowStart.setMinutes(0, 0, 0);
+  const windowEnd = new Date(windowStart);
+  windowEnd.setHours(windowStart.getHours() + 5);
+
+  const scheduled = posts
+    .filter((p) => p.scheduledAt && ["scheduled", "approved"].includes(p.status?.toLowerCase() ?? ""))
+    .sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime());
+
+  const colors = ["#8b5cf6", "#e1306c", "#1877f2", "#10b981", "#f59e0b"];
+  const timelineSlots = Array.from({ length: 5 }, (_, i) => {
+    const slotStart = new Date(windowStart);
+    slotStart.setHours(windowStart.getHours() + i);
+    const slotEnd = new Date(slotStart);
+    slotEnd.setHours(slotStart.getHours() + 1);
+
+    const slotPosts = scheduled.filter((post) => {
+      const d = new Date(post.scheduledAt!);
+      return d >= slotStart && d < slotEnd;
+    });
+
+    return {
+      slotStart,
+      slotPosts,
+      slotLabel: slotStart.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }),
+    };
+  });
+
+  const scheduledInWindow = timelineSlots.reduce((acc, s) => acc + s.slotPosts.length, 0);
+
+  return (
+    <div style={{ ...card, display: "flex", flexDirection: "column", gap: 0, paddingBottom: 0 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>Post Schedule</div>
+          <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+            {windowStart.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
+            {" - "}
+            {windowEnd.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false })}
+            {" · "}
+            {scheduledInWindow} posts
+          </div>
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+        {timelineSlots.map((slot, hi) => {
+          const { slotLabel, slotPosts } = slot;
+          return (
+            <div key={slotLabel} style={{ display: "flex", gap: 10, alignItems: "flex-start", minHeight: 44, position: "relative" }}>
+              {/* Hour label */}
+              <div style={{ width: 42, fontSize: 10, color: "#94a3b8", paddingTop: 2, flexShrink: 0 }}>{slotLabel}</div>
+
+              {/* Timeline line */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 8, flexShrink: 0 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: colors[hi % colors.length], flexShrink: 0 }} />
+                {hi < timelineSlots.length - 1 && <div style={{ width: 1, flex: 1, background: "#f0f0f0", minHeight: 36 }} />}
+              </div>
+
+              {/* Post card */}
+              <div style={{ flex: 1, marginBottom: 4 }}>
+                {slotPosts.length === 0 ? (
+                  <div style={{
+                    background: "#f8fafc",
+                    borderRadius: 10,
+                    padding: "8px 10px",
+                    border: "1px solid #eef2f7",
+                    fontSize: 11,
+                    color: "#cbd5e1",
+                  }}>
+                    No post
+                  </div>
+                ) : (
+                  slotPosts.map((post) => (
+                    <div
+                      key={post.id}
+                      style={{
+                        background: colors[hi % colors.length] + "12",
+                        borderRadius: 10,
+                        padding: "8px 10px",
+                        border: `1px solid ${colors[hi % colors.length]}20`,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        marginBottom: 6,
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: colors[hi % colors.length], marginBottom: 2 }}>
+                          {new Date(post.scheduledAt!).toLocaleTimeString("en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#374151", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {post.caption?.slice(0, 40) || "No caption"}
+                        </div>
+                      </div>
+                      {post.imageUrl && (
+                        <img src={post.imageUrl} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {scheduledInWindow === 0 && (
+        <div style={{ textAlign: "center", padding: "20px", color: "#94a3b8", fontSize: 12 }}>
+          No posts scheduled in this 5-hour window
+        </div>
+      )}
+    </div>
+  );
+}
+
 const COMPARE_METRICS = {
   audience:   { label: "Audience",   igKey: "followers", fbKey: "fans"       },
   engagement: { label: "Engagement", igKey: "likes",     fbKey: "engaged"    },
@@ -225,6 +468,7 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ flex: 1, height: 36, marginBottom: 4 }} />
 
       {/* ── Row 1: KPI tiles ─────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
@@ -234,7 +478,13 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
         <KpiTile label="In review"   value={inReview.length}  sub="awaiting"                        accent="#f59e0b" />
       </div>
 
-      {/* ── Row 2: Platform cards + Bar chart ────────────────────────── */}
+      {/* ── Row 2: Calendar + Schedule (top-left) ─────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(340px, 430px) 1fr", gap: 12, alignItems: "start" }}>
+        <PostActivityCalendar posts={posts} />
+        <PostSchedule posts={posts} />
+      </div>
+
+      {/* ── Row 3: Platform cards + Bar chart ────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: platformGridCols, gap: 12 }}>
 
         {igData && (
@@ -298,7 +548,7 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
         )}
 
         {/* Post activity bar chart */}
-        <div style={card}>
+        <div style={{ ...card, display: "grid" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Post activity</div>
@@ -330,7 +580,7 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
         </div>
       </div>
 
-      {/* ── Row 3: Compare + Status + Platforms & Recent ─────────────── */}
+      {/* ── Row 4: Compare + Status + Platforms & Recent ─────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 12 }}>
 
         {/* Compare widget */}
@@ -536,7 +786,7 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
         </div>
       </div>
 
-      {/* ── Row 4: AI Recommendations ────────────────────────────────── */}
+      {/* ── Row 5: AI Recommendations ────────────────────────────────── */}
       <Airecommendations posts={posts} igData={igData} fbData={fbData} token={token} />
 
     </div>

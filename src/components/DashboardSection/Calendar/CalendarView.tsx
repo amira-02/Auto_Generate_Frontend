@@ -177,6 +177,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
 
   const dragIdRef      = useRef<number | null>(null);
   const dragCounterRef = useRef<Record<string, number>>({});
+  const dayTimelineRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { setPosts(initialPosts); }, [initialPosts]);
 
@@ -189,6 +190,18 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
     }, 60_000);
     return () => clearInterval(interval);
   }, [token, apiBase]);
+
+  useEffect(() => {
+    if (viewMode !== "day" || !dayTimelineRef.current) return;
+    const timeline = dayTimelineRef.current;
+    const hourSlotHeight = 84;
+    const now = new Date();
+    const targetHour = isSameDay(selectedDay, now) ? now.getHours() : 8;
+    timeline.scrollTo({
+      top: Math.max(0, (targetHour - 1) * hourSlotHeight),
+      behavior: "smooth",
+    });
+  }, [viewMode, selectedDay]);
 
   const showToast = (msg: string, type: "ok" | "err" = "ok") => {
     setToast({ msg, type });
@@ -240,7 +253,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
     setDragOverKey(key);
   };
   const onCellDragOver  = (e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; };
-  const onCellDragLeave = (e: React.DragEvent, key: string) => {
+  const onCellDragLeave = (key: string) => {
     dragCounterRef.current[key] = (dragCounterRef.current[key] ?? 1) - 1;
     if (dragCounterRef.current[key] <= 0) {
       dragCounterRef.current[key] = 0;
@@ -262,12 +275,11 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
   const year  = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const firstOfMonth = new Date(year, month, 1);
-  const lastOfMonth  = new Date(year, month + 1, 0);
   const offset = (firstOfMonth.getDay() + 6) % 7;
-  const monthDays: (number | null)[] = [
-    ...Array(offset).fill(null),
-    ...Array.from({ length: lastOfMonth.getDate() }, (_, i) => i + 1),
-  ];
+  const monthCells = Array.from({ length: 42 }, (_, i) => {
+    const dayOffset = i - offset;
+    return new Date(year, month, dayOffset + 1);
+  });
 
   const startOfWeek = new Date(currentDate);
   const dow = currentDate.getDay();
@@ -384,12 +396,14 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
 
   // ─── Month cell ───────────────────────────────────────────────────────────────
 
-  const renderMonthCell = (date: Date, dayNum: number) => {
+  const renderMonthCell = (date: Date) => {
     const key      = toDateKey(date);
     const dayPosts = getPostsForDay(date);
     const isOver   = dragOverKey === key;
     const today    = isToday(date);
     const selected = isSameDay(date, selectedDay);
+    const isCurrentMonth = date.getMonth() === month;
+    const dayNum = date.getDate();
 
     return (
       <div
@@ -397,11 +411,11 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         onClick={() => { setSelectedDay(date); setCurrentDate(date); setViewMode("day"); }}
         onDragEnter={e => onCellDragEnter(e, key)}
         onDragOver={onCellDragOver}
-        onDragLeave={e => onCellDragLeave(e, key)}
+        onDragLeave={() => onCellDragLeave(key)}
         onDrop={e => onCellDrop(e, date, key)}
         style={{
           minHeight: 100, padding: "8px 6px", borderRadius: 10, cursor: "pointer",
-          background: isOver ? "#f0f0fe" : selected ? "#fafafe" : "#fff",
+          background: isOver ? "#f0f0fe" : selected ? "#fafafe" : isCurrentMonth ? "#fff" : "#f8fafc",
           border: today ? "2px solid #6366f1" : isOver ? "2px dashed #6366f1" : "1px solid #f0f0f0",
           transition: "background .1s, border .1s",
         }}
@@ -411,7 +425,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
           background: today ? "#6366f1" : "transparent",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: today ? "#fff" : "#374151" }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: today ? "#fff" : isCurrentMonth ? "#374151" : "#94a3b8" }}>
             {dayNum}
           </span>
         </div>
@@ -458,7 +472,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         <div
           onDragEnter={e => onCellDragEnter(e, key)}
           onDragOver={onCellDragOver}
-          onDragLeave={e => onCellDragLeave(e, key)}
+          onDragLeave={() => onCellDragLeave(key)}
           onDrop={e => onCellDrop(e, date, key)}
           style={{
             flex: 1, padding: 8, minHeight: 200,
@@ -623,7 +637,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
           />
 
           {/* Upcoming posts */}
-          <div style={{ flex: 1, padding: "0 16px 16px", overflow: "auto" }}>
+          <div className="hide-scrollbar" style={{ flex: 1, padding: "0 16px 16px", overflow: "auto" }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
               Upcoming
             </div>
@@ -667,7 +681,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         }}>
 
           {/* Calendar body */}
-          <div style={{ flex: 1, overflow: "auto", padding: 16 }}>
+          <div className="hide-scrollbar" style={{ flex: 1, overflow: "auto", padding: 16 }}>
 
             {/* WEEK */}
             {viewMode === "week" && (
@@ -687,18 +701,14 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
                   ))}
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 6 }}>
-                  {monthDays.map((day, i) =>
-                    day === null
-                      ? <div key={`e-${i}`} />
-                      : renderMonthCell(new Date(year, month, day), day)
-                  )}
+                  {monthCells.map(date => renderMonthCell(date))}
                 </div>
               </>
             )}
 
             {/* DAY */}
             {viewMode === "day" && (
-              <div style={{ maxWidth: 560, margin: "0 auto" }}>
+              <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
                 <div style={{
                   display: "flex", alignItems: "center", gap: 12,
                   padding: "16px 0 20px",
@@ -725,69 +735,95 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
                   </div>
                 </div>
 
-                {getPostsForDay(selectedDay).length === 0 ? (
-                  <div style={{
-                    textAlign: "center", padding: "60px 20px",
-                    background: "#fafafa", borderRadius: 16, border: "1px dashed #e5e7eb",
-                  }}>
-                    <div style={{ fontSize: 36, marginBottom: 10 }}>📭</div>
-                    <p style={{ color: "#94a3b8", fontSize: 13, margin: 0 }}>No posts scheduled for this day</p>
-                  </div>
-                ) : (
-                  getPostsForDay(selectedDay).map(p => {
-                    const published = isPublished(p);
-                    const color = published
-                      ? { bg: "#f3f4f6", text: "#9ca3af", border: "#e5e7eb" }
-                      : getPostColor(p.id);
-                    const platforms = normalizePlatforms(p.platforms);
-                    const d = parseDate(p.scheduledAt);
+                <div
+                  className="hide-scrollbar"
+                  ref={dayTimelineRef}
+                  style={{
+                    flex: 1,
+                    minHeight: 0,
+                    overflowY: "auto",
+                    paddingRight: 4,
+                  }}
+                >
+                  {Array.from({ length: 24 }, (_, hour) => {
+                    const hourPosts = getPostsForDay(selectedDay)
+                      .filter(p => {
+                        const d = parseDate(p.scheduledAt);
+                        return d !== null && d.getHours() === hour;
+                      })
+                      .sort((a, b) => (parseDate(a.scheduledAt)?.getTime() ?? 0) - (parseDate(b.scheduledAt)?.getTime() ?? 0));
+
+                    const hourLabel = new Date(2000, 0, 1, hour, 0).toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    });
+
                     return (
-                      <div key={p.id} style={{
-                        background: color.bg, border: `1px solid ${color.border}`,
-                        borderRadius: 14, padding: 16, marginBottom: 12,
-                        opacity: published ? 0.7 : 1,
-                      }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: color.text }}>{p.topicName}</div>
-                            {d && (
-                              <div style={{ fontSize: 11, color: color.text, opacity: 0.7, marginTop: 2 }}>
-                                🕐 {d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-                              </div>
-                            )}
-                          </div>
-                          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                            {platforms.map(pl => (
-                              <span key={pl} style={{ fontSize: 14 }}>{getIcon(pl)}</span>
-                            ))}
-                            {published && (
-                              <span style={{ fontSize: 10, background: "#d1fae5", color: "#065f46", padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>
-                                Published
-                              </span>
-                            )}
-                          </div>
+                      <div key={`slot-${hour}`} style={{ display: "flex", gap: 10, minHeight: 84 }}>
+                        <div style={{ width: 64, flexShrink: 0, paddingTop: 10 }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8" }}>{hourLabel}</span>
                         </div>
-                        {p.caption && (
-                          <p style={{ margin: 0, fontSize: 13, color: color.text, lineHeight: 1.6 }}>
-                            {p.caption}
-                          </p>
-                        )}
-                        {p.hashtags && (
-                          <p style={{ margin: "6px 0 0", fontSize: 11, color: color.text, opacity: 0.7 }}>
-                            {p.hashtags}
-                          </p>
-                        )}
-                        {p.imageUrl && (
-                          <img src={p.imageUrl} alt="" style={{
-                            marginTop: 10, width: "100%", borderRadius: 10,
-                            objectFit: "cover", maxHeight: 180,
-                            filter: published ? "grayscale(50%)" : "none",
-                          }} />
-                        )}
+                        <div style={{ flex: 1, paddingBottom: 8 }}>
+                          <div style={{ borderTop: "1px solid #eef2f7", marginBottom: 8 }} />
+                          {hourPosts.map(p => {
+                            const published = isPublished(p);
+                            const color = published
+                              ? { bg: "#f3f4f6", text: "#9ca3af", border: "#e5e7eb" }
+                              : getPostColor(p.id);
+                            const platforms = normalizePlatforms(p.platforms);
+                            const d = parseDate(p.scheduledAt);
+                            return (
+                              <div key={p.id} style={{
+                                background: color.bg, border: `1px solid ${color.border}`,
+                                borderRadius: 14, padding: 12, marginBottom: 10,
+                                opacity: published ? 0.7 : 1,
+                              }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+                                  <div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: color.text }}>{p.topicName}</div>
+                                    {d && (
+                                      <div style={{ fontSize: 11, color: color.text, opacity: 0.7, marginTop: 2 }}>
+                                        🕐 {d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                                    {platforms.map(pl => (
+                                      <span key={pl} style={{ fontSize: 14 }}>{getIcon(pl)}</span>
+                                    ))}
+                                    {published && (
+                                      <span style={{ fontSize: 10, background: "#d1fae5", color: "#065f46", padding: "2px 8px", borderRadius: 10, fontWeight: 700 }}>
+                                        Published
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                {p.caption && (
+                                  <p style={{ margin: 0, fontSize: 13, color: color.text, lineHeight: 1.6 }}>
+                                    {p.caption}
+                                  </p>
+                                )}
+                                {p.hashtags && (
+                                  <p style={{ margin: "6px 0 0", fontSize: 11, color: color.text, opacity: 0.7 }}>
+                                    {p.hashtags}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     );
-                  })
-                )}
+                  })}
+                  {getPostsForDay(selectedDay).length === 0 && (
+                    <div style={{
+                      textAlign: "center", padding: "24px 20px 8px",
+                      color: "#94a3b8", fontSize: 13,
+                    }}>
+                      No posts scheduled for this day
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -798,6 +834,17 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+          width: 0;
+          height: 0;
+          display: none;
         }
       `}</style>
     </div>

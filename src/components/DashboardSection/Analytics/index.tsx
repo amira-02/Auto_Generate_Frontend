@@ -10,12 +10,16 @@ import TiktokTab    from "./TiktokTab";
 import ContentTab   from "./ContentTab";
 import { fmtNum }   from "./analyticsHelpers";
 import type { Post, InstagramSummary, FacebookSummary, LinkedInSummary, TikTokSummary } from "./analyticsTypes";
+import NotificationBell from "../Notifications/NotificationBell";
 
 const API = "https://localhost:7079";
-
 type Tab = "overview" | "instagram" | "facebook" | "linkedin" | "tiktok" | "content";
 
-export default function Analytics() {
+type Props = {
+  onExternalTask?: (taskId: number) => void;
+};
+
+export default function Analytics({ onExternalTask }: Props) {
   const { token } = useContext(AuthContext);
   const [posts,   setPosts]   = useState<Post[]>([]);
   const [igData,  setIgData]  = useState<InstagramSummary | null>(null);
@@ -67,7 +71,7 @@ export default function Analytics() {
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif" }}>
 
-      {/* ── Top Bar ───────────────────────────────────────────────────────── */}
+      {/* ── Top Bar with NotificationBell ──────────────────────────────── */}
       <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #f0f0f0",
         boxShadow: "0 1px 4px rgba(0,0,0,0.04)", padding: "12px 18px",
         display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
@@ -78,7 +82,7 @@ export default function Analytics() {
           <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Analytics</span>
         </div>
 
-        {/* Instagram badge */}
+        {/* Platform badges */}
         {igData && (
           <>
             <div style={{ width: 1, height: 22, background: "#f0f0f0" }} />
@@ -90,41 +94,33 @@ export default function Analytics() {
             </div>
           </>
         )}
-
-        {/* Facebook badge */}
         {fbData && (
           <>
             <div style={{ width: 1, height: 22, background: "#f0f0f0" }} />
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {fbData.profilePicture && <img src={fbData.profilePicture} alt="" style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", border: "2px solid #1877f230" }} />}
+              {fbData.profilePicture && <img src={fbData.profilePicture} alt="" style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover" }} />}
               <span style={{ fontSize: 12, fontWeight: 600, color: "#1877f2" }}>{fbData.name}</span>
               <span style={{ fontSize: 11, color: "#94a3b8" }}>{fmtNum(fbData.fans)} fans</span>
               <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 10, background: "#1877f215", color: "#1877f2" }}>FB</span>
             </div>
           </>
         )}
-
-        {/* LinkedIn badge */}
         {liData && (
           <>
             <div style={{ width: 1, height: 22, background: "#f0f0f0" }} />
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {liData.profilePicture && <img src={liData.profilePicture} alt="" style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", border: "2px solid #0077b530" }} />}
+              {liData.profilePicture && <img src={liData.profilePicture} alt="" style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover" }} />}
               <span style={{ fontSize: 12, fontWeight: 600, color: "#0077b5" }}>{liData.name}</span>
-              <span style={{ fontSize: 11, color: "#94a3b8" }}>{fmtNum(liData.followers)} followers</span>
               <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 10, background: "#0077b515", color: "#0077b5" }}>LI</span>
             </div>
           </>
         )}
-
-        {/* TikTok badge */}
         {ttData && (
           <>
             <div style={{ width: 1, height: 22, background: "#f0f0f0" }} />
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {ttData.profilePicture && <img src={ttData.profilePicture} alt="" style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", border: "2px solid #ff005030" }} />}
+              {ttData.profilePicture && <img src={ttData.profilePicture} alt="" style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover" }} />}
               <span style={{ fontSize: 12, fontWeight: 600, color: "#ff0050" }}>@{ttData.name}</span>
-              <span style={{ fontSize: 11, color: "#94a3b8" }}>{fmtNum(ttData.followers)} followers</span>
               <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 10, background: "#ff005015", color: "#ff0050" }}>TT</span>
             </div>
           </>
@@ -159,9 +155,15 @@ export default function Analytics() {
             }}>{p}</button>
           ))}
         </div>
+
+        {/* 🔔 NotificationBell — only here in Analytics */}
+        <NotificationBell
+          token={token}
+          onExternalTask={onExternalTask}
+        />
       </div>
 
-      {/* ── Tab Content ───────────────────────────────────────────────────── */}
+      {/* ── Tab Content ── */}
       {tab === "overview"  && <OverviewTab  posts={posts} igData={igData} fbData={fbData} liData={liData} ttData={ttData} />}
       {tab === "instagram" && <InstagramTab igData={igData} token={token} />}
       {tab === "facebook"  && <FacebookTab  fbData={fbData} />}

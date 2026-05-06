@@ -33,6 +33,17 @@ type Props = {
 };
 
 export default function TopicsView({ onSelectTopic }: Props) {
+  const ui = {
+    bg: "#f8f9fb",
+    panel: "#ffffff",
+    border: "#e5e7eb",
+    text: "#0f172a",
+    subtext: "#64748b",
+    primary: "#6366f1",
+    primarySoft: "#eef2ff",
+    danger: "#ef4444",
+  } as const;
+
   const { token } = useContext(AuthContext);
   const [topics, setTopics]         = useState<Topic[]>([]);
   const [loading, setLoading]       = useState(false);
@@ -106,7 +117,7 @@ export default function TopicsView({ onSelectTopic }: Props) {
   })).filter(p => p.count > 0);
 
   return (
-    <div style={{ background: "#f5f7fa", minHeight: "100vh", padding: "40px 32px", fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div style={{ background: ui.bg, minHeight: "100vh", padding: "24px", fontFamily: "'DM Sans', 'Inter', system-ui, sans-serif" }}>
       
       {/* Controls Bar */}
       <motion.div
@@ -114,15 +125,16 @@ export default function TopicsView({ onSelectTopic }: Props) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
         style={{
-          background: "white", borderRadius: 24, padding: "16px 24px",
+          background: ui.panel, borderRadius: 16, padding: "14px 16px",
           marginBottom: 32, boxShadow: "0 1px 2px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.05)",
           display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap",
+          border: `1px solid ${ui.border}`,
         }}
       >
         <div style={{ 
           display: "flex", alignItems: "center", gap: 10, flex: 1,
-          background: "#f9fafb", padding: "8px 16px", borderRadius: 40,
-          border: "1px solid #e5e7eb"
+          background: "#f8fafc", padding: "8px 14px", borderRadius: 12,
+          border: `1px solid ${ui.border}`
         }}>
           <FiSearch size={20} color="#9ca3af" />
           <input
@@ -138,7 +150,7 @@ export default function TopicsView({ onSelectTopic }: Props) {
           />
           {search && (
             <button onClick={() => setSearch("")} style={{
-              background: "#e5e7eb", border: "none", borderRadius: 20,
+              background: "#eef2f7", border: "none", borderRadius: 10,
               cursor: "pointer", padding: "4px 8px", display: "flex",
               alignItems: "center", gap: 4, fontSize: 12, color: "#6b7280"
             }}>
@@ -152,9 +164,9 @@ export default function TopicsView({ onSelectTopic }: Props) {
             onClick={() => setSelectedPlatform("all")}
             style={{
               padding: "8px 20px", borderRadius: 40, fontSize: 13, fontWeight: 500,
-              background: selectedPlatform === "all" ? "#667eea" : "transparent",
+              background: selectedPlatform === "all" ? ui.primary : "transparent",
               color: selectedPlatform === "all" ? "white" : "#6b7280",
-              border: selectedPlatform === "all" ? "none" : "1px solid #e5e7eb",
+              border: selectedPlatform === "all" ? "none" : `1px solid ${ui.border}`,
               cursor: "pointer", transition: "all 0.2s",
             }}
           >
@@ -182,10 +194,10 @@ export default function TopicsView({ onSelectTopic }: Props) {
           onClick={() => { setShowCreate(true); setError(""); }}
           style={{
             display: "flex", alignItems: "center", gap: 8,
-            padding: "10px 24px", borderRadius: 40, border: "none",
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            padding: "10px 18px", borderRadius: 12, border: "none",
+            background: ui.primary,
             color: "white", fontSize: 14, fontWeight: 600,
-            cursor: "pointer", boxShadow: "0 4px 12px rgba(102,126,234,0.3)",
+            cursor: "pointer", boxShadow: "0 4px 10px rgba(99,102,241,0.28)",
             whiteSpace: "nowrap",
           }}
         >
@@ -215,9 +227,9 @@ export default function TopicsView({ onSelectTopic }: Props) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.05 }}
             style={{
-              background: "white", borderRadius: 20, padding: "20px 24px",
+              background: ui.panel, borderRadius: 14, padding: "18px 20px",
               boxShadow: "0 1px 3px rgba(0,0,0,0.02), 0 8px 24px -12px rgba(0,0,0,0.1)",
-              border: "1px solid rgba(226, 232, 240, 0.8)", backdropFilter: "blur(10px)",
+              border: `1px solid ${ui.border}`,
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -227,9 +239,9 @@ export default function TopicsView({ onSelectTopic }: Props) {
               }}>
                 <stat.icon size={24} color={stat.color} />
               </div>
-              <span style={{ fontSize: 28, fontWeight: 700, color: "#1f2937" }}>{stat.value}</span>
+              <span style={{ fontSize: 26, fontWeight: 700, color: ui.text }}>{stat.value}</span>
             </div>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "#6b7280", margin: 0 }}>{stat.label}</p>
+            <p style={{ fontSize: 13, fontWeight: 600, color: ui.subtext, margin: 0 }}>{stat.label}</p>
           </motion.div>
         ))}
       </motion.div>
@@ -277,15 +289,15 @@ export default function TopicsView({ onSelectTopic }: Props) {
       {!loading && topics.length === 0 && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
           style={{
-            background: "white", borderRadius: 32, padding: "80px 40px",
+            background: ui.panel, borderRadius: 18, padding: "64px 28px",
             textAlign: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.02), 0 8px 24px -12px rgba(0,0,0,0.1)"
           }}
         >
-          <div style={{ fontSize: 80, marginBottom: 24 }}>📚</div>
+          <div style={{ fontSize: 48, marginBottom: 14 }}>🗂️</div>
           <h3 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 8px", color: "#1f2937" }}>No topics created yet</h3>
           <p style={{ color: "#6b7280", marginBottom: 32, fontSize: 14 }}>Start organizing your content by creating your first topic</p>
           <button onClick={() => setShowCreate(true)} style={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: ui.primary,
             color: "white", border: "none", borderRadius: 40, padding: "12px 32px",
             fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex",
             alignItems: "center", gap: 8,
@@ -299,7 +311,7 @@ export default function TopicsView({ onSelectTopic }: Props) {
       {!loading && topics.length > 0 && filtered.length === 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           style={{
-            background: "white", borderRadius: 24, padding: "60px 40px",
+            background: ui.panel, borderRadius: 16, padding: "56px 28px",
             textAlign: "center", boxShadow: "0 1px 2px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.05)"
           }}
         >
@@ -335,10 +347,10 @@ export default function TopicsView({ onSelectTopic }: Props) {
                   whileHover={{ y: -6 }}
                   onClick={() => onSelectTopic(topic.id, topic.name)}
                   style={{
-                    background: "white", borderRadius: 20, overflow: "hidden",
+                    background: ui.panel, borderRadius: 16, overflow: "hidden",
                     cursor: "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.05)",
                     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                    border: "1px solid rgba(226, 232, 240, 0.6)"
+                    border: `1px solid ${ui.border}`
                   }}
                 >
                   <div style={{ padding: "20px 20px 16px" }}>
@@ -349,11 +361,11 @@ export default function TopicsView({ onSelectTopic }: Props) {
                         background: platform ? `${platform.color}15` : "#f3f4f6",
                         display: "flex", alignItems: "center", justifyContent: "center"
                       }}>
-                        <FiFolder size={24} color={platform?.color || "#9ca3af"} />
+                        <FiFolder size={22} color={platform?.color || "#94a3b8"} />
                       </div>
                       <button
                         onClick={(e) => handleDelete(topic.id, e)}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = ui.danger)}
                         onMouseLeave={(e) => (e.currentTarget.style.color = "#d1d5db")}
                         style={{
                           background: "transparent", border: "none", cursor: "pointer",
@@ -368,7 +380,7 @@ export default function TopicsView({ onSelectTopic }: Props) {
                     {/* Title */}
                     <h3 style={{
                       fontSize: 16, fontWeight: 700, margin: "8px 0 6px",
-                      color: "#111827", lineHeight: 1.4
+                      color: ui.text, lineHeight: 1.4
                     }}>
                       {topic.name}
                     </h3>
@@ -376,7 +388,7 @@ export default function TopicsView({ onSelectTopic }: Props) {
                     {/* Description */}
                     {topic.description && (
                       <p style={{
-                        fontSize: 13, color: "#6b7280", lineHeight: 1.5,
+                        fontSize: 13, color: ui.subtext, lineHeight: 1.5,
                         margin: "0 0 12px", display: "-webkit-box",
                         WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden"
                       }}>
@@ -387,18 +399,18 @@ export default function TopicsView({ onSelectTopic }: Props) {
                     {/* Stats Row */}
                     <div style={{
                       display: "flex", alignItems: "center", gap: 12,
-                      paddingTop: 12, borderTop: "1px solid #f3f4f6"
+                      paddingTop: 12, borderTop: `1px solid ${ui.border}`
                     }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <FiHash size={14} color="#9ca3af" />
-                        <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>
                           {topic.postCount} posts
                         </span>
                       </div>
                       <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#d1d5db" }} />
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <FiCalendar size={14} color="#9ca3af" />
-                        <span style={{ fontSize: 12, color: "#6b7280" }}>
+                        <span style={{ fontSize: 12, color: ui.subtext }}>
                           {new Date(topic.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                         </span>
                       </div>
@@ -512,14 +524,15 @@ export default function TopicsView({ onSelectTopic }: Props) {
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               onClick={e => e.stopPropagation()}
               style={{
-                background: "white", borderRadius: 32, padding: "32px",
+                background: ui.panel, borderRadius: 18, padding: "26px",
                 width: "100%", maxWidth: 500, position: "relative",
                 boxShadow: "0 24px 64px rgba(0,0,0,0.15)",
+                border: `1px solid ${ui.border}`,
               }}
             >
               {/* Modal Header */}
               <div style={{ marginBottom: 24 }}>
-                <h2 style={{ fontSize: 24, fontWeight: 700, margin: "0 0 6px", color: "#111827" }}>
+                <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px", color: ui.text }}>
                   Create New Topic
                 </h2>
                 <p style={{ fontSize: 14, color: "#6b7280", margin: 0 }}>
@@ -540,12 +553,12 @@ export default function TopicsView({ onSelectTopic }: Props) {
                     placeholder="e.g., Product Launch, Marketing Tips..."
                     style={{
                       width: "100%", padding: "12px 16px", borderRadius: 16,
-                      border: "2px solid #e5e7eb", fontSize: 14,
+                      border: `1px solid ${ui.border}`, fontSize: 14,
                       outline: "none", transition: "all 0.2s",
                       boxSizing: "border-box"
                     }}
-                    onFocus={e => e.target.style.borderColor = "#667eea"}
-                    onBlur={e => e.target.style.borderColor = "#e5e7eb"}
+                    onFocus={e => e.target.style.borderColor = ui.primary}
+                    onBlur={e => e.target.style.borderColor = ui.border}
                     onKeyDown={e => e.key === "Enter" && handleCreate()}
                   />
                 </div>
@@ -561,11 +574,11 @@ export default function TopicsView({ onSelectTopic }: Props) {
                     rows={3}
                     style={{
                       width: "100%", padding: "12px 16px", borderRadius: 16,
-                      border: "2px solid #e5e7eb", fontSize: 14, outline: "none",
+                      border: `1px solid ${ui.border}`, fontSize: 14, outline: "none",
                       resize: "vertical", boxSizing: "border-box", fontFamily: "inherit"
                     }}
-                    onFocus={e => e.target.style.borderColor = "#667eea"}
-                    onBlur={e => e.target.style.borderColor = "#e5e7eb"}
+                    onFocus={e => e.target.style.borderColor = ui.primary}
+                    onBlur={e => e.target.style.borderColor = ui.border}
                   />
                 </div>
 
@@ -612,7 +625,7 @@ export default function TopicsView({ onSelectTopic }: Props) {
                     onClick={() => setShowCreate(false)}
                     style={{
                       flex: 1, padding: "12px", borderRadius: 40,
-                      border: "2px solid #e5e7eb", background: "white",
+                      border: `1px solid ${ui.border}`, background: "white",
                       fontSize: 14, fontWeight: 600, cursor: "pointer",
                       color: "#6b7280", transition: "all 0.2s",
                     }}
@@ -624,7 +637,7 @@ export default function TopicsView({ onSelectTopic }: Props) {
                     disabled={creating}
                     style={{
                       flex: 1, padding: "12px", borderRadius: 40, border: "none",
-                      background: creating ? "#d1d5db" : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      background: creating ? "#d1d5db" : ui.primary,
                       color: creating ? "#9ca3af" : "white", fontSize: 14,
                       fontWeight: 600, cursor: creating ? "not-allowed" : "pointer",
                       transition: "all 0.2s",
