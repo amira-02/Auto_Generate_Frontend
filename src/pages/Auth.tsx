@@ -1,11 +1,12 @@
 // Auth.tsx
-import { useState, useContext } from "react";
+import { useState, useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../hooks/AuthContext";
 import { API } from "../services/api";
 import "../assets/Auth.css";
 
 export default function Auth() {
+  const pageRef = useRef<HTMLDivElement | null>(null);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
@@ -35,8 +36,42 @@ export default function Auth() {
     }
   };
 
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!pageRef.current) return;
+
+    const bounds = pageRef.current.getBoundingClientRect();
+    const x = (event.clientX - bounds.left) / bounds.width;
+    const y = (event.clientY - bounds.top) / bounds.height;
+    const rotateX = (0.5 - y) * 8;
+    const rotateY = (x - 0.5) * 10;
+    const shiftX = (x - 0.5) * 2;
+    const shiftY = (y - 0.5) * 2;
+
+    pageRef.current.style.setProperty("--auth-tilt-x", `${rotateX.toFixed(2)}deg`);
+    pageRef.current.style.setProperty("--auth-tilt-y", `${rotateY.toFixed(2)}deg`);
+    pageRef.current.style.setProperty("--auth-cursor-x", `${(x * 100).toFixed(1)}%`);
+    pageRef.current.style.setProperty("--auth-cursor-y", `${(y * 100).toFixed(1)}%`);
+    pageRef.current.style.setProperty("--auth-shift-x", shiftX.toFixed(3));
+    pageRef.current.style.setProperty("--auth-shift-y", shiftY.toFixed(3));
+  };
+
+  const resetMouseMotion = () => {
+    if (!pageRef.current) return;
+    pageRef.current.style.setProperty("--auth-tilt-x", "0deg");
+    pageRef.current.style.setProperty("--auth-tilt-y", "0deg");
+    pageRef.current.style.setProperty("--auth-cursor-x", "50%");
+    pageRef.current.style.setProperty("--auth-cursor-y", "50%");
+    pageRef.current.style.setProperty("--auth-shift-x", "0");
+    pageRef.current.style.setProperty("--auth-shift-y", "0");
+  };
+
   return (
-    <div className="auth-page">
+    <div className="auth-page" ref={pageRef} onMouseMove={handleMouseMove} onMouseLeave={resetMouseMotion}>
+      <div className="auth-cursor-light" aria-hidden="true" />
+      <div className="auth-glow auth-glow-one" aria-hidden="true" />
+      <div className="auth-glow auth-glow-two" aria-hidden="true" />
+      <div className="auth-grid-overlay" aria-hidden="true" />
+
       <button className="auth-home-btn" onClick={() => navigate("/")}>
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -48,8 +83,18 @@ export default function Auth() {
       <div className="auth-shell">
         <div className="auth-brand">
           <div className="auth-badge">AutoGenerate</div>
-          <h1>Create better posts faster</h1>
-          <p>Generate, schedule, and manage your social content from one place.</p>
+          <h1>Grow your socials with smoother workflows</h1>
+          <p>Plan, generate, and ship high-performing content from one intelligent workspace.</p>
+          <div className="auth-brand-stats">
+            <div className="auth-stat-card">
+              <span>Avg. speed boost</span>
+              <strong>3.2x</strong>
+            </div>
+            <div className="auth-stat-card">
+              <span>Posts automated</span>
+              <strong>12K+</strong>
+            </div>
+          </div>
           <ul>
             <li>AI captions and media</li>
             <li>Topic-based organization</li>
@@ -58,6 +103,11 @@ export default function Auth() {
         </div>
 
         <div className="auth-card">
+          <div className="auth-pill-row">
+            <span className={`auth-pill ${isLogin ? "active" : ""}`}>Sign In</span>
+            <span className={`auth-pill ${!isLogin ? "active" : ""}`}>Sign Up</span>
+          </div>
+
           <div className="auth-header">
             <h2>{isLogin ? "Welcome back" : "Create account"}</h2>
             <p>{isLogin ? "Sign in to continue" : "Register a new account"}</p>
