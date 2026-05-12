@@ -24,7 +24,7 @@ type TopicDetail = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-  all:       { label: "All",       color: "#6366f1", bg: "#f0f0fe" },
+  all:       { label: "All",       color: "#e65787", bg: "#fff1f3" },
   draft:     { label: "Draft",     color: "#64748b", bg: "#f1f5f9" },
   inreview:  { label: "In Review", color: "#d97706", bg: "#fffbeb" },
   approved:  { label: "Approved",  color: "#0891b2", bg: "#f0f9ff" },
@@ -189,7 +189,7 @@ export default function TopicDetailView({ topicId, topicName, onBack }: Props) {
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#6366f1", marginBottom: 12 }}
+        style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#e65787", marginBottom: 12 }}
       />
       <p style={{ color: "#94a3b8", fontSize: 13 }}>Loading posts…</p>
     </div>
@@ -263,7 +263,7 @@ export default function TopicDetailView({ topicId, topicName, onBack }: Props) {
           <div style={{ display: "flex", gap: 6 }}>
             {([
               { key: "draft",     accent: "#94a3b8" },
-              { key: "scheduled", accent: "#8b5cf6" },
+              { key: "scheduled", accent: "#e65787" },
               { key: "published", accent: "#10b981" },
             ] as const).map(({ key, accent }) => (
               counts[key] > 0 ? (
@@ -346,9 +346,9 @@ export default function TopicDetailView({ topicId, topicName, onBack }: Props) {
           style={{
             display: "flex", alignItems: "center", gap: 6,
             padding: "8px 16px", borderRadius: 9, border: "none",
-            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            background: "linear-gradient(135deg, #e65787, #e65787)",
             color: "#fff", fontSize: 12, fontWeight: 600,
-            cursor: "pointer", boxShadow: "0 3px 10px rgba(99,102,241,0.25)",
+            cursor: "pointer", boxShadow: "0 3px 10px rgba(230,87,135,0.25)",
             flexShrink: 0,
           }}
         >
@@ -518,7 +518,7 @@ export default function TopicDetailView({ topicId, topicName, onBack }: Props) {
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
             <button key={n} onClick={() => setPage(n)} style={{
               width: 32, height: 32, borderRadius: 8, cursor: "pointer",
-              background: page === n ? "#6366f1" : "#fff",
+              background: page === n ? "#e65787" : "#fff",
               color: page === n ? "#fff" : "#374151",
               fontWeight: page === n ? 700 : 400, fontSize: 13,
               border: page === n ? "none" : "1px solid #f0f0f0",

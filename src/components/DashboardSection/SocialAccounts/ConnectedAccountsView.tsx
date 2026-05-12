@@ -106,7 +106,7 @@ const PLATFORMS: Platform[] = [
   },
   {
     id: "facebook", label: "Facebook", color: "#1877f2",
-    pastel: "#f0f4ff", pastelBorder: "#c3d4ff",
+    pastel: "#fff1f3", pastelBorder: "#c3d4ff",
     gradient: "linear-gradient(135deg, #1877f2, #42a5f5)",
     description: "Pages, groups & ads",
     fields: [
@@ -448,7 +448,7 @@ export default function ConnectedAccountsView() {
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "40vh" }}>
       <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#6366f1" }} />
+        style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#e65787" }} />
     </div>
   );
 
@@ -462,7 +462,7 @@ export default function ConnectedAccountsView() {
         display: "flex", alignItems: "center", gap: 12, marginBottom: 28,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#f0f0fe", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>🔗</div>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#fff1f3", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>🔗</div>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Connected Accounts</span>
         </div>
         <div style={{ width: 1, height: 22, background: "#f0f0f0" }} />

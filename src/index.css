@@ -3,28 +3,24 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --color-foreground: #0f172a;
+}
+
 body {
   /* @apply bg-bg1; */
   font-feature-settings: "liga" 1, "calt" 1;
 }
 
-/* Custom scrollbar */
-/* ::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #0f0f0f;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #eeeeee, #00bfff);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #33ff33, #00ffff);
-} */
+/* Custom scrollbar — light mode */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #6366f1; }
 
 /* Custom animations */
 @keyframes marquee {
@@ -380,11 +376,18 @@ body {
 .animate-float-slow {
   animation: float 10s ease-in-out infinite;
 }
-button:hover {
-  background-color: inherit !important;
-  color: inherit !important;
-  box-shadow: none !important;
+
+@keyframes scroll-left {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
+@keyframes scroll-right {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+.animate-scroll-left  { animation: scroll-left  35s linear infinite; }
+.animate-scroll-right { animation: scroll-right 35s linear infinite; }
+/* button:hover override removed — was blocking all hover interactions */
 
 /* Hide Scrollbar but keep scrolling */
 .hide-scrollbar {
@@ -394,5 +397,66 @@ button:hover {
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;                  /* Chrome, Safari, Opera */
+}
+
+/* ── Social Hub Circuit animations ───────────────────────────────────────── */
+.social-hub {
+  offset-anchor: 10px 0px;
+  animation: animation-path;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.75, -0.01, 0, 0.99);
+}
+
+.social-line-1 {
+  offset-path: path("M 10 20 h 79.5 q 5 0 5 5 v 30");
+  animation-duration: 5s;
+  animation-delay: 1s;
+}
+
+.social-line-2 {
+  offset-path: path("M 180 10 h -69.7 q -5 0 -5 5 v 40");
+  animation-duration: 2s;
+  animation-delay: 6s;
+}
+
+.social-line-3 {
+  offset-path: path("M 130 20 v 21.8 q 0 5 -5 5 h -25");
+  animation-duration: 6s;
+  animation-delay: 4s;
+}
+
+.social-line-4 {
+  offset-path: path("M 170 80 v -21.8 q 0 -5 -5 -5 h -65");
+  animation-duration: 3s;
+  animation-delay: 3s;
+}
+
+.social-line-5 {
+  offset-path: path("M 135 65 h 15 q 5 0 5 5 v 10 q 0 5 -5 5 h -39.8 q -5 0 -5 -5 v -35");
+  animation-duration: 4s;
+  animation-delay: 9s;
+}
+
+.social-line-6 {
+  offset-path: path("M 94.8 95 v -46");
+  animation-duration: 7s;
+  animation-delay: 3s;
+}
+
+.social-line-7 {
+  offset-path: path("M 88 88 v -15 q 0 -5 -5 -5 h -10 q -5 0 -5 -5 v -5 q 0 -5 5 -5 h 28");
+  animation-duration: 4s;
+  animation-delay: 4s;
+}
+
+.social-line-8 {
+  offset-path: path("M 30 30 h 25 q 5 0 5 5 v 6.5 q 0 5 5 5 h 35");
+  animation-duration: 3s;
+  animation-delay: 3s;
+}
+
+@keyframes animation-path {
+  0%   { offset-distance: 0%; }
+  100% { offset-distance: 100%; }
 }
 

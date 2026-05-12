@@ -1,76 +1,174 @@
-/* NAVBAR CONTAINER */
+/* ── Container ──────────────────────────────────────────────────── */
 .navbar {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  max-width: 10000px;
-  padding: 10px 25px; 
-  display: flex;      
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding: 20px 48px;
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  border-radius: 18px; 
   z-index: 1000;
-  backdrop-filter: blur(15px);
-  /* background: rgba(148, 149, 150, 0.12);
-  border: 1px solid rgba(97, 97, 97, 0.25);
-  box-shadow: 0 6px 20px rgba(73, 74, 75, 0.15);
-  transition: all 0.4s ease; */
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    padding 0.3s ease;
 }
-/* .logo {
- 
-  gap: 10px;
-  font-weight: bold;
-  font-size: 20px;
-  width: 100%;
-}  */
 
-/* .logo-icon {
-  width: 28px;
-  height: 28px;
-  background: black;
-  border-radius: 6px;
-} */
+/* Glassmorphism on scroll */
+.navbar--scrolled {
+  padding: 12px 48px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(228, 73, 125, 0.15);
+  box-shadow: 0 1px 20px rgba(228, 73, 125, 0.08);
+}
 
-/* Center capsule */
+/* ── Logo ───────────────────────────────────────────────────────── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #111827;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.logo:hover {
+  opacity: 0.8;
+}
+
+.logo-icon {
+  width: 26px;
+  height: 26px;
+  background: #e4497d;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(228, 73, 125, 0.25);
+}
+
+/* ── Nav links ──────────────────────────────────────────────────── */
 .nav-links {
   display: flex;
-  gap: 30px;
+  gap: 2px;
   list-style: none;
-
-  background: #e5e5e5;
-  padding: 14px 40px;
-  border-radius: 50px;
-
-  font-weight: 500;
-  color: #555;
+  margin: 0;
+  padding: 0;
 }
 
-/* Right section */
+.nav-links li {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-links li:hover {
+  color: #e4497d;
+  background: rgba(228, 73, 125, 0.08);
+}
+
+/* ── Right buttons ──────────────────────────────────────────────── */
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .signin {
-  padding: 10px 22px;
-  border-radius: 30px;
-  border: 1px solid black;
+  padding: 8px 18px;
+  border-radius: 50px;
+  border: 1px solid rgba(228, 73, 125, 0.18);
   background: transparent;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.signin:hover {
+  border-color: #e4497d;
+  color: #e4497d;
+  background: rgba(228, 73, 125, 0.06);
 }
 
 .signup {
-  padding: 10px 22px;
-  border-radius: 30px;
+  padding: 8px 18px;
+  border-radius: 50px;
   border: none;
-  background: black;
+  background: #e4497d;
   color: white;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+  box-shadow: 0 6px 18px rgba(228, 73, 125, 0.28);
 }
 
-.moon {
-  font-size: 20px;
-  cursor: pointer;
+.signup:hover {
+  opacity: 0.92;
+  transform: scale(1.03);
+  box-shadow: 0 8px 24px rgba(228, 73, 125, 0.35);
+}
+
+.signup:active {
+  transform: scale(0.97);
+}
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.auth-container {
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(228, 73, 125, 0.12);
+}
+.links-container {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.75);
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  border: 1px solid rgba(228, 73, 125, 0.12);
+
+  box-shadow:
+    0 4px 20px rgba(228, 73, 125, 0.06);
 }

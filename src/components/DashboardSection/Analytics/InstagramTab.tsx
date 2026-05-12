@@ -106,11 +106,11 @@ export default function InstagramTab({ igData, token }: Props) {
       {/* ── KPIs compacts ────────────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 14 }}>
         <Kpi label="Followers"    value={fmtNum(igFollowers)}  sub="audience"       color="#e1306c" />
-        <Kpi label="Posts"        value={igMediaCount}         sub="published"      color="#8b5cf6" />
+        <Kpi label="Posts"        value={igMediaCount}         sub="published"      color="#e65787" />
         <Kpi label="Likes"        value={fmtNum(igTotalLikes)} sub="recent posts"   color="#f59e0b" />
         <Kpi label="Comments"     value={fmtNum(igTotalComments)} sub="recent posts" color="#06b6d4" />
         <Kpi label="Eng. Rate"    value={`${engRate}%`}        sub="likes+cmts/fol" color="#10b981" />
-        <Kpi label="Avg Likes"    value={igMediaCount > 0 ? Math.round(igTotalLikes / igMediaCount) : 0} sub="per post" color="#6366f1" />
+        <Kpi label="Avg Likes"    value={igMediaCount > 0 ? Math.round(igTotalLikes / igMediaCount) : 0} sub="per post" color="#e65787" />
       </div>
 
       {/* ── Charts ───────────────────────────────────────────────────────── */}

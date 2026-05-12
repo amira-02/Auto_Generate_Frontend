@@ -23,7 +23,7 @@ type Recommendation = {
 };
 
 const TYPE_META = {
-  trend:      { icon: "📈", color: "#6366f1", label: "Trending"    },
+  trend:      { icon: "📈", color: "#e65787", label: "Trending"    },
   event:      { icon: "📅", color: "#f59e0b", label: "Event"       },
   content:    { icon: "💡", color: "#10b981", label: "Content Tip" },
   engagement: { icon: "🚀", color: "#e1306c", label: "Engagement"  },
@@ -98,7 +98,7 @@ export default function AiRecommendations({ posts, igData, fbData, token }: Prop
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{ width: 32, height: 32, borderRadius: 10,
-            background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
+            background: "linear-gradient(135deg,#e65787,#e65787)",
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>✨</div>
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>AI Recommendations</div>
@@ -109,13 +109,13 @@ export default function AiRecommendations({ posts, igData, fbData, token }: Prop
         <button onClick={generate} disabled={loading} style={{
           padding: "8px 16px", borderRadius: 10, border: "none",
           cursor: loading ? "not-allowed" : "pointer",
-          background: loading ? "#f1f5f9" : "linear-gradient(135deg,#6366f1,#8b5cf6)",
+          background: loading ? "#f1f5f9" : "linear-gradient(135deg,#e65787,#e65787)",
           color: loading ? "#94a3b8" : "#fff",
           fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6,
           boxShadow: loading ? "none" : "0 2px 8px rgba(99,102,241,0.3)" }}>
           {loading
             ? <><span style={{ width: 12, height: 12, border: "2px solid #cbd5e1",
-                borderTopColor: "#6366f1", borderRadius: "50%",
+                borderTopColor: "#e65787", borderRadius: "50%",
                 display: "inline-block", animation: "spin .8s linear infinite" }} /> Analyzing market...</>
             : loaded ? "↻ Refresh" : "✨ Generate Insights"
           }

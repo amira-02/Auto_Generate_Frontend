@@ -31,11 +31,11 @@ export default function TiktokTab({ ttData }: Props) {
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 14, marginBottom: 20 }}>
         <KpiCard label="Followers"      value={fmtNum(ttData.followers)}     accent="#ff0050" icon="👥" delay={0}    sub="TikTok followers"   badge="REAL" badgeColor="#ff0050" />
-        <KpiCard label="Total Videos"   value={ttData.videoCount}            accent="#8b5cf6" icon="🎬" delay={0.05} sub="published videos"   badge="REAL" badgeColor="#ff0050" />
+        <KpiCard label="Total Videos"   value={ttData.videoCount}            accent="#e65787" icon="🎬" delay={0.05} sub="published videos"   badge="REAL" badgeColor="#ff0050" />
         <KpiCard label="Total Views"    value={fmtNum(ttData.totalViews)}    accent="#06b6d4" icon="👁️" delay={0.1}  sub="all time"           badge="REAL" badgeColor="#ff0050" />
         <KpiCard label="Total Likes"    value={fmtNum(ttData.totalLikes)}    accent="#f59e0b" icon="❤️" delay={0.15} sub="all time"           badge="REAL" badgeColor="#ff0050" />
         <KpiCard label="Total Shares"   value={fmtNum(ttData.totalShares)}   accent="#10b981" icon="🔁" delay={0.2}  sub="all time"           badge="REAL" badgeColor="#ff0050" />
-        <KpiCard label="Eng. Rate"      value={`${engRate}%`}               accent="#6366f1" icon="📊" delay={0.25} sub="(likes+cmts+shares)/views" badge="REAL" badgeColor="#ff0050" />
+        <KpiCard label="Eng. Rate"      value={`${engRate}%`}               accent="#e65787" icon="📊" delay={0.25} sub="(likes+cmts+shares)/views" badge="REAL" badgeColor="#ff0050" />
       </div>
 
       {/* Charts row 1 */}

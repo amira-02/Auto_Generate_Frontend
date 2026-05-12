@@ -34,46 +34,59 @@ export default function NavBar({ sections }: NavBarProps) {
   };
 
   return (
-    <nav className="navbar">
-      <div className="logo" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
-        Auto Generate
-      </div>
+ <nav className="navbar">
 
-      {/* Scroll links — seulement sur Home */}
-      {sections && (
+  {/* LEFT */}
+  <div className="nav-left">
+    <div className="logo" onClick={() => navigate("/")}>
+      <span className="logo-icon">AG</span>
+      Auto Generate
+    </div>
+  </div>
+
+  {/* CENTER (IMPORTANT) */}
+  <div className="nav-center">
+    {sections && (
+      <div className="links-container">
         <ul className="nav-links">
           <li onClick={() => scrollToSection("about")}>About Us</li>
           <li onClick={() => scrollToSection("generate")}>Generate Post</li>
           <li onClick={() => scrollToSection("contact")}>Contact</li>
-             <li onClick={() => scrollToSection("pricing")}>Pricing</li>
-             <li onClick={() => scrollToSection("blog")}>Blog</li>
-             <li onClick={() => scrollToSection("dashboardPreview")}>Dash Preview</li>
+          <li onClick={() => scrollToSection("pricing")}>Pricing</li>
+          <li onClick={() => scrollToSection("blog")}>Blog</li>
+          <li onClick={() => scrollToSection("dashboardPreview")}>
+            Dash Preview
+          </li>
         </ul>
-      )}
-
-      <div className="nav-right">
-        {token ? (
-          // Connecté
-          <>
-            <button className="signin" onClick={() => navigate("/dashboard")}>
-              My Dashboard
-            </button>
-            <button className="signup" onClick={handleLogout}>
-              Logout
-            </button>
-          </>
-        ) : (
-          // Non connecté
-          <>
-            <button className="signin" onClick={() => navigate("/auth")}>
-              Sign In
-            </button>
-            <button className="signup" onClick={() => navigate("/auth")}>
-              Sign Up
-            </button>
-          </>
-        )}
       </div>
-    </nav>
+    )}
+  </div>
+
+  {/* RIGHT */}
+  <div className="auth-container">
+    <div className="nav-right">
+      {token ? (
+        <>
+          <button className="signin" onClick={() => navigate("/dashboard")}>
+            My Dashboard
+          </button>
+          <button className="signup" onClick={handleLogout}>
+            Logout
+          </button>
+        </>
+      ) : (
+        <>
+          <button className="signin" onClick={() => navigate("/auth")}>
+            Sign In
+          </button>
+          <button className="signup" onClick={() => navigate("/auth")}>
+            Sign Up
+          </button>
+        </>
+      )}
+    </div>
+  </div>
+
+</nav>
   );
 }

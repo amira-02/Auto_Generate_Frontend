@@ -34,7 +34,7 @@ export default function FacebookTab({ fbData }: Props) {
         <KpiCard label="Followers"         value={fmtNum(fbData.followers)}   accent="#1877f2" icon="📢" delay={0.05} sub="Page followers"      badge="REAL" badgeColor="#1877f2" />
         <KpiCard label="Total Impressions" value={fmtNum(fbTotalImpressions)} accent="#06b6d4" icon="👁️" delay={0.1}  sub="Last 30 days"        badge="REAL" badgeColor="#1877f2" />
         <KpiCard label="Engaged Users"     value={fmtNum(fbTotalEngaged)}     accent="#10b981" icon="💬" delay={0.15} sub="Last 30 days"        badge="REAL" badgeColor="#1877f2" />
-        <KpiCard label="Avg Daily Reach"   value={fmtNum(fbAvgDailyImp)}      accent="#8b5cf6" icon="📊" delay={0.2}  sub="impressions/day"     badge="REAL" badgeColor="#1877f2" />
+        <KpiCard label="Avg Daily Reach"   value={fmtNum(fbAvgDailyImp)}      accent="#e65787" icon="📊" delay={0.2}  sub="impressions/day"     badge="REAL" badgeColor="#1877f2" />
         <KpiCard label="Page Eng. Rate"    value={`${fbEngRate}%`}            accent="#f59e0b" icon="⭐" delay={0.25} sub="engaged/fans/day"    badge="REAL" badgeColor="#1877f2" />
       </div>
 

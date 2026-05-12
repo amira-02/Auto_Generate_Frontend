@@ -172,7 +172,7 @@ export default function NotificationBell({ token, onExternalTask }: Props) {
 
                   {/* Icône type */}
                   <div style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-                    background: n.type === "external_task" ? "#f0f4ff" : "#f8fafc",
+                    background: n.type === "external_task" ? "#fff1f3" : "#f8fafc",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 14 }}>
                     {n.type === "external_task" ? "🔗" : "🔔"}
@@ -189,7 +189,7 @@ export default function NotificationBell({ token, onExternalTask }: Props) {
                     <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>
                       {timeAgo(n.createdAt)}
                       {n.type === "external_task" && (
-                        <span style={{ marginLeft: 6, color: "#6366f1", fontWeight: 600 }}>
+                        <span style={{ marginLeft: 6, color: "#e65787", fontWeight: 600 }}>
                           → Click to assign topic
                         </span>
                       )}
@@ -198,7 +198,7 @@ export default function NotificationBell({ token, onExternalTask }: Props) {
 
                   {!n.isRead && (
                     <div style={{ width: 8, height: 8, borderRadius: "50%",
-                      background: "#6366f1", flexShrink: 0, marginTop: 4 }} />
+                      background: "#e65787", flexShrink: 0, marginTop: 4 }} />
                   )}
                 </div>
               ))}

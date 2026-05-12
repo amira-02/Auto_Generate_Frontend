@@ -53,18 +53,18 @@ export default function Analytics({ onExternalTask }: Props) {
   const igFollowers = igData?.followers ?? 0;
 
   const TAB_CONFIG: { id: Tab; label: string; color: string }[] = [
-    { id: "overview",  label: "Overview",     color: "#6366f1" },
-    { id: "instagram", label: "📸 Instagram", color: "#e1306c" },
-    { id: "facebook",  label: "📘 Facebook",  color: "#1877f2" },
-    { id: "linkedin",  label: "💼 LinkedIn",  color: "#0077b5" },
-    { id: "tiktok",    label: "🎵 TikTok",    color: "#ff0050" },
-    { id: "content",   label: "Content",      color: "#6366f1" },
+    { id: "overview", label: "Overview",     color: "#e65787" },
+    { id: "instagram", label: " Instagram", color: "#e1306c" },
+    { id: "facebook",  label: "Facebook",  color: "#1877f2" },
+    { id: "linkedin",  label: "LinkedIn",  color: "#0077b5" },
+    { id: "tiktok",    label: " TikTok",    color: "#ff0050" },
+    { id: "content",   label: "Content",      color: "#e65787" },
   ];
 
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh" }}>
       <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#6366f1" }} />
+        style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#e65787" }} />
     </div>
   );
 
@@ -77,7 +77,7 @@ export default function Analytics({ onExternalTask }: Props) {
         display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#f0f0fe",
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#fff1f3",
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>📈</div>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Analytics</span>
         </div>
@@ -143,7 +143,7 @@ export default function Analytics({ onExternalTask }: Props) {
         </div>
 
         {/* Period */}
-        <div style={{ display: "flex", background: "#f8f9fb", borderRadius: 10, padding: 3, border: "1px solid #f0f0f0" }}>
+        {/* <div style={{ display: "flex", background: "#f8f9fb", borderRadius: 10, padding: 3, border: "1px solid #f0f0f0" }}>
           {(["7d", "30d", "90d"] as const).map(p => (
             <button key={p} onClick={() => setPeriod(p)} style={{
               padding: "5px 12px", borderRadius: 8, border: "none", cursor: "pointer",
@@ -154,7 +154,7 @@ export default function Analytics({ onExternalTask }: Props) {
               transition: "all .15s",
             }}>{p}</button>
           ))}
-        </div>
+        </div> */}
 
         {/* 🔔 NotificationBell — only here in Analytics */}
         <NotificationBell
@@ -172,12 +172,12 @@ export default function Analytics({ onExternalTask }: Props) {
       {tab === "content"   && <ContentTab   posts={posts} igData={igData} fbData={fbData} />}
 
       {/* Footer */}
-      <div style={{ marginTop: 20, padding: "10px 16px", borderRadius: 10, background: "#f0f9ff",
+      {/* <div style={{ marginTop: 20, padding: "10px 16px", borderRadius: 10, background: "#f0f9ff",
         border: "1px solid #bae6fd", fontSize: 11, color: "#0369a1", display: "flex", gap: 8, alignItems: "center" }}>
         <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 6px", borderRadius: 8, background: "#e1306c", color: "#fff" }}>REAL</span>
         Instagram &amp; Facebook data is live from the API.
         <span style={{ color: "#94a3b8" }}>· LinkedIn &amp; TikTok shown when connected · Content engagement estimates are simulated.</span>
-      </div>
+      </div> */}
     </div>
   );
 }

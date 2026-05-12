@@ -6,7 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import CalendarView from "../components/DashboardSection/Calendar/CalendarView";
 import CreatePostModal from "../components/DashboardSection/Posts/CreatePostModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
+import { FiChevronsLeft, FiChevronsRight, FiHome } from "react-icons/fi";
 import PostsView from "../components/DashboardSection/Posts/PostsView";
 import TopicsView from "../components/DashboardSection/Topics/TopicsView";
 import TopicDetailView from "../components/DashboardSection/Topics/TopicDetailView";
@@ -154,15 +154,15 @@ export default function Dashboard() {
     display: "flex", alignItems: "center", gap: sidebarOpen ? 10 : 0,
     padding: "8px", justifyContent: sidebarOpen ? "flex-start" : "center",
     borderRadius: 10, border: "none",
-    background: active ? "#f0f0fe" : "transparent",
-    color: active ? "#6366f1" : "#64748b",
+    background: active ? "#fff1f3" : "transparent",
+    color: active ? "#e65787" : "#64748b",
     fontWeight: active ? 600 : 400, fontSize: 13,
     cursor: "pointer", transition: "all .15s", width: "100%",
   });
 
   const iconStyle = (active: boolean): React.CSSProperties => ({
     width: 30, height: 30, borderRadius: 9, flexShrink: 0,
-    background: active ? "#6366f1" : "#f1f5f9",
+    background: active ? "#e65787" : "#f1f5f9",
     display: "flex", alignItems: "center", justifyContent: "center",
     fontSize: 13, color: active ? "#fff" : "#94a3b8",
   });
@@ -174,13 +174,34 @@ export default function Dashboard() {
       <motion.aside initial={false} animate={{ width: sidebarOpen ? 232 : 64 }} transition={{ duration: 0.25, ease: "easeInOut" }}
         style={{ flexShrink: 0, background: "#fff", borderRadius: 16, margin: "16px 0 16px 16px", border: "1px solid #f0f0f0", boxShadow: "0 1px 6px rgba(0,0,0,0.04)", display: "flex", flexDirection: "column", padding: "20px 12px", gap: 4, overflow: "hidden" }}>
 
-        {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24, justifyContent: sidebarOpen ? "flex-start" : "center" }}>
-          <div style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 15, fontWeight: 700 }}>A</div>
-          {sidebarOpen && <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>AutoGenerate</span>}
-          <IconBtn onClick={() => setSidebarOpen(!sidebarOpen)} title={sidebarOpen ? "Collapse" : "Expand"}>
-            {sidebarOpen ? <FiChevronsLeft size={16} /> : <FiChevronsRight size={16} />}
-          </IconBtn>
+        {/* ── Header: brand + action buttons ── */}
+        <div style={{
+          display: "flex", marginBottom: 20,
+          flexDirection: sidebarOpen ? "row" : "column",
+          alignItems: "center",
+          gap: sidebarOpen ? 0 : 6,
+        }}>
+          {/* Brand */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: sidebarOpen ? 1 : undefined }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0, background: "linear-gradient(135deg,#e65787,#e65787)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 15, fontWeight: 700 }}>
+              A
+            </div>
+            {sidebarOpen && (
+              <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>
+                AutoGenerate
+              </span>
+            )}
+          </div>
+
+          {/* Action icons: Home + Collapse */}
+          <div style={{ display: "flex", flexDirection: sidebarOpen ? "row" : "column", gap: 4 }}>
+            <IconBtn onClick={() => navigate("/")} title="Back to Home">
+              <FiHome size={14} />
+            </IconBtn>
+            <IconBtn onClick={() => setSidebarOpen(!sidebarOpen)} title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}>
+              {sidebarOpen ? <FiChevronsLeft size={16} /> : <FiChevronsRight size={16} />}
+            </IconBtn>
+          </div>
         </div>
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
@@ -193,7 +214,7 @@ export default function Dashboard() {
                 <span style={iconStyle(active)}>{item.icon}</span>
                 {sidebarOpen && (<>
                   <span style={{ whiteSpace: "nowrap" }}>{item.label}</span>
-                  {active && <div style={{ marginLeft: "auto", width: 5, height: 5, borderRadius: "50%", background: "#6366f1" }} />}
+                  {active && <div style={{ marginLeft: "auto", width: 5, height: 5, borderRadius: "50%", background: "#e65787" }} />}
                 </>)}
               </button>
             );
@@ -216,7 +237,7 @@ export default function Dashboard() {
         {/* User */}
         <div style={{ borderTop: "1px solid #f5f5f5", paddingTop: 14, display: "flex", flexDirection: "column", gap: 8, alignItems: sidebarOpen ? "stretch" : "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: sidebarOpen ? "flex-start" : "center" }}>
-            <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "linear-gradient(135deg,#6366f1,#8b5cf6)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 700 }}>{userInitial}</div>
+            <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "linear-gradient(135deg,#e65787,#e65787)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 700 }}>{userInitial}</div>
             {sidebarOpen && <div style={{ overflow: "hidden" }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{userEmail.split("@")[0]}</div>
               <div style={{ fontSize: 10, color: "#94a3b8" }}>Content Manager</div>

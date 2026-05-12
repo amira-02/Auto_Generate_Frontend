@@ -170,7 +170,7 @@ export default function ExternalTaskModal({ taskId, token, onClose, onAssigned }
                   border: "1.5px solid #e2e8f0", fontSize: 13, outline: "none",
                   fontFamily: "inherit", resize: "vertical", boxSizing: "border-box",
                   lineHeight: 1.6, color: "#374151" }}
-                onFocus={e => e.target.style.borderColor = "#6366f1"}
+                onFocus={e => e.target.style.borderColor = "#e65787"}
                 onBlur={e  => e.target.style.borderColor = "#e2e8f0"}
               />
             </div>
@@ -193,7 +193,7 @@ export default function ExternalTaskModal({ taskId, token, onClose, onAssigned }
                   style={{ width: "100%", padding: "9px 12px 9px 30px", borderRadius: 10,
                     border: "1.5px solid #e2e8f0", fontSize: 13, outline: "none",
                     boxSizing: "border-box", color: "#374151" }}
-                  onFocus={e => e.target.style.borderColor = "#6366f1"}
+                  onFocus={e => e.target.style.borderColor = "#e65787"}
                   onBlur={e  => e.target.style.borderColor = "#e2e8f0"}
                 />
               </div>
@@ -209,16 +209,16 @@ export default function ExternalTaskModal({ taskId, token, onClose, onAssigned }
                   <div key={t.id}
                     onClick={() => setSelectedTopic(t.id)}
                     style={{ padding: "9px 14px", borderRadius: 10, cursor: "pointer",
-                      border: `1.5px solid ${selectedTopic === t.id ? "#6366f1" : "#f0f0f0"}`,
-                      background: selectedTopic === t.id ? "#f0f4ff" : "#fafafa",
+                      border: `1.5px solid ${selectedTopic === t.id ? "#e65787" : "#f0f0f0"}`,
+                      background: selectedTopic === t.id ? "#fff1f3" : "#fafafa",
                       display: "flex", alignItems: "center", justifyContent: "space-between",
                       transition: "all .15s" }}>
                     <span style={{ fontSize: 13,
                       fontWeight: selectedTopic === t.id ? 600 : 400,
-                      color: selectedTopic === t.id ? "#4f46e5" : "#374151" }}>
+                      color: selectedTopic === t.id ? "#d94470" : "#374151" }}>
                       {t.name}
                     </span>
-                    {selectedTopic === t.id && <FiCheck size={14} color="#4f46e5" />}
+                    {selectedTopic === t.id && <FiCheck size={14} color="#d94470" />}
                   </div>
                 ))}
               </div>
@@ -241,11 +241,11 @@ export default function ExternalTaskModal({ taskId, token, onClose, onAssigned }
                     onKeyDown={e => e.key === "Enter" && handleCreateTopic()}
                     placeholder="Topic name..."
                     style={{ flex: 1, padding: "9px 12px", borderRadius: 10,
-                      border: "1.5px solid #6366f1", fontSize: 13, outline: "none" }}
+                      border: "1.5px solid #e65787", fontSize: 13, outline: "none" }}
                   />
                   <button onClick={handleCreateTopic} disabled={creating}
                     style={{ padding: "9px 14px", borderRadius: 10, border: "none",
-                      background: "#6366f1", color: "#fff", fontSize: 12,
+                      background: "#e65787", color: "#fff", fontSize: 12,
                       fontWeight: 600, cursor: "pointer" }}>
                     {creating ? "..." : "Add"}
                   </button>
@@ -280,11 +280,11 @@ export default function ExternalTaskModal({ taskId, token, onClose, onAssigned }
                 cursor: !selectedTopic || !description.trim() || loading ? "not-allowed" : "pointer",
                 background: !selectedTopic || !description.trim()
                   ? "#f1f5f9"
-                  : "linear-gradient(135deg,#6366f1,#8b5cf6)",
+                  : "linear-gradient(135deg,#e65787,#e65787)",
                 color: !selectedTopic || !description.trim() ? "#94a3b8" : "#fff",
                 fontSize: 14, fontWeight: 700,
                 boxShadow: selectedTopic && description.trim()
-                  ? "0 4px 14px rgba(99,102,241,0.3)" : "none" }}>
+                  ? "0 4px 14px rgba(230,87,135,0.3)" : "none" }}>
               {loading ? "Creating post..." : "✓ Confirm & Open Post Editor →"}
             </button>
           </div>

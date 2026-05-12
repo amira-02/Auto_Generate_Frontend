@@ -151,8 +151,8 @@ function MiniCalendar({
           return (
             <button key={day} onClick={() => onSelectDay(date)} style={{
               width: "100%", aspectRatio: "1", borderRadius: 8, border: "none",
-              background: today ? "#6366f1" : selected ? "#f0f0fe" : "transparent",
-              color: today ? "#fff" : selected ? "#6366f1" : "#374151",
+              background: today ? "#e65787" : selected ? "#fff1f3" : "transparent",
+              color: today ? "#fff" : selected ? "#e65787" : "#374151",
               fontSize: 12, fontWeight: today || selected ? 700 : 400,
               cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             }}>
@@ -415,14 +415,14 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         onDrop={e => onCellDrop(e, date, key)}
         style={{
           minHeight: 100, padding: "8px 6px", borderRadius: 10, cursor: "pointer",
-          background: isOver ? "#f0f0fe" : selected ? "#fafafe" : isCurrentMonth ? "#fff" : "#f8fafc",
-          border: today ? "2px solid #6366f1" : isOver ? "2px dashed #6366f1" : "1px solid #f0f0f0",
+          background: isOver ? "#fff1f3" : selected ? "#fafafe" : isCurrentMonth ? "#fff" : "#f8fafc",
+          border: today ? "2px solid #e65787" : isOver ? "2px dashed #e65787" : "1px solid #f0f0f0",
           transition: "background .1s, border .1s",
         }}
       >
         <div style={{
           width: 24, height: 24, borderRadius: "50%", marginBottom: 4,
-          background: today ? "#6366f1" : "transparent",
+          background: today ? "#e65787" : "transparent",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: today ? "#fff" : isCurrentMonth ? "#374151" : "#94a3b8" }}>
@@ -431,7 +431,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         </div>
         {dayPosts.slice(0, 2).map(p => renderPostCard(p, true))}
         {dayPosts.length > 2 && (
-          <div style={{ fontSize: 10, color: "#6366f1", fontWeight: 600, marginTop: 4 }}>
+          <div style={{ fontSize: 10, color: "#e65787", fontWeight: 600, marginTop: 4 }}>
             +{dayPosts.length - 2} more
           </div>
         )}
@@ -455,12 +455,12 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
           onClick={() => { setSelectedDay(date); setCurrentDate(date); }}
           style={{
             padding: "12px 8px", borderRadius: "10px 10px 0 0", cursor: "pointer",
-            background: today ? "#6366f1" : selected ? "#f0f0fe" : "#fff",
+            background: today ? "#e65787" : selected ? "#fff1f3" : "#fff",
             border: "1px solid #f0f0f0", borderBottom: "none", textAlign: "center",
             transition: "background .1s",
           }}
         >
-          <div style={{ fontSize: 10, fontWeight: 600, color: today ? "#c7d2fe" : "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: today ? "#ed8faf" : "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>
             {date.toLocaleString("en-US", { weekday: "short" })}
           </div>
           <div style={{ fontSize: 22, fontWeight: 800, color: today ? "#fff" : "#0f172a", lineHeight: 1.2, marginTop: 2 }}>
@@ -477,7 +477,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
           style={{
             flex: 1, padding: 8, minHeight: 200,
             background: isOver ? "#f8f8ff" : "#fafafa",
-            border: `1px solid ${isOver ? "#6366f1" : "#f0f0f0"}`,
+            border: `1px solid ${isOver ? "#e65787" : "#f0f0f0"}`,
             borderTop: "none", borderRadius: "0 0 10px 10px",
             transition: "background .1s, border .1s",
           }}
@@ -530,7 +530,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{
             width: 30, height: 30, borderRadius: 8,
-            background: "#f0f0fe",
+            background: "#fff1f3",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 15,
           }}>▦</div>
@@ -543,9 +543,9 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         {/* Stats pills */}
         <div style={{ display: "flex", gap: 8 }}>
           {[
-            { label: "Scheduled", value: posts.filter(p => p.status?.toLowerCase() === "scheduled").length, accent: "#8b5cf6" },
+            { label: "Scheduled", value: posts.filter(p => p.status?.toLowerCase() === "scheduled").length, accent: "#e65787" },
             { label: "Published",  value: posts.filter(p => p.status?.toLowerCase() === "published").length,  accent: "#10b981" },
-            { label: "Total",      value: posts.length,                                                        accent: "#6366f1" },
+            { label: "Total",      value: posts.length,                                                        accent: "#e65787" },
           ].map(({ label, value, accent }) => (
             <div key={label} style={{
               display: "flex", alignItems: "center", gap: 5,
@@ -715,13 +715,13 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
                 }}>
                   <div style={{
                     width: 48, height: 48, borderRadius: 14,
-                    background: isToday(selectedDay) ? "#6366f1" : "#f0f0fe",
+                    background: isToday(selectedDay) ? "#e65787" : "#fff1f3",
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                   }}>
-                    <span style={{ fontSize: 10, color: isToday(selectedDay) ? "#c7d2fe" : "#6366f1", fontWeight: 700, textTransform: "uppercase" }}>
+                    <span style={{ fontSize: 10, color: isToday(selectedDay) ? "#ed8faf" : "#e65787", fontWeight: 700, textTransform: "uppercase" }}>
                       {selectedDay.toLocaleString("en-US", { weekday: "short" })}
                     </span>
-                    <span style={{ fontSize: 20, fontWeight: 800, color: isToday(selectedDay) ? "#fff" : "#6366f1", lineHeight: 1 }}>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: isToday(selectedDay) ? "#fff" : "#e65787", lineHeight: 1 }}>
                       {selectedDay.getDate()}
                     </span>
                   </div>
