@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiPlus, FiCheck, FiSearch } from "react-icons/fi";
 
-const API = "https://localhost:7079";
+const API: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
 type Topic = { id: number; name: string };
 

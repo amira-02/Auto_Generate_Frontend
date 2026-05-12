@@ -1,6 +1,6 @@
 // Analytics/analyticsHelpers.ts
 
-export const API = "https://localhost:7079";
+export const API: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
 export const PLATFORM_META: Record<string, { color: string; icon: string; label: string }> = {
   instagram: { color: "#e1306c", icon: "instagram", label: "Instagram" },

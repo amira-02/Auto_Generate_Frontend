@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AreaChart, Area, BarChart, Bar,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import { CustomTooltip, SectionTitle } from "./AnalyticsComponents";
 import { fmtNum, fmtDate } from "./analyticsHelpers";
@@ -11,7 +11,7 @@ import type { InstagramSummary } from "./analyticsTypes";
 
 type Props = { igData: InstagramSummary | null; token: string | null };
 
-const API = "https://localhost:7079";
+const API: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
 type SentimentResult = {
   positive: number;
@@ -62,8 +62,6 @@ export default function InstagramTab({ igData, token }: Props) {
       likes: p.likeCount,
       comments: p.commentCount,
     }));
-
-  const selectedPostData = igTopPosts.find(p => p.id === selectedPost);
 
   const handleAnalyze = async (postId: string, caption: string) => {
     if (!token || sentimentMap[postId] || analyzingRef.current[postId]) return;

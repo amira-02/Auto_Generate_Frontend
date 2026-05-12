@@ -7,7 +7,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 
-const API = "https://localhost:7079";
+const API: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -103,7 +103,7 @@ function fmtNum(n: number): string {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, sub, accent, delta, icon, delay = 0, badge, badgeColor }: {
+function KpiCard({ label, value, sub, accent, delta, icon, delay = 0, badge }: {
   label: string; value: string | number; sub?: string;
   accent: string; delta?: number; icon: string; delay?: number; badge?: string; badgeColor?: string;
 }) {
@@ -262,11 +262,6 @@ export default function Analytics() {
     ? Math.round(fbTotalImpressions / fbData.impressionsTimeline.length) : 0;
   const fbEngRate           = fbData && fbData.fans > 0
     ? ((fbTotalEngaged / 30 / fbData.fans) * 100).toFixed(2) : "0.00";
-
-  // ── Theme per tab ─────────────────────────────────────────────────────────
-  const isIG = activeTab === "instagram";
-  const isFB = activeTab === "facebook";
-  const accentColor = isFB ? "#1877f2" : "#e1306c";
 
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh" }}>

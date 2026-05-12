@@ -9,21 +9,13 @@ import {
   FaSnapchat,
   FaPinterest,
   FaWhatsapp,
-  FaSnapchatGhost
 } from "react-icons/fa";
 import { motion } from "framer-motion";
-import type { Variants } from "framer-motion";
 import { useTheme } from "../../hooks/ThemeContext";
 
 
 const AboutUs: React.FC = () => {
-  const floatVariants: Variants = {
-    float: {
-      y: [0, -20, 0],
-      transition: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-    },
-  };
-const { t, isDark, toggleTheme } = useTheme();
+const { t } = useTheme();
   return (
     <div style={{ background: t.bg, color: t.text }}>
       {/* <button onClick={toggleTheme}>

@@ -1,9 +1,9 @@
 // src/components/DashboardSection/Notifications/NotificationBell.tsx
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiBell, FiX, FiCheck } from "react-icons/fi";
+import { FiBell, FiX } from "react-icons/fi";
 
-const API = "https://localhost:7079";
+const API: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
 type Notif = {
   id:          number;

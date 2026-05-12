@@ -1,10 +1,9 @@
 // Analytics/AiRecommendations.tsx
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { fmtNum } from "./analyticsHelpers";
 import type { InstagramSummary, FacebookSummary, Post } from "./analyticsTypes";
 
-const API = "https://localhost:7079";
+const API: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
 type Props = {
   posts:  Post[];

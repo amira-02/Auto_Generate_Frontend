@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
@@ -182,57 +181,6 @@ const INJECTED_STYLES = `
       stroke-linecap: round;
   }
 `;
-
-// ── FloatingPaths ─────────────────────────────────────────────────────────────
-function FloatingPaths({ position }: { position: number }) {
-  const paths = Array.from({ length: 28 }, (_, i) => ({
-    id: i,
-    d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position} -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position} ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position} ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
-    opacity: 0.03 + i * 0.012,
-    width:   0.35 + i * 0.022,
-  }));
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-      <svg className="w-full h-full" viewBox="0 0 696 316" fill="none">
-        {paths.map((p) => (
-          <motion.path
-            key={p.id}
-            d={p.d}
-            stroke="rgba(230,87,135,1)"
-            strokeWidth={p.width}
-            strokeOpacity={p.opacity}
-            initial={{ pathLength: 0.2, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: [0, p.opacity * 3, p.opacity], pathOffset: [0, 1, 0] }}
-            transition={{ duration: 18 + p.id * 0.6, repeat: Infinity, ease: "linear" }}
-          />
-        ))}
-      </svg>
-    </div>
-  );
-}
-
-// ── AnimatedTagline ────────────────────────────────────────────────────────────
-function AnimatedTagline({ text, className, delay = 0 }: { text: string; className?: string; delay?: number }) {
-  return (
-    <h1 className={className}>
-      {text.split(" ").map((word, wi) => (
-        <span key={wi} className="inline-block mr-[0.28em] last:mr-0">
-          {word.split("").map((letter, li) => (
-            <motion.span
-              key={`${wi}-${li}`}
-              initial={{ y: 80, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: delay + wi * 0.08 + li * 0.03, type: "spring", stiffness: 160, damping: 22 }}
-              className="inline-block"
-            >
-              {letter}
-            </motion.span>
-          ))}
-        </span>
-      ))}
-    </h1>
-  );
-}
 
 export interface CinematicHeroProps extends React.HTMLAttributes<HTMLDivElement> {
   tagline1?: string;

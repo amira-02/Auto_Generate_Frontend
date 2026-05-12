@@ -7,7 +7,7 @@ import DetailPanel from "../Posts/DetailPanel";
 import type { Post } from "../Posts/PostsView";
 import { toast } from "react-toastify";
 
-const API = "https://localhost:7079";
+const API: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 const PAGE_SIZE = 12;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -163,11 +163,6 @@ export default function TopicDetailView({ topicId, topicName, onBack }: Props) {
   };
 
 
-  const parsePlatforms = (p: any): string[] => {
-  if (!p) return [];
-  if (Array.isArray(p)) return p;
-  try { return JSON.parse(p); } catch { return []; }
-};
   const handleDeletePost = async (postId: number, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!confirm("Delete this post?")) return;

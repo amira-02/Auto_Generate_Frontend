@@ -4,12 +4,12 @@ import ReactDOM from "react-dom";
 import {
   FiImage, FiFileText, FiClock, FiCheckCircle, FiAlertCircle,
   FiX, FiEdit3, FiUpload, FiSend, FiCalendar, FiRefreshCw,
-  FiZap, FiSave, FiLink, FiArrowLeft, FiHeart, FiMessageCircle,
+  FiZap, FiSave, FiLink, FiHeart, FiMessageCircle,
   FiShare2, FiBookmark, FiSmile
 } from "react-icons/fi";
 import type { Post } from "./PostsView";
 
-const API_BASE = "https://localhost:7079";
+const API_BASE: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
 type Platform = "linkedin" | "twitter" | "instagram" | "facebook" | "tiktok" | "threads";
 
@@ -277,7 +277,6 @@ export type DetailPanelProps = {
 };
 
 export default function DetailPanel({ post, onClose, onUpdate, token }: DetailPanelProps) {
-  const missing = getMissing(post);
   const statusKey = normalizeStatus(post.status);
   const status = STATUS_META[statusKey];
 
@@ -580,8 +579,6 @@ const handleSetImageUrl = async () => {
   const ALL_PLATFORMS: Platform[] = ["instagram", "linkedin", "twitter", "facebook", "tiktok", "threads"];
   const togglePlatform = (p: Platform) =>
     setPlatformsDraft(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
-
-  const resolvedImageUrl = resolveImageUrl(post.imageUrl);
 
   // Mock user data (safe access)
   const mockUser = {

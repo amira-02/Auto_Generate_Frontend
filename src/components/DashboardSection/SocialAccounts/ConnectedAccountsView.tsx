@@ -5,7 +5,7 @@ import { FiRefreshCw, FiX, FiCheck, FiPlus, FiEye, FiEyeOff, FiEdit2 } from "rea
 import { AuthContext } from "../../../hooks/AuthContext";
 import { toast } from "react-toastify";
 
-const API_BASE = "https://localhost:7079";
+const API_BASE: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
 // ─── Real platform SVG logos ──────────────────────────────────────────────────
 

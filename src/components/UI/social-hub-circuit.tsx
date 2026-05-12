@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import React from "react";
 import {
   FaInstagram, FaYoutube, FaFacebook, FaLinkedinIn,
   FaTelegramPlane, FaSnapchatGhost,

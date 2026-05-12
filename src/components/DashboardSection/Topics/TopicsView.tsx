@@ -7,7 +7,7 @@ import {
 import { AuthContext } from "../../../hooks/AuthContext";
 import { toast } from "react-toastify";
 
-const API      = "https://localhost:7079";
+const API: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 const PAGE_SIZE = 12;
 
 type Topic = {

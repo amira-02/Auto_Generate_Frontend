@@ -18,7 +18,7 @@ type Props = {
   imageInputRef: any; videoInputRef: any; PLATFORMS: any[];
 };
 
-const BASE_URL    = "https://localhost:7079";
+const BASE_URL: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 const API_URL     = `${BASE_URL}/api/posts/chat`;
 const SAVE_URL    = `${BASE_URL}/api/posts/save`;
 const GEN_IMG_URL = `${BASE_URL}/api/images/generate`;

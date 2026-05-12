@@ -24,8 +24,6 @@ interface FeatureItem { icon: LucideIcon; title: string; desc: string; large: bo
 interface PlanItem    { name: string; price: string; desc: string; features: string[]; cta: string; highlight: boolean }
 interface TItem       { name: string; role: string; text: string; rating: number; avatar: string }
 interface FaqItem     { q: string; a: string }
-type SocialPlatform   = { name: string; bg: string; color: string; icon: React.ReactNode }
-
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const STATS: StatItem[] = [

@@ -79,7 +79,7 @@ export default function Dashboard() {
   const [selectedTopic,  setSelectedTopic]  = useState<{ id: number; name: string } | null>(null);
   const [modal,          setModal]          = useState<ModalState>(INITIAL_MODAL);
   const [posts,          setPosts]          = useState<any[]>([]);
-  const [loadingPosts,   setLoadingPosts]   = useState(false);
+  const [, setLoadingPosts] = useState(false);
   const [sidebarOpen,    setSidebarOpen]    = useState(true);
   const [externalTaskId, setExternalTaskId] = useState<number | null>(null);
 

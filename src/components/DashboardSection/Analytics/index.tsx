@@ -12,7 +12,7 @@ import { fmtNum }   from "./analyticsHelpers";
 import type { Post, InstagramSummary, FacebookSummary, LinkedInSummary, TikTokSummary } from "./analyticsTypes";
 import NotificationBell from "../Notifications/NotificationBell";
 
-const API = "https://localhost:7079";
+const API: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 type Tab = "overview" | "instagram" | "facebook" | "linkedin" | "tiktok" | "content";
 
 type Props = {
@@ -27,7 +27,6 @@ export default function Analytics({ onExternalTask }: Props) {
   const [liData,  setLiData]  = useState<LinkedInSummary  | null>(null);
   const [ttData,  setTtData]  = useState<TikTokSummary    | null>(null);
   const [loading, setLoading] = useState(true);
-  const [period,  setPeriod]  = useState<"7d" | "30d" | "90d">("30d");
   const [tab,     setTab]     = useState<Tab>("overview");
 
   useEffect(() => {

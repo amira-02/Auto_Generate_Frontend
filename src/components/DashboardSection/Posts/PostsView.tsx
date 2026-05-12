@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiImage, FiFileText, FiClock, FiCheckCircle, FiAlertCircle,
   FiX, FiEdit3, FiUpload, FiSend, FiCalendar, FiSearch, FiRefreshCw,
-  FiZap, FiTrash2, FiSave, FiLink
+  FiZap, FiSave, FiLink
 } from "react-icons/fi";
 import { AuthContext } from "../../../hooks/AuthContext";
 
-const API_BASE = "https://localhost:7079";
+const API_BASE: string = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
