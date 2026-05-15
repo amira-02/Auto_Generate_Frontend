@@ -74,7 +74,7 @@ const PLATFORM_META: Record<string, { color: string; icon: string; label: string
 };
 
 const STATUS_COLOR: Record<string, string> = {
-  published: "#10b981", scheduled: "#e65787",
+  published: "#10b981", scheduled: "#dc2626",
   draft: "#94a3b8", inreview: "#f59e0b",
   approved: "#06b6d4", failed: "#ef4444",
 };
@@ -266,7 +266,7 @@ export default function Analytics() {
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh" }}>
       <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#e65787" }} />
+        style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#dc2626" }} />
     </div>
   );
 
@@ -279,7 +279,7 @@ export default function Analytics() {
         display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#fff1f3",
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#fef2f2",
             display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>📈</div>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Analytics</span>
         </div>
@@ -320,7 +320,7 @@ export default function Analytics() {
             { id: "facebook",  label: "📘 Facebook"   },
             { id: "content",   label: "Content"       },
           ] as const).map(t => {
-            const tabAccent = t.id === "facebook" ? "#1877f2" : t.id === "instagram" ? "#e1306c" : "#e65787";
+            const tabAccent = t.id === "facebook" ? "#1877f2" : t.id === "instagram" ? "#e1306c" : "#dc2626";
             return (
               <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
                 padding: "5px 14px", borderRadius: 8, border: "none", cursor: "pointer",
@@ -353,14 +353,14 @@ export default function Analytics() {
       {activeTab === "overview" && (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 14, marginBottom: 20 }}>
-            <KpiCard label="Total Posts"      value={posts.length}           accent="#e65787" icon="📝" delta={growthPct} delay={0}    sub={`${postsThisMonth.length} this month`} />
+            <KpiCard label="Total Posts"      value={posts.length}           accent="#dc2626" icon="📝" delta={growthPct} delay={0}    sub={`${postsThisMonth.length} this month`} />
             <KpiCard label="Published"        value={published.length}       accent="#10b981" icon="✅" delta={8}         delay={0.05} sub="Live on social" />
             <KpiCard label="IG Followers"     value={fmtNum(igFollowers)}    accent="#e1306c" icon="📸" delay={0.1}       sub="Instagram" badge="REAL" badgeColor="#e1306c" />
             <KpiCard label="IG Likes"         value={fmtNum(igTotalLikes)}   accent="#f59e0b" icon="❤️" delay={0.15}      sub="recent posts" badge="REAL" badgeColor="#e1306c" />
             <KpiCard label="FB Fans"          value={fmtNum(fbData?.fans ?? 0)} accent="#1877f2" icon="📘" delay={0.2}   sub="Facebook page" badge="REAL" badgeColor="#1877f2" />
             <KpiCard label="FB Impressions"   value={fmtNum(fbTotalImpressions)} accent="#06b6d4" icon="👁️" delay={0.25} sub="Last 30 days" badge="REAL" badgeColor="#1877f2" />
-            <KpiCard label="IG Eng. Rate"     value={`${engRate}%`}          accent="#e65787" icon="💬" delay={0.3}       sub="likes+comments/followers" badge="REAL" badgeColor="#e1306c" />
-            <KpiCard label="Scheduled"        value={scheduled.length}       accent="#e65787" icon="📅" delay={0.35}      sub="upcoming" />
+            <KpiCard label="IG Eng. Rate"     value={`${engRate}%`}          accent="#dc2626" icon="💬" delay={0.3}       sub="likes+comments/followers" badge="REAL" badgeColor="#e1306c" />
+            <KpiCard label="Scheduled"        value={scheduled.length}       accent="#dc2626" icon="📅" delay={0.35}      sub="upcoming" />
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16, marginBottom: 16 }}>
@@ -369,21 +369,21 @@ export default function Analytics() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                 <SectionTitle title="Posts over time" sub="Monthly creation trend" />
                 <div style={{ display: "flex", gap: 12, fontSize: 11, color: "#94a3b8" }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#e65787", display: "inline-block" }} />Total</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#dc2626", display: "inline-block" }} />Total</span>
                   <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />Published</span>
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={monthlyTrend} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="gT" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#e65787" stopOpacity={0.15} /><stop offset="95%" stopColor="#e65787" stopOpacity={0} /></linearGradient>
+                    <linearGradient id="gT" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#dc2626" stopOpacity={0.15} /><stop offset="95%" stopColor="#dc2626" stopOpacity={0} /></linearGradient>
                     <linearGradient id="gP" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.15} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} /></linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="total"     name="Total"     stroke="#e65787" strokeWidth={2} fill="url(#gT)" dot={{ fill: "#e65787", r: 3 }} />
+                  <Area type="monotone" dataKey="total"     name="Total"     stroke="#dc2626" strokeWidth={2} fill="url(#gT)" dot={{ fill: "#dc2626", r: 3 }} />
                   <Area type="monotone" dataKey="published" name="Published" stroke="#10b981" strokeWidth={2} fill="url(#gP)" dot={{ fill: "#10b981", r: 3 }} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -399,7 +399,7 @@ export default function Analytics() {
                   <XAxis dataKey="metric" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="thisMonth" name="This Month" fill="#e65787" radius={[4,4,0,0]} />
+                  <Bar dataKey="thisMonth" name="This Month" fill="#dc2626" radius={[4,4,0,0]} />
                   <Bar dataKey="lastMonth" name="Last Month" fill="#fce7ef"  radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -525,11 +525,11 @@ export default function Analytics() {
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 14, marginBottom: 20 }}>
             <KpiCard label="Followers"      value={fmtNum(igFollowers)}     accent="#e1306c" icon="👥" delay={0}    sub="Instagram audience"       badge="REAL" badgeColor="#e1306c" />
-            <KpiCard label="Total Posts"    value={igMediaCount}            accent="#e65787" icon="🖼️" delay={0.05} sub="published on IG"          badge="REAL" badgeColor="#e1306c" />
+            <KpiCard label="Total Posts"    value={igMediaCount}            accent="#dc2626" icon="🖼️" delay={0.05} sub="published on IG"          badge="REAL" badgeColor="#e1306c" />
             <KpiCard label="Total Likes"    value={fmtNum(igTotalLikes)}    accent="#f59e0b" icon="❤️" delay={0.1}  sub="recent 6 posts"           badge="REAL" badgeColor="#e1306c" />
             <KpiCard label="Total Comments" value={fmtNum(igTotalComments)} accent="#06b6d4" icon="💬" delay={0.15} sub="recent 6 posts"           badge="REAL" badgeColor="#e1306c" />
             <KpiCard label="Eng. Rate"      value={`${engRate}%`}           accent="#10b981" icon="📊" delay={0.2}  sub="(likes+comments)/followers" badge="REAL" badgeColor="#e1306c" />
-            <KpiCard label="Avg Likes/Post" value={igMediaCount > 0 ? Math.round(igTotalLikes / igMediaCount) : 0} accent="#e65787" icon="⭐" delay={0.25} sub="per post" badge="REAL" badgeColor="#e1306c" />
+            <KpiCard label="Avg Likes/Post" value={igMediaCount > 0 ? Math.round(igTotalLikes / igMediaCount) : 0} accent="#dc2626" icon="⭐" delay={0.25} sub="per post" badge="REAL" badgeColor="#e1306c" />
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
@@ -624,7 +624,7 @@ export default function Analytics() {
                 <KpiCard label="Followers"          value={fmtNum(fbData.followers)}  accent="#1877f2" icon="📢" delay={0.05} sub="Page followers"      badge="REAL" badgeColor="#1877f2" />
                 <KpiCard label="Total Impressions"  value={fmtNum(fbTotalImpressions)} accent="#06b6d4" icon="👁️" delay={0.1} sub="Last 30 days"        badge="REAL" badgeColor="#1877f2" />
                 <KpiCard label="Engaged Users"      value={fmtNum(fbTotalEngaged)}    accent="#10b981" icon="💬" delay={0.15} sub="Last 30 days"        badge="REAL" badgeColor="#1877f2" />
-                <KpiCard label="Avg Daily Reach"    value={fmtNum(fbAvgDailyImp)}     accent="#e65787" icon="📊" delay={0.2}  sub="impressions/day"     badge="REAL" badgeColor="#1877f2" />
+                <KpiCard label="Avg Daily Reach"    value={fmtNum(fbAvgDailyImp)}     accent="#dc2626" icon="📊" delay={0.2}  sub="impressions/day"     badge="REAL" badgeColor="#1877f2" />
                 <KpiCard label="Page Eng. Rate"     value={`${fbEngRate}%`}           accent="#f59e0b" icon="⭐" delay={0.25} sub="engaged/fans/day"    badge="REAL" badgeColor="#1877f2" />
               </div>
 
@@ -748,10 +748,10 @@ export default function Analytics() {
                             {p.caption?.slice(0, 36) ?? p.topicName}
                           </div>
                           <div style={{ height: 4, borderRadius: 10, background: "#f1f5f9", overflow: "hidden", marginTop: 4 }}>
-                            <div style={{ width: `${pct}%`, height: "100%", borderRadius: 10, background: "#e65787" }} />
+                            <div style={{ width: `${pct}%`, height: "100%", borderRadius: 10, background: "#dc2626" }} />
                           </div>
                         </div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: "#e65787", flexShrink: 0 }}>{score.toLocaleString()}</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: "#dc2626", flexShrink: 0 }}>{score.toLocaleString()}</div>
                       </div>
                     );
                   })}
@@ -764,13 +764,13 @@ export default function Analytics() {
               <div style={{ marginTop: 16 }} />
               <ResponsiveContainer width="100%" height={210}>
                 <LineChart data={monthlyTrend} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
-                  <defs><linearGradient id="lG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#e65787" /><stop offset="100%" stopColor="#e65787" /></linearGradient></defs>
+                  <defs><linearGradient id="lG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#dc2626" /><stop offset="100%" stopColor="#dc2626" /></linearGradient></defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} />
                   <Line type="monotone" dataKey="engagement" name="Engagement" stroke="url(#lG)" strokeWidth={3}
-                    dot={{ fill: "#e65787", r: 4, strokeWidth: 0 }} activeDot={{ r: 6, fill: "#e65787" }} />
+                    dot={{ fill: "#dc2626", r: 4, strokeWidth: 0 }} activeDot={{ r: 6, fill: "#dc2626" }} />
                 </LineChart>
               </ResponsiveContainer>
             </motion.div>

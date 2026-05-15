@@ -12,7 +12,7 @@ export const PLATFORM_META: Record<string, { color: string; icon: string; label:
 };
 
 export const STATUS_COLOR: Record<string, string> = {
-  published: "#10b981", scheduled: "#e65787",
+  published: "#10b981", scheduled: "#dc2626",
   draft: "#94a3b8", inreview: "#f59e0b",
   approved: "#06b6d4", failed: "#ef4444",
 };

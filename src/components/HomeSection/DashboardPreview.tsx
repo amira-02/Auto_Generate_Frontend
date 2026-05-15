@@ -35,7 +35,7 @@ const DashboardPreview: React.FC = () => {
           {/* Top Bar */}
           <div className="h-14 bg-gray-50 border-b flex items-center px-6 justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-2xl flex items-center justify-center text-white font-bold">IS</div>
+              <div className="w-8 h-8 bg-gradient-to-br from-red-700 to-red-600 rounded-2xl flex items-center justify-center text-white font-bold">IS</div>
               <span className="font-bold text-2xl tracking-tighter">IntelliSite</span>
             </div>
             <div className="flex gap-8 text-sm">
@@ -50,7 +50,7 @@ const DashboardPreview: React.FC = () => {
           <div className="p-8 grid grid-cols-12 gap-6">
             {/* Left - Overview */}
             <div className="col-span-12 lg:col-span-4 space-y-6">
-              <div className="bg-gradient-to-br from-violet-50 to-fuchsia-50 rounded-3xl p-7">
+              <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-3xl p-7">
                 <p className="text-sm text-gray-500">PROJECT SCORE</p>
                 <div className="text-6xl font-bold text-gray-900 mt-2">94<span className="text-3xl">%</span></div>
                 <p className="text-emerald-600">Excellent AI Match</p>
@@ -62,7 +62,7 @@ const DashboardPreview: React.FC = () => {
                 <div className="space-y-5">
                   {[
                     { label: "Hero Sections", percent: 65, color: "violet" },
-                    { label: "About Pages", percent: 45, color: "pink" },
+                    { label: "About Pages", percent: 45, color: "red" },
                     { label: "Service Cards", percent: 80, color: "emerald" },
                   ].map((item, i) => (
                     <div key={i}>
@@ -140,7 +140,7 @@ const DashboardPreview: React.FC = () => {
                 </div>
                 <div className="text-center text-sm space-y-1">
                   <div>Modern <span className="font-bold text-violet-600">62%</span></div>
-                  <div>Minimal <span className="font-bold text-pink-500">38%</span></div>
+                  <div>Minimal <span className="font-bold text-red-500">38%</span></div>
                 </div>
               </div>
 
@@ -157,7 +157,7 @@ const DashboardPreview: React.FC = () => {
               </div>
 
               {/* AI Recommendation Box */}
-              <div className="bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-600 text-white rounded-3xl p-6">
+              <div className="bg-gradient-to-br from-red-700 via-red-600 to-red-600 text-white rounded-3xl p-6">
                 <p className="opacity-75 text-sm">NEXT RECOMMENDATION</p>
                 <p className="text-lg font-semibold mt-2 leading-tight">
                   Add parallax scroll + 3D hover effects

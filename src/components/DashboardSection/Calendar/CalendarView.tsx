@@ -25,6 +25,7 @@ type Props = {
   posts: Post[];
   token: string;
   apiBase: string;
+  clientId: number;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -151,8 +152,8 @@ function MiniCalendar({
           return (
             <button key={day} onClick={() => onSelectDay(date)} style={{
               width: "100%", aspectRatio: "1", borderRadius: 8, border: "none",
-              background: today ? "#e65787" : selected ? "#fff1f3" : "transparent",
-              color: today ? "#fff" : selected ? "#e65787" : "#374151",
+              background: today ? "#dc2626" : selected ? "#fef2f2" : "transparent",
+              color: today ? "#fff" : selected ? "#dc2626" : "#374151",
               fontSize: 12, fontWeight: today || selected ? 700 : 400,
               cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             }}>
@@ -167,7 +168,7 @@ function MiniCalendar({
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function CalendarView({ posts: initialPosts, token, apiBase }: Props) {
+export default function CalendarView({ posts: initialPosts, token, apiBase, clientId }: Props) {
   const [posts, setPosts]             = useState<Post[]>(initialPosts);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode]       = useState<"month" | "week" | "day">("week");
@@ -184,12 +185,12 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`${apiBase}/api/posts`, { headers: { Authorization: `Bearer ${token}` } });
+        const res = await fetch(`${apiBase}/api/posts?clientId=${clientId}`, { headers: { Authorization: `Bearer ${token}` } });
         if (res.ok) setPosts(await res.json());
       } catch (err) { console.error("Auto-refresh failed:", err); }
     }, 60_000);
     return () => clearInterval(interval);
-  }, [token, apiBase]);
+  }, [token, apiBase, clientId]);
 
   useEffect(() => {
     if (viewMode !== "day" || !dayTimelineRef.current) return;
@@ -415,14 +416,14 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         onDrop={e => onCellDrop(e, date, key)}
         style={{
           minHeight: 100, padding: "8px 6px", borderRadius: 10, cursor: "pointer",
-          background: isOver ? "#fff1f3" : selected ? "#fafafe" : isCurrentMonth ? "#fff" : "#f8fafc",
-          border: today ? "2px solid #e65787" : isOver ? "2px dashed #e65787" : "1px solid #f0f0f0",
+          background: isOver ? "#fef2f2" : selected ? "#fafafe" : isCurrentMonth ? "#fff" : "#f8fafc",
+          border: today ? "2px solid #dc2626" : isOver ? "2px dashed #dc2626" : "1px solid #f0f0f0",
           transition: "background .1s, border .1s",
         }}
       >
         <div style={{
           width: 24, height: 24, borderRadius: "50%", marginBottom: 4,
-          background: today ? "#e65787" : "transparent",
+          background: today ? "#dc2626" : "transparent",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: today ? "#fff" : isCurrentMonth ? "#374151" : "#94a3b8" }}>
@@ -431,7 +432,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         </div>
         {dayPosts.slice(0, 2).map(p => renderPostCard(p, true))}
         {dayPosts.length > 2 && (
-          <div style={{ fontSize: 10, color: "#e65787", fontWeight: 600, marginTop: 4 }}>
+          <div style={{ fontSize: 10, color: "#dc2626", fontWeight: 600, marginTop: 4 }}>
             +{dayPosts.length - 2} more
           </div>
         )}
@@ -455,7 +456,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
           onClick={() => { setSelectedDay(date); setCurrentDate(date); }}
           style={{
             padding: "12px 8px", borderRadius: "10px 10px 0 0", cursor: "pointer",
-            background: today ? "#e65787" : selected ? "#fff1f3" : "#fff",
+            background: today ? "#dc2626" : selected ? "#fef2f2" : "#fff",
             border: "1px solid #f0f0f0", borderBottom: "none", textAlign: "center",
             transition: "background .1s",
           }}
@@ -477,7 +478,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
           style={{
             flex: 1, padding: 8, minHeight: 200,
             background: isOver ? "#f8f8ff" : "#fafafa",
-            border: `1px solid ${isOver ? "#e65787" : "#f0f0f0"}`,
+            border: `1px solid ${isOver ? "#dc2626" : "#f0f0f0"}`,
             borderTop: "none", borderRadius: "0 0 10px 10px",
             transition: "background .1s, border .1s",
           }}
@@ -530,7 +531,7 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{
             width: 30, height: 30, borderRadius: 8,
-            background: "#fff1f3",
+            background: "#fef2f2",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 15,
           }}>▦</div>
@@ -543,9 +544,9 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
         {/* Stats pills */}
         <div style={{ display: "flex", gap: 8 }}>
           {[
-            { label: "Scheduled", value: posts.filter(p => p.status?.toLowerCase() === "scheduled").length, accent: "#e65787" },
+            { label: "Scheduled", value: posts.filter(p => p.status?.toLowerCase() === "scheduled").length, accent: "#dc2626" },
             { label: "Published",  value: posts.filter(p => p.status?.toLowerCase() === "published").length,  accent: "#10b981" },
-            { label: "Total",      value: posts.length,                                                        accent: "#e65787" },
+            { label: "Total",      value: posts.length,                                                        accent: "#dc2626" },
           ].map(({ label, value, accent }) => (
             <div key={label} style={{
               display: "flex", alignItems: "center", gap: 5,
@@ -715,13 +716,13 @@ export default function CalendarView({ posts: initialPosts, token, apiBase }: Pr
                 }}>
                   <div style={{
                     width: 48, height: 48, borderRadius: 14,
-                    background: isToday(selectedDay) ? "#e65787" : "#fff1f3",
+                    background: isToday(selectedDay) ? "#dc2626" : "#fef2f2",
                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                   }}>
-                    <span style={{ fontSize: 10, color: isToday(selectedDay) ? "#ed8faf" : "#e65787", fontWeight: 700, textTransform: "uppercase" }}>
+                    <span style={{ fontSize: 10, color: isToday(selectedDay) ? "#ed8faf" : "#dc2626", fontWeight: 700, textTransform: "uppercase" }}>
                       {selectedDay.toLocaleString("en-US", { weekday: "short" })}
                     </span>
-                    <span style={{ fontSize: 20, fontWeight: 800, color: isToday(selectedDay) ? "#fff" : "#e65787", lineHeight: 1 }}>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: isToday(selectedDay) ? "#fff" : "#dc2626", lineHeight: 1 }}>
                       {selectedDay.getDate()}
                     </span>
                   </div>

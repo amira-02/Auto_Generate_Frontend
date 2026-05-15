@@ -24,23 +24,24 @@ const PLATFORMS = [
   { id: "linkedin",  label: "LinkedIn",  color: "#0077b5", gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" },
   { id: "twitter",   label: "Twitter/X", color: "#1da1f2", gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" },
   { id: "facebook",  label: "Facebook",  color: "#1877f2", gradient: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)" },
-  { id: "tiktok",    label: "TikTok",    color: "#010101", gradient: "linear-gradient(135deg, #e65787 0%, #764ba2 100%)" },
+  { id: "tiktok",    label: "TikTok",    color: "#010101", gradient: "linear-gradient(135deg, #dc2626 0%, #764ba2 100%)" },
   { id: "threads",   label: "Threads",   color: "#000000", gradient: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)" },
 ];
 
 type Props = {
   onSelectTopic: (id: number, name: string) => void;
+  clientId: number;
 };
 
-export default function TopicsView({ onSelectTopic }: Props) {
+export default function TopicsView({ onSelectTopic, clientId }: Props) {
   const ui = {
     bg: "#f8f9fb",
     panel: "#ffffff",
     border: "#e5e7eb",
     text: "#0f172a",
     subtext: "#64748b",
-    primary: "#e65787",
-    primarySoft: "#fff1f3",
+    primary: "#dc2626",
+    primarySoft: "#fef2f2",
     danger: "#ef4444",
   } as const;
 
@@ -55,14 +56,16 @@ export default function TopicsView({ onSelectTopic }: Props) {
   const [page, setPage]             = useState(1);
   const [selectedPlatform, setSelectedPlatform] = useState<string>("all");
 
-  useEffect(() => { fetchTopics(); }, [token]);
+  // Clear stale data immediately when client switches
+  useEffect(() => { setTopics([]); setPage(1); setSearch(""); }, [clientId]);
+  useEffect(() => { if (clientId > 0) fetchTopics(); }, [token, clientId]);
   useEffect(() => { setPage(1); }, [search, selectedPlatform]);
 
   const fetchTopics = async () => {
-    if (!token) return;
+    if (!token || clientId === 0) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/topics`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API}/api/topics?clientId=${clientId}`, { headers: { Authorization: `Bearer ${token}` } });
       setTopics(await res.json());
     } catch { setError("Failed to load topics"); }
     finally { setLoading(false); }
@@ -70,12 +73,13 @@ export default function TopicsView({ onSelectTopic }: Props) {
 
   const handleCreate = async () => {
     if (!form.name.trim()) { setError("Name is required"); return; }
+    if (clientId === 0) { setError("No client selected"); return; }
     setCreating(true); setError("");
     try {
       const res = await fetch(`${API}/api/topics`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, clientId }),
       });
       const created = await res.json();
       setTopics(prev => [created, ...prev]);
@@ -216,7 +220,7 @@ export default function TopicsView({ onSelectTopic }: Props) {
         }}
       >
         {[
-          { label: "Total Topics", value: topics.length, icon: FiFolder, color: "#e65787", bg: "#fce7ef" },
+          { label: "Total Topics", value: topics.length, icon: FiFolder, color: "#dc2626", bg: "#fce7ef" },
           { label: "Total Posts", value: totalPosts, icon: FiHash, color: "#f59e0b", bg: "#fed7aa" },
           { label: "Avg Posts/Topic", value: avgPosts, icon: FiTrendingUp, color: "#10b981", bg: "#d1fae5" },
           { label: "Active Platforms", value: platformStats.length, icon: FiHome, color: "#ef4444", bg: "#fee2e2" },
@@ -278,7 +282,7 @@ export default function TopicsView({ onSelectTopic }: Props) {
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             style={{
               width: 48, height: 48, borderRadius: "50%",
-              border: "3px solid #e5e7eb", borderTopColor: "#e65787"
+              border: "3px solid #e5e7eb", borderTopColor: "#dc2626"
             }}
           />
           <p style={{ marginTop: 16, color: "#6b7280", fontSize: 14 }}>Loading your topics...</p>
@@ -476,7 +480,7 @@ export default function TopicsView({ onSelectTopic }: Props) {
               return (
                 <button key={pageNum} onClick={() => setPage(pageNum)} style={{
                   width: 40, height: 40, borderRadius: 12, cursor: "pointer",
-                  background: page === pageNum ? "linear-gradient(135deg, #e65787 0%, #764ba2 100%)" : "white",
+                  background: page === pageNum ? "linear-gradient(135deg, #dc2626 0%, #764ba2 100%)" : "white",
                   color: page === pageNum ? "white" : "#374151",
                   fontWeight: page === pageNum ? 700 : 500, fontSize: 14,
                   border: page === pageNum ? "none" : "1px solid #e5e7eb",

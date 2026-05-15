@@ -137,10 +137,10 @@ export function SocialHubCircuit({
 
           {/* Box body */}
           <rect x="85" y="40" width="30" height="20" rx="2"
-            fill="#1a0a10" filter="url(#sh-glow)" />
+            fill="#ffffff" filter="url(#sh-glow)" />
           <rect x="85" y="40" width="30" height="20" rx="2"
-            fill="none" stroke="#e65787" strokeWidth="0.45" strokeOpacity="0.75" />
-          <text x="91.5" y="53" fontSize="6.5" fill="url(#sh-text-grad)"
+            fill="none" stroke="#dc2626" strokeWidth="0.45" strokeOpacity="0.75" />
+          <text x="91.5" y="53" fontSize="6.5" fill="#dc2626"
             fontWeight="700" letterSpacing="0.08em">AUTO</text>
 
           <defs>
@@ -218,13 +218,13 @@ export function SocialHubCircuit({
             {/* ── Hub glow filter ── */}
             <filter id="sh-glow" x="-80%" y="-80%" width="260%" height="260%">
               <feDropShadow dx="0" dy="0" stdDeviation="2.5"
-                floodColor="#e65787" floodOpacity="0.5" />
+                floodColor="#dc2626" floodOpacity="0.5" />
             </filter>
 
             {/* ── Dot marker at path start ── */}
             <marker id="sh-circle-marker" viewBox="0 0 10 10"
               refX="5" refY="5" markerWidth="18" markerHeight="18">
-              <circle cx="5" cy="5" r="2" fill="#1a0a10" stroke="#e65787" strokeWidth="0.5">
+              <circle cx="5" cy="5" r="2" fill="#1a0a10" stroke="#dc2626" strokeWidth="0.5">
                 {animateMarkers && (
                   <animate attributeName="r" values="0; 3; 2" dur="0.5s" />
                 )}
@@ -268,7 +268,7 @@ export function SocialHubCircuit({
               style={{ left, top, transform: "translate(-50%, -50%)" }}
             >
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{
                   background: node.bg,
                   color: node.color,

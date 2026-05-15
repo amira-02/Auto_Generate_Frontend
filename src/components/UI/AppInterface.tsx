@@ -45,7 +45,7 @@ const AppInterface: React.FC = () => {
       <div className="h-20 border-b bg-white flex items-center gap-4 px-4 overflow-x-auto hide-scrollbar">
         {stories.map((story, i) => (
           <div key={i} className="flex flex-col items-center flex-shrink-0">
-            <div className="w-14 h-14 rounded-full border-2 border-pink-500 p-0.5 overflow-hidden">
+            <div className="w-14 h-14 rounded-full border-2 border-red-500 p-0.5 overflow-hidden">
               <img
                 src={story.image}
                 alt={story.name}
@@ -64,7 +64,7 @@ const AppInterface: React.FC = () => {
             {/* Post Header */}
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-gradient-to-tr from-pink-500 via-red-500 to-yellow-500 rounded-full"></div>
+                <div className="w-9 h-9 bg-gradient-to-tr from-red-500 via-red-500 to-yellow-500 rounded-full"></div>
                 <div>
                   <p className="font-semibold text-sm">{post.username}</p>
                   <p className="text-xs text-gray-500">{post.location}</p>

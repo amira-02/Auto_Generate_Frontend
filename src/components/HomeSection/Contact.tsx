@@ -12,7 +12,7 @@ const ContactPage: React.FC = () => {
           <h1 className="text-5xl md:text-6xl font-semibold text-[#0F172A] leading-tight">
             Let’s build something{" "}
            <span 
-    className="italic font-serif bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-600 bg-clip-text text-transparent font-semibold"
+    className="italic font-serif bg-gradient-to-br from-red-700 via-red-600 to-red-600 bg-clip-text text-transparent font-semibold"
   >
     impactful
   </span>
@@ -89,7 +89,7 @@ const ContactPage: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full py-4 rounded-xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-600 text-white font-medium shadow-lg hover:scale-[1.02] transition"
+              className="w-full py-4 rounded-xl bg-gradient-to-br from-red-700 via-red-600 to-red-600 text-white font-medium shadow-lg hover:scale-[1.02] transition"
             >
               Send Message
             </button>

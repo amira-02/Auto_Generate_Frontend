@@ -4,7 +4,7 @@ const Footer: React.FC = () => {
   return (
     <footer
       style={{
-        background: "#fff1f3",
+        background: "#fef2f2",
         borderTop: "1px solid #e5e7eb",
         color: "#111827",
       }}
@@ -21,7 +21,7 @@ const Footer: React.FC = () => {
             <div className="flex items-center gap-2.5 mb-5">
               <div
                 className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: "#e65787" }}
+                style={{ background: "#dc2626" }}
               >
                 <span className="text-[10px] font-bold text-white">AG</span>
               </div>
@@ -39,19 +39,19 @@ const Footer: React.FC = () => {
             <div className="flex gap-4 mt-6" style={{ color: "#9ca3af" }}>
               <FaInstagram
                 size={16}
-                className="cursor-pointer transition-colors duration-200 hover:text-[#e65787]"
+                className="cursor-pointer transition-colors duration-200 hover:text-[#dc2626]"
               />
               <FaLinkedinIn
                 size={16}
-                className="cursor-pointer transition-colors duration-200 hover:text-[#e65787]"
+                className="cursor-pointer transition-colors duration-200 hover:text-[#dc2626]"
               />
               <FaTwitter
                 size={16}
-                className="cursor-pointer transition-colors duration-200 hover:text-[#e65787]"
+                className="cursor-pointer transition-colors duration-200 hover:text-[#dc2626]"
               />
               <FaYoutube
                 size={16}
-                className="cursor-pointer transition-colors duration-200 hover:text-[#e65787]"
+                className="cursor-pointer transition-colors duration-200 hover:text-[#dc2626]"
               />
             </div>
           </div>
@@ -67,7 +67,7 @@ const Footer: React.FC = () => {
                   <span
                     className="text-sm cursor-pointer transition-colors duration-200"
                     style={{ color: "#6b7280" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#e65787")}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#dc2626")}
                     onMouseLeave={(e) => (e.currentTarget.style.color = "#6b7280")}
                   >
                     {item}
@@ -89,7 +89,7 @@ const Footer: React.FC = () => {
               <input
                 type="email"
                 placeholder="Your email"
-                className="flex-1 px-4 py-2.5 text-sm rounded-l-xl focus:outline-none focus:ring-2 focus:ring-pink-400"
+                className="flex-1 px-4 py-2.5 text-sm rounded-l-xl focus:outline-none focus:ring-2 focus:ring-red-400"
                 style={{
                   background: "#ffffff",
                   border: "1px solid #e5e7eb",
@@ -99,7 +99,7 @@ const Footer: React.FC = () => {
               />
               <button
                 className="px-5 py-2.5 text-sm font-semibold rounded-r-xl text-white transition-opacity duration-200 hover:opacity-90"
-                style={{ background: "#e65787" }}
+                style={{ background: "#dc2626" }}
               >
                 Join
               </button>
@@ -121,7 +121,7 @@ const Footer: React.FC = () => {
               <span
                 key={item}
                 className="cursor-pointer transition-colors duration-200"
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#e65787")}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#dc2626")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
               >
                 {item}

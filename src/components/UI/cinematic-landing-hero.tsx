@@ -34,7 +34,7 @@ const INJECTED_STYLES = `
   }
 
   .text-silver-matte {
-      background: linear-gradient(128deg, #e65787 0%, #e65787 50%, #ed8faf 100%);
+      background: linear-gradient(128deg, #dc2626 0%, #dc2626 50%, #ed8faf 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -46,7 +46,7 @@ const INJECTED_STYLES = `
 
   /* Brand name inside the light card — indigo gradient */
   .text-card-brand {
-      background: linear-gradient(160deg, #7a1d3e 0%, #d94470 50%, #e65787 100%);
+      background: linear-gradient(160deg, #7a1d3e 0%, #dc2626 50%, #dc2626 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -58,7 +58,7 @@ const INJECTED_STYLES = `
 
   /* Light premium card — white / very light indigo */
   .premium-depth-card {
-      background: linear-gradient(145deg, #ffffff 0%, #fff1f3 100%);
+      background: linear-gradient(145deg, #ffffff 0%, #fef2f2 100%);
       box-shadow:
           0 60px 120px -20px rgba(230, 87, 135, 0.18),
           0 25px 50px -15px rgba(230, 87, 135, 0.10),
@@ -123,7 +123,7 @@ const INJECTED_STYLES = `
   /* Tactile buttons */
   .btn-modern-primary {
       transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
-      background: linear-gradient(180deg, #e65787 0%, #d94470 100%);
+      background: linear-gradient(180deg, #dc2626 0%, #dc2626 100%);
       color: #ffffff;
       box-shadow:
           0 0 0 1px rgba(230,87,135,0.2),
@@ -134,7 +134,7 @@ const INJECTED_STYLES = `
   }
   .btn-modern-primary:hover {
       transform: translateY(-3px);
-      background: linear-gradient(180deg, #ed8faf 0%, #e65787 100%);
+      background: linear-gradient(180deg, #ed8faf 0%, #dc2626 100%);
       box-shadow:
           0 0 0 1px rgba(230,87,135,0.25),
           0 6px 12px -2px rgba(230,87,135,0.35),
@@ -199,7 +199,7 @@ export function CinematicHero({
   cardHeading = "AI-powered social media.",
   cardDescription = (
     <>
-      <span className="font-semibold" style={{ color: "#e65787" }}>AutoGenerate</span>{" "}
+      <span className="font-semibold" style={{ color: "#dc2626" }}>AutoGenerate</span>{" "}
       writes, schedules, and analyzes your content across every platform — so you focus on what matters.
     </>
   ),
@@ -359,18 +359,18 @@ export function CinematicHero({
                         style={{ filter: "drop-shadow(0 15px 25px rgba(0,0,0,0.7))" }}>
                         <svg className="absolute inset-0 w-full h-full" aria-hidden="true">
                           <circle cx="88" cy="88" r="64" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="12" />
-                          <circle className="progress-ring" cx="88" cy="88" r="64" fill="none" stroke="#e65787" strokeWidth="12" />
+                          <circle className="progress-ring" cx="88" cy="88" r="64" fill="none" stroke="#dc2626" strokeWidth="12" />
                         </svg>
                         <div className="text-center z-10 flex flex-col items-center">
                           <span className="counter-val text-4xl font-extrabold tracking-tighter text-white">0</span>
-                          <span className="text-[8px] text-pink-300/60 uppercase tracking-[0.1em] font-bold mt-0.5">{metricLabel}</span>
+                          <span className="text-[8px] text-red-300/60 uppercase tracking-[0.1em] font-bold mt-0.5">{metricLabel}</span>
                         </div>
                       </div>
 
                       <div className="space-y-3">
                         <div className="phone-widget widget-depth rounded-2xl p-3 flex items-center">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500/20 to-pink-600/5 flex items-center justify-center mr-3 border border-pink-400/20 shadow-inner">
-                            <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500/20 to-red-600/5 flex items-center justify-center mr-3 border border-red-400/20 shadow-inner">
+                            <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
                           </div>
@@ -400,13 +400,13 @@ export function CinematicHero({
 
                 {/* Floating badge — top left */}
                 <div className="floating-badge absolute flex top-6 lg:top-12 left-[-15px] lg:left-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
-                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center border border-pink-200/60"
-                    style={{ background: "linear-gradient(135deg, #fff1f3, #fce7ef)" }}>
+                  <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center border border-red-200/60"
+                    style={{ background: "linear-gradient(135deg, #fef2f2, #fce7ef)" }}>
                     <span className="text-base lg:text-xl" aria-hidden="true">✨</span>
                   </div>
                   <div>
                     <p className="text-xs lg:text-sm font-bold tracking-tight" style={{ color: "#0f172a" }}>Post Generated</p>
-                    <p className="text-[10px] lg:text-xs font-medium" style={{ color: "#e65787" }}>6 platforms · 3 seconds</p>
+                    <p className="text-[10px] lg:text-xs font-medium" style={{ color: "#dc2626" }}>6 platforms · 3 seconds</p>
                   </div>
                 </div>
 
@@ -427,8 +427,8 @@ export function CinematicHero({
             {/* Left column: Description */}
             <div className="card-left-text gsap-reveal order-3 lg:order-1 flex flex-col justify-center text-center lg:text-left z-20 w-full px-4 lg:px-0">
               <div className="inline-flex items-center gap-1.5 mb-4 self-center lg:self-start">
-                <span className="w-4 h-[2px] rounded-full" style={{ background: "#e65787" }} />
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: "#e65787" }}>AI-Powered</span>
+                <span className="w-4 h-[2px] rounded-full" style={{ background: "#dc2626" }} />
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: "#dc2626" }}>AI-Powered</span>
               </div>
               <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 tracking-tight" style={{ color: "#0f172a" }}>
                 {cardHeading}
@@ -442,7 +442,7 @@ export function CinematicHero({
               <div className="hidden lg:flex flex-wrap gap-1.5 mt-6">
                 {["Instagram","LinkedIn","TikTok","Facebook","Twitter/X","YouTube"].map((p) => (
                   <span key={p} className="text-[10px] px-2.5 py-1 rounded-full font-medium"
-                    style={{ background: "#fff1f3", border: "1px solid #fce7ef", color: "#e65787" }}>
+                    style={{ background: "#fef2f2", border: "1px solid #fce7ef", color: "#dc2626" }}>
                     {p}
                   </span>
                 ))}

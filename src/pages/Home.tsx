@@ -27,9 +27,9 @@ interface FaqItem     { q: string; a: string }
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const STATS: StatItem[] = [
-  { value: "10K+", label: "Active creators", icon: Users,    color: "#e1306c", bg: "#fff1f3" },
-  { value: "2M+",  label: "Posts generated", icon: Sparkles, color: "#e65787", bg: "#fff1f3" },
-  { value: "6",    label: "Platforms",        icon: Globe,    color: "#e65787", bg: "#fff1f3" },
+  { value: "10K+", label: "Active creators", icon: Users,    color: "#e1306c", bg: "#fef2f2" },
+  { value: "2M+",  label: "Posts generated", icon: Sparkles, color: "#dc2626", bg: "#fef2f2" },
+  { value: "6",    label: "Platforms",        icon: Globe,    color: "#dc2626", bg: "#fef2f2" },
   { value: "70%",  label: "Time saved",       icon: Zap,      color: "#10b981", bg: "#ecfdf5" },
 ];
 
@@ -81,7 +81,7 @@ const PLANS: PlanItem[] = [
 const TESTIMONIALS: TItem[] = [
   { name: "Sarah Chen",   role: "Content Strategist · Novo Agency",        avatar: "#e1306c",
     text: "AutoGenerate cut our production time by 70%. The quality is genuinely impressive — it sounds like us, not a robot.", rating: 5 },
-  { name: "Marcus Osei",  role: "Founder · GrowthLab",                      avatar: "#e65787",
+  { name: "Marcus Osei",  role: "Founder · GrowthLab",                      avatar: "#dc2626",
     text: "We went from twice a week to daily posting. The analytics alone are worth the subscription.",                       rating: 5 },
   { name: "Léa Moreau",   role: "Social Media Manager · Lumière Brand",     avatar: "#ed8faf",
     text: "One brief, five platform-ready posts. The multi-platform support is an absolute game-changer.",                    rating: 5 },
@@ -179,7 +179,7 @@ function FaqRow({ q, a }: FaqItem) {
       <button onClick={() => setOpen(!open)}
         className="w-full flex justify-between items-center text-left py-5 gap-6 group"
       >
-        <span className="text-sm font-medium transition-colors duration-200 group-hover:text-[#e65787]"
+        <span className="text-sm font-medium transition-colors duration-200 group-hover:text-[#dc2626]"
           style={{ color: "#0f172a" }}>{q}
         </span>
         <motion.span animate={{ rotate: open ? 45 : 0 }} transition={{ duration: 0.22, ease: "easeOut" }}
@@ -347,7 +347,7 @@ export default function Home() {
                   onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#ed8faf")}
                 >
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
-                    style={{ background: "#fff1f3" }}>
+                    style={{ background: "#fef2f2" }}>
                     <Icon size={16} color="#e1306c" />
                   </div>
                   <h3 className="text-sm font-semibold mb-1.5" style={{ color: "#0f172a" }}>{f.title}</h3>
@@ -358,7 +358,7 @@ export default function Home() {
                     <div className="mt-5 rounded-xl overflow-hidden"
                       style={{ background: "#f8fafc", border: "1px solid #ed8faf" }}>
                       <div className="px-3 pt-3 pb-1 flex gap-1.5 flex-wrap">
-                        {[["Instagram","#fff1f3","#ed8faf","#e1306c"],["LinkedIn","#fff1f3","#ed8faf","#e1306c"],["TikTok","#f3f4f6","#ed8faf","#9ca3af"]].map(([name,bg,border,color],j) => (
+                        {[["Instagram","#fef2f2","#ed8faf","#e1306c"],["LinkedIn","#fef2f2","#ed8faf","#e1306c"],["TikTok","#f3f4f6","#ed8faf","#9ca3af"]].map(([name,bg,border,color],j) => (
                           <span key={j} className="text-[9px] px-2.5 py-0.5 rounded-full font-medium"
                             style={{ background: bg, border: `1px solid ${border}`, color }}>{name}</span>
                         ))}
@@ -475,7 +475,7 @@ export default function Home() {
                 >
                   <div className="relative mb-6 z-10">
                     <div className="w-20 h-20 rounded-2xl flex flex-col items-center justify-center"
-                      style={{ background: "linear-gradient(135deg, #fff1f3, #fce7ef)" }}>
+                      style={{ background: "linear-gradient(135deg, #fef2f2, #fce7ef)" }}>
                       <span className="text-[10px] font-bold mb-0.5" style={{ color: "#ed8faf" }}>{step.number}</span>
                       <Icon size={22} color="#e1306c" />
                     </div>
@@ -594,7 +594,7 @@ export default function Home() {
                 className="relative p-8 rounded-2xl flex flex-col"
                 style={{
                   background: plan.highlight
-                    ? "linear-gradient(145deg, #fff1f3 0%, #fce7ef 100%)"
+                    ? "linear-gradient(145deg, #fef2f2 0%, #fce7ef 100%)"
                     : "#fff",
                   border: plan.highlight ? "2px solid #e1306c" : "1px solid #ed8faf",
                   boxShadow: plan.highlight ? "0 0 0 4px rgba(230,87,135,0.08), 0 16px 40px rgba(230,87,135,0.12)" : "none",
@@ -687,7 +687,7 @@ export default function Home() {
         >
           <motion.div variants={scale} transition={{ duration: 0.5 }}
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium mb-8"
-            style={{ background: "#fff1f3", border: "1px solid #fce7ef", color: "#e1306c" }}
+            style={{ background: "#fef2f2", border: "1px solid #fce7ef", color: "#e1306c" }}
           >
             <Users size={11} /> Join 10,000+ creators
           </motion.div>

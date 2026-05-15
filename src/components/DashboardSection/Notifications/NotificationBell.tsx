@@ -172,24 +172,38 @@ export default function NotificationBell({ token, onExternalTask }: Props) {
 
                   {/* Icône type */}
                   <div style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-                    background: n.type === "external_task" ? "#fff1f3" : "#f8fafc",
+                    background: n.type === "external_task" ? "#fef2f2"
+                              : n.type === "trello_task"   ? "#eff6ff"
+                              : "#f8fafc",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 14 }}>
-                    {n.type === "external_task" ? "🔗" : "🔔"}
+                    {n.type === "external_task" ? "🔗"
+                   : n.type === "trello_task"   ? "🟦"
+                   : "🔔"}
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: n.isRead ? 500 : 700,
-                      color: "#0f172a", marginBottom: 2 }}>{n.title}</div>
-                    <div style={{ fontSize: 11, color: "#64748b", lineHeight: 1.4,
-                      display: "-webkit-box", WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {n.message}
-                    </div>
+                      color: "#0f172a", marginBottom: 4 }}>{n.title}</div>
+
+                    {n.type === "trello_task" ? (
+                      <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.6 }}>
+                        {n.message.split("\n").map((line, i) => (
+                          <div key={i}>{line}</div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 11, color: "#64748b", lineHeight: 1.4,
+                        display: "-webkit-box", WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                        {n.message}
+                      </div>
+                    )}
+
                     <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 4 }}>
                       {timeAgo(n.createdAt)}
                       {n.type === "external_task" && (
-                        <span style={{ marginLeft: 6, color: "#e65787", fontWeight: 600 }}>
+                        <span style={{ marginLeft: 6, color: "#dc2626", fontWeight: 600 }}>
                           → Click to assign topic
                         </span>
                       )}
@@ -198,7 +212,7 @@ export default function NotificationBell({ token, onExternalTask }: Props) {
 
                   {!n.isRead && (
                     <div style={{ width: 8, height: 8, borderRadius: "50%",
-                      background: "#e65787", flexShrink: 0, marginTop: 4 }} />
+                      background: "#dc2626", flexShrink: 0, marginTop: 4 }} />
                   )}
                 </div>
               ))}

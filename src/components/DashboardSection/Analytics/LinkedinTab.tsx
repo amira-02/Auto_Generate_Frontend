@@ -35,7 +35,7 @@ export default function LinkedinTab({ liData }: Props) {
         <KpiCard label="Connections"        value={fmtNum(liData.connectionsCount)} accent="#0077b5" icon="🤝" delay={0.05} sub="1st degree"           badge="REAL" badgeColor="#0077b5" />
         <KpiCard label="Total Impressions"  value={fmtNum(liData.totalImpressions)} accent="#06b6d4" icon="👁️" delay={0.1}  sub="Last 30 days"         badge="REAL" badgeColor="#0077b5" />
         <KpiCard label="Total Reactions"    value={fmtNum(liData.totalReactions)}   accent="#10b981" icon="👍" delay={0.15} sub="Last 30 days"         badge="REAL" badgeColor="#0077b5" />
-        <KpiCard label="Total Clicks"       value={fmtNum(liData.totalClicks)}      accent="#e65787" icon="🖱️" delay={0.2}  sub="Last 30 days"         badge="REAL" badgeColor="#0077b5" />
+        <KpiCard label="Total Clicks"       value={fmtNum(liData.totalClicks)}      accent="#dc2626" icon="🖱️" delay={0.2}  sub="Last 30 days"         badge="REAL" badgeColor="#0077b5" />
         <KpiCard label="Eng. Rate"          value={`${engRate}%`}                   accent="#f59e0b" icon="📊" delay={0.25} sub="reactions/impressions" badge="REAL" badgeColor="#0077b5" />
       </div>
 

@@ -81,10 +81,10 @@ export default function ContentTab({ posts, igData, fbData }: Props) {
                         {p.caption?.slice(0, 36) ?? p.topicName}
                       </div>
                       <div style={{ height: 4, borderRadius: 10, background: "#f1f5f9", overflow: "hidden", marginTop: 4 }}>
-                        <div style={{ width: `${pct}%`, height: "100%", borderRadius: 10, background: "#e65787" }} />
+                        <div style={{ width: `${pct}%`, height: "100%", borderRadius: 10, background: "#dc2626" }} />
                       </div>
                     </div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#e65787", flexShrink: 0 }}>{score.toLocaleString()}</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#dc2626", flexShrink: 0 }}>{score.toLocaleString()}</div>
                   </div>
                 );
               })}
@@ -98,13 +98,13 @@ export default function ContentTab({ posts, igData, fbData }: Props) {
           <div style={{ marginTop: 16 }} />
           <ResponsiveContainer width="100%" height={210}>
             <LineChart data={monthlyTrend} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
-              <defs><linearGradient id="lG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#e65787" /><stop offset="100%" stopColor="#e65787" /></linearGradient></defs>
+              <defs><linearGradient id="lG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#dc2626" /><stop offset="100%" stopColor="#dc2626" /></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
               <Line type="monotone" dataKey="engagement" name="Engagement" stroke="url(#lG)" strokeWidth={3}
-                dot={{ fill: "#e65787", r: 4, strokeWidth: 0 }} activeDot={{ r: 6, fill: "#e65787" }} />
+                dot={{ fill: "#dc2626", r: 4, strokeWidth: 0 }} activeDot={{ r: 6, fill: "#dc2626" }} />
             </LineChart>
           </ResponsiveContainer>
         </motion.div>

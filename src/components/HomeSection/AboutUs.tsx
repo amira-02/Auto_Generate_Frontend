@@ -104,7 +104,7 @@ const { t } = useTheme();
       <h1 className="text-5xl md:text-7xl font-semibold text-[#0F172A] leading-tight max-w-4xl mb-4">
         Building impactful digital presence in{" "}
         <span 
-    className="italic font-serif bg-gradient-to-br from-[#e65787] via-[#d94470] to-pink-600 bg-clip-text text-transparent font-semibold"
+    className="italic font-serif bg-gradient-to-br from-[#dc2626] via-[#dc2626] to-red-600 bg-clip-text text-transparent font-semibold"
   >
     seconds
   </span>
@@ -154,7 +154,7 @@ const { t } = useTheme();
   <button className="px-10 py-2 rounded-2xl bg-white border border-gray-300 text-gray-700">
     Watch
   </button>
-  <button className="px-10 py-2 rounded-2xl bg-gradient-to-br from-[#e65787] via-[#d94470] to-pink-600 text-white shadow-lg">
+  <button className="px-10 py-2 rounded-2xl bg-gradient-to-br from-[#dc2626] via-[#dc2626] to-red-600 text-white shadow-lg">
     Work
   </button>
 

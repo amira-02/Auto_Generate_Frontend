@@ -24,9 +24,9 @@ const PLATFORM_META: Record<Platform, { label: string; color: string; bg: string
 
 const STATUS_META = {
   draft:     { label: "Draft",     color: "#6b7280", bg: "#f3f4f6", border: "#e5e7eb", dot: "#9ca3af", icon: "✏️" },
-  inreview:  { label: "In Review", color: "#e65787", bg: "#eff6ff", border: "#bfdbfe", dot: "#60a5fa", icon: "🔎" },
+  inreview:  { label: "In Review", color: "#dc2626", bg: "#eff6ff", border: "#bfdbfe", dot: "#60a5fa", icon: "🔎" },
   approved:  { label: "Approved",  color: "#059669", bg: "#ecfdf5", border: "#a7f3d0", dot: "#34d399", icon: "✅" },
-  scheduled: { label: "Scheduled", color: "#e65787", bg: "#fff1f3", border: "#ed8faf", dot: "#ed8faf", icon: "📅" },
+  scheduled: { label: "Scheduled", color: "#dc2626", bg: "#fef2f2", border: "#ed8faf", dot: "#ed8faf", icon: "📅" },
   published: { label: "Published", color: "#059669", bg: "#ecfdf5", border: "#a7f3d0", dot: "#34d399", icon: "✅" },
   failed:    { label: "Failed",    color: "#dc2626", bg: "#fef2f2", border: "#fecaca", dot: "#f87171", icon: "❌" },
 };

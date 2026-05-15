@@ -275,7 +275,7 @@ export default function CreatePostModal(props: Props) {
 
   const getStatusColor = (s: PostStatus) => ({
     Draft: "#6b7280", InReview: "#f59e0b", Approved: "#10b981",
-    Scheduled: "#e65787", Published: "#e65787", Failed: "#ef4444",
+    Scheduled: "#dc2626", Published: "#dc2626", Failed: "#ef4444",
   }[s]);
 
   if (!modal.open) return null;
@@ -297,7 +297,7 @@ export default function CreatePostModal(props: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>✨ Create Post</h2>
             {isExternalTask && (
-              <span style={{ fontSize: 11, background: "#fff1f3", color: "#d94470", padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
+              <span style={{ fontSize: 11, background: "#fef2f2", color: "#dc2626", padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
                 🔗 External Task
               </span>
             )}
@@ -324,8 +324,8 @@ export default function CreatePostModal(props: Props) {
 
             {/* External task banner */}
             {isExternalTask && (
-              <div style={{ background: "#fff1f3", borderRadius: 12, padding: "12px 14px", border: "1px solid #ed8faf" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#d94470", marginBottom: 4 }}>🔗 External Post Request</div>
+              <div style={{ background: "#fef2f2", borderRadius: 12, padding: "12px 14px", border: "1px solid #ed8faf" }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#dc2626", marginBottom: 4 }}>🔗 External Post Request</div>
                 <div style={{ fontSize: 11, color: "#6b7280", lineHeight: 1.5 }}>{modal.generatedContent}</div>
                 {modal.scheduledAt && (
                   <div style={{ marginTop: 8, fontSize: 11, background: "#f0fdf4", color: "#16a34a", padding: "6px 10px", borderRadius: 8, fontWeight: 600, border: "1px solid #bbf7d0" }}>
@@ -354,7 +354,7 @@ export default function CreatePostModal(props: Props) {
                 <label style={S.label}>Longueur</label>
                 <div style={{ display: "flex", gap: 6 }}>
                   {(["short", "medium", "long"] as const).map(v => (
-                    <button key={v} onClick={() => setM({ captionLength: v })} style={{ flex: 1, padding: "6px", borderRadius: 10, border: "1px solid", borderColor: modal.captionLength === v ? "#e65787" : "#e5e7eb", background: modal.captionLength === v ? "#eff6ff" : "#fff", color: modal.captionLength === v ? "#e65787" : "#6b7280", fontSize: 11, cursor: "pointer" }}>
+                    <button key={v} onClick={() => setM({ captionLength: v })} style={{ flex: 1, padding: "6px", borderRadius: 10, border: "1px solid", borderColor: modal.captionLength === v ? "#dc2626" : "#e5e7eb", background: modal.captionLength === v ? "#eff6ff" : "#fff", color: modal.captionLength === v ? "#dc2626" : "#6b7280", fontSize: 11, cursor: "pointer" }}>
                       {v === "short" ? "Courte" : v === "medium" ? "Moyenne" : "Longue"}
                     </button>
                   ))}
@@ -364,7 +364,7 @@ export default function CreatePostModal(props: Props) {
                 <label style={S.label}>Ton</label>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {(["professional", "casual", "funny", "inspirational"] as const).map(v => (
-                    <button key={v} onClick={() => setM({ tone: v })} style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid", borderColor: modal.tone === v ? "#e65787" : "#e5e7eb", background: modal.tone === v ? "#eff6ff" : "#fff", color: modal.tone === v ? "#e65787" : "#6b7280", fontSize: 11, cursor: "pointer" }}>
+                    <button key={v} onClick={() => setM({ tone: v })} style={{ padding: "6px 12px", borderRadius: 20, border: "1px solid", borderColor: modal.tone === v ? "#dc2626" : "#e5e7eb", background: modal.tone === v ? "#eff6ff" : "#fff", color: modal.tone === v ? "#dc2626" : "#6b7280", fontSize: 11, cursor: "pointer" }}>
                       {v === "professional" ? "Pro" : v === "casual" ? "Détendu" : v === "funny" ? "Drôle" : "Inspi"}
                     </button>
                   ))}
@@ -393,7 +393,7 @@ export default function CreatePostModal(props: Props) {
 
            <button onClick={handleGenerate} disabled={(!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0 || chatLoading}
             style={{ padding: "14px", borderRadius: 12, border: "none", marginTop: "auto",
-              background: ((!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0 || chatLoading) ? "#e5e7eb" : "#e65787",
+              background: ((!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0 || chatLoading) ? "#e5e7eb" : "#dc2626",
               color: ((!modal.topic && !modal.fileContent) || modal.selectedPlatforms.length === 0 || chatLoading) ? "#9ca3af" : "#fff",
               cursor: "pointer", fontSize: 14, fontWeight: 700,
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
@@ -419,8 +419,8 @@ export default function CreatePostModal(props: Props) {
             <div style={{ flex: 1, overflowY: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: 16, scrollbarWidth: "none" }}>
               {/* External task caption preview */}
               {isExternalTask && confirmedCaption && messages.length === 0 && (
-                <div style={{ background: "#fff1f3", borderRadius: 16, padding: "16px 20px", border: "1px solid #ed8faf" }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#d94470", marginBottom: 8 }}>📋 Caption from external request</div>
+                <div style={{ background: "#fef2f2", borderRadius: 16, padding: "16px 20px", border: "1px solid #ed8faf" }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#dc2626", marginBottom: 8 }}>📋 Caption from external request</div>
                   <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.6 }}>{confirmedCaption}</div>
                   <div style={{ marginTop: 10, padding: "6px 10px", background: "#f0fdf4", borderRadius: 8, fontSize: 11, color: "#16a34a", fontWeight: 600 }}>
                     ✅ Caption auto-confirmed
@@ -438,7 +438,7 @@ export default function CreatePostModal(props: Props) {
 
               {messages.map(msg => (
                 <div key={msg.id} style={{ display: "flex", flexDirection: "column", alignItems: msg.role === "user" ? "flex-end" : "flex-start", width: "100%" }}>
-                  <div style={{ maxWidth: "85%", padding: "12px 16px", borderRadius: msg.role === "user" ? "20px 20px 4px 20px" : "20px 20px 20px 4px", background: msg.role === "user" ? "#e65787" : "#fff", color: msg.role === "user" ? "#fff" : "#111827", fontSize: 13, lineHeight: 1.55, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: msg.role === "bot" ? "1px solid #e5e7eb" : "none" }}>
+                  <div style={{ maxWidth: "85%", padding: "12px 16px", borderRadius: msg.role === "user" ? "20px 20px 4px 20px" : "20px 20px 20px 4px", background: msg.role === "user" ? "#dc2626" : "#fff", color: msg.role === "user" ? "#fff" : "#111827", fontSize: 13, lineHeight: 1.55, boxShadow: "0 1px 2px rgba(0,0,0,0.05)", border: msg.role === "bot" ? "1px solid #e5e7eb" : "none" }}>
                     {msg.content}
                   </div>
                   {msg.role === "bot" && msg.captions && Object.keys(msg.captions).length > 0 && (
@@ -446,7 +446,7 @@ export default function CreatePostModal(props: Props) {
                       {Object.keys(msg.captions).length > 1 && (
                         <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
                           {Object.keys(msg.captions).map(platform => (
-                            <button key={platform} onClick={() => setActivePlatformTab(platform)} style={{ padding: "6px 14px", borderRadius: 20, border: "1px solid", borderColor: activePlatformTab === platform ? "#e65787" : "#e5e7eb", background: activePlatformTab === platform ? "#eff6ff" : "#fff", color: activePlatformTab === platform ? "#e65787" : "#6b7280", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                            <button key={platform} onClick={() => setActivePlatformTab(platform)} style={{ padding: "6px 14px", borderRadius: 20, border: "1px solid", borderColor: activePlatformTab === platform ? "#dc2626" : "#e5e7eb", background: activePlatformTab === platform ? "#eff6ff" : "#fff", color: activePlatformTab === platform ? "#dc2626" : "#6b7280", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
                               {platform}
                             </button>
                           ))}
@@ -467,7 +467,7 @@ export default function CreatePostModal(props: Props) {
               {chatLoading && (
                 <div style={{ display: "flex", alignItems: "flex-start" }}>
                   <div style={{ background: "#fff", borderRadius: "20px 20px 20px 4px", padding: "12px 18px", border: "1px solid #e5e7eb", display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #e5e7eb", borderTopColor: "#e65787", animation: "spin 0.8s linear infinite" }} />
+                    <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #e5e7eb", borderTopColor: "#dc2626", animation: "spin 0.8s linear infinite" }} />
                     <span style={{ fontSize: 13, color: "#6b7280" }}>Génération en cours...</span>
                   </div>
                 </div>
@@ -482,7 +482,7 @@ export default function CreatePostModal(props: Props) {
                   disabled={chatLoading || (messages.length === 0 && !isExternalTask)}
                   style={{ flex: 1, padding: "10px 12px", borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 13, resize: "none", fontFamily: "inherit", background: "#fafafa" }} />
                 <button onClick={handleUserSend} disabled={chatLoading || !userInput.trim()}
-                  style={{ padding: "10px 20px", background: (!userInput.trim() || chatLoading) ? "#e5e7eb" : "#e65787", color: (!userInput.trim() || chatLoading) ? "#9ca3af" : "#fff", border: "none", borderRadius: 12, fontWeight: 700, cursor: "pointer" }}>
+                  style={{ padding: "10px 20px", background: (!userInput.trim() || chatLoading) ? "#e5e7eb" : "#dc2626", color: (!userInput.trim() || chatLoading) ? "#9ca3af" : "#fff", border: "none", borderRadius: 12, fontWeight: 700, cursor: "pointer" }}>
                   Envoyer
                 </button>
               </div>
@@ -544,10 +544,10 @@ export default function CreatePostModal(props: Props) {
               <textarea rows={2} placeholder="Ex: une jeune femme souriante avec un smartphone..." value={imagePrompt} onChange={e => setImagePrompt(e.target.value)} style={{ ...S.input, resize: "vertical", marginBottom: 8 }} />
               <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
                 {["realistic", "artistic", "cartoon", "minimalist"].map(style => (
-                  <button key={style} onClick={() => setImageStyle(style)} style={{ flex: 1, padding: "4px", borderRadius: 20, border: "1px solid", borderColor: imageStyle === style ? "#e65787" : "#e5e7eb", background: imageStyle === style ? "#eff6ff" : "#fff", color: imageStyle === style ? "#e65787" : "#6b7280", fontSize: 10, cursor: "pointer" }}>{style}</button>
+                  <button key={style} onClick={() => setImageStyle(style)} style={{ flex: 1, padding: "4px", borderRadius: 20, border: "1px solid", borderColor: imageStyle === style ? "#dc2626" : "#e5e7eb", background: imageStyle === style ? "#eff6ff" : "#fff", color: imageStyle === style ? "#dc2626" : "#6b7280", fontSize: 10, cursor: "pointer" }}>{style}</button>
                 ))}
               </div>
-              <button onClick={generateImage} disabled={generatingImage || !imagePrompt.trim()} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "none", background: (!imagePrompt.trim() || generatingImage) ? "#e5e7eb" : "#e65787", color: (!imagePrompt.trim() || generatingImage) ? "#9ca3af" : "#fff", fontWeight: 600, cursor: "pointer" }}>
+              <button onClick={generateImage} disabled={generatingImage || !imagePrompt.trim()} style={{ width: "100%", padding: "10px", borderRadius: 10, border: "none", background: (!imagePrompt.trim() || generatingImage) ? "#e5e7eb" : "#dc2626", color: (!imagePrompt.trim() || generatingImage) ? "#9ca3af" : "#fff", fontWeight: 600, cursor: "pointer" }}>
                 {generatingImage ? "⏳ Génération..." : "🎨 Générer"}
               </button>
             </div>
@@ -597,7 +597,7 @@ export default function CreatePostModal(props: Props) {
                         <input type="time" value={modal.scheduleTime || ""} onChange={e => setM({ scheduleTime: e.target.value })} style={{ ...S.input, flex: 1 }} />
                       </div>
                       {modal.scheduleDate && modal.scheduleTime && (
-                        <div style={{ fontSize: 10, color: "#e65787", marginTop: 6, fontWeight: 600 }}>
+                        <div style={{ fontSize: 10, color: "#dc2626", marginTop: 6, fontWeight: 600 }}>
                           ✓ Sera planifié le {modal.scheduleDate} à {modal.scheduleTime}
                         </div>
                       )}
@@ -616,7 +616,7 @@ export default function CreatePostModal(props: Props) {
                   savePostWithStatus(finalStatus);
                 }}
                 disabled={saving}
-                style={{ width: "100%", padding: "13px", borderRadius: 11, border: "none", marginTop: 4, background: saving ? "#e5e7eb" : "linear-gradient(135deg, #e65787, #e65787)", color: saving ? "#9ca3af" : "#fff", fontWeight: 700, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: saving ? "none" : "0 4px 14px rgba(230,87,135,0.3)", transition: "all .15s" }}>
+                style={{ width: "100%", padding: "13px", borderRadius: 11, border: "none", marginTop: 4, background: saving ? "#e5e7eb" : "linear-gradient(135deg, #dc2626, #dc2626)", color: saving ? "#9ca3af" : "#fff", fontWeight: 700, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: saving ? "none" : "0 4px 14px rgba(230,87,135,0.3)", transition: "all .15s" }}>
                 {saving ? "⏳ Saving..." : (
                   isExternalTask && modal.scheduledAt ? `📅 Schedule & Approve`
                   : postStatus === "Approved" && modal.scheduleDate && modal.scheduleTime ? `📅 Schedule for ${modal.scheduleDate} ${modal.scheduleTime}`

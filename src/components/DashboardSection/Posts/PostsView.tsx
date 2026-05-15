@@ -30,9 +30,9 @@ export type Post = {
   createdAt: string;
 };
 
-// ✅ Optional prop: parent can pass a callback to receive posts updates
 type Props = {
   onPostsChange?: (posts: Post[]) => void;
+  clientId: number;
 };
 
 const normalizeStatus = (s: string): "draft" | "scheduled" | "published" | "failed" => {
@@ -799,7 +799,7 @@ function DetailPanel({ post, onClose, onUpdate, token }: {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function PostsView({ onPostsChange }: Props) {
+export default function PostsView({ onPostsChange, clientId }: Props) {
   const { token } = useContext(AuthContext);
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -808,12 +808,15 @@ export default function PostsView({ onPostsChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Clear stale data immediately when client switches
+  useEffect(() => { setPosts([]); setSelectedId(null); }, [clientId]);
+
   useEffect(() => {
-    if (!token) return;
+    if (!token || clientId === 0) return;
     setLoading(true);
     setError(null);
 
-    fetch(`${API_BASE}/api/posts`, {
+    fetch(`${API_BASE}/api/posts?clientId=${clientId}`, {
       headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
     })
       .then(async r => {
@@ -853,7 +856,7 @@ export default function PostsView({ onPostsChange }: Props) {
         setError(err.message);
         setLoading(false);
       });
-  }, [token]);
+  }, [token, clientId]);
 
   const selectedPost = posts.find(p => p.id === selectedId) ?? null;
 

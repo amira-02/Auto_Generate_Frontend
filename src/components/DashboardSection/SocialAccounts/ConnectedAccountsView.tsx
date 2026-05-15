@@ -66,6 +66,7 @@ type PlatformField = { key: string; label: string; placeholder: string; type: st
 
 type Platform = {
   id: string;
+  platformId: number;  // FK to Platforms table
   label: string;
   color: string;
   pastel: string;
@@ -80,7 +81,7 @@ type Platform = {
 
 const PLATFORMS: Platform[] = [
   {
-    id: "instagram", label: "Instagram", color: "#e1306c",
+    id: "instagram", platformId: 1, label: "Instagram", color: "#e1306c",
     pastel: "#fff0f5", pastelBorder: "#ffd6e7",
     gradient: "linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)",
     description: "Photos, Reels & Stories",
@@ -93,7 +94,7 @@ const PLATFORMS: Platform[] = [
     docsLabel: "Graph API Explorer",
   },
   {
-    id: "linkedin", label: "LinkedIn", color: "#0077b5",
+    id: "linkedin", platformId: 3, label: "LinkedIn", color: "#0077b5",
     pastel: "#f0f7ff", pastelBorder: "#bfdfff",
     gradient: "linear-gradient(135deg, #0077b5, #00a0dc)",
     description: "Professional content & network",
@@ -105,8 +106,8 @@ const PLATFORMS: Platform[] = [
     docsLabel: "LinkedIn Developer Portal",
   },
   {
-    id: "facebook", label: "Facebook", color: "#1877f2",
-    pastel: "#fff1f3", pastelBorder: "#c3d4ff",
+    id: "facebook", platformId: 2, label: "Facebook", color: "#1877f2",
+    pastel: "#fef2f2", pastelBorder: "#c3d4ff",
     gradient: "linear-gradient(135deg, #1877f2, #42a5f5)",
     description: "Pages, groups & ads",
     fields: [
@@ -117,7 +118,7 @@ const PLATFORMS: Platform[] = [
     docsLabel: "Graph API Explorer",
   },
   {
-    id: "tiktok", label: "TikTok", color: "#ff0050",
+    id: "tiktok", platformId: 4, label: "TikTok", color: "#ff0050",
     pastel: "#fff0f2", pastelBorder: "#ffc0cc",
     gradient: "linear-gradient(135deg, #010101, #ff0050)",
     description: "Short-form video content",
@@ -127,7 +128,7 @@ const PLATFORMS: Platform[] = [
     docsLabel: "TikTok Developer Portal",
   },
   {
-    id: "twitter", label: "Twitter / X", color: "#000",
+    id: "twitter", platformId: 5, label: "Twitter / X", color: "#000",
     pastel: "#f5f5f5", pastelBorder: "#d0d0d0",
     gradient: "linear-gradient(135deg, #333, #000)",
     description: "Tweets, threads & spaces",
@@ -140,7 +141,7 @@ const PLATFORMS: Platform[] = [
     docsLabel: "Twitter Developer Portal",
   },
   {
-    id: "threads", label: "Threads", color: "#101010",
+    id: "threads", platformId: 6, label: "Threads", color: "#101010",
     pastel: "#f5f5f5", pastelBorder: "#d0d0d0",
     gradient: "linear-gradient(135deg, #444, #101010)",
     description: "Text updates & conversations",
@@ -155,7 +156,8 @@ const PLATFORMS: Platform[] = [
 
 type Account = {
   id: number;
-  platform: string;
+  platformId: number;
+  platformName: string;
   username?: string;
   profilePicture?: string;
   followersCount?: number;
@@ -350,7 +352,7 @@ function ConnectModal({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function ConnectedAccountsView() {
+export default function ConnectedAccountsView({ clientId }: { clientId: number }) {
   const { token } = useContext(AuthContext);
 
   const [accounts,       setAccounts]       = useState<Account[]>([]);
@@ -369,24 +371,26 @@ export default function ConnectedAccountsView() {
     }
   }, []);
 
-  useEffect(() => { fetchAccounts(); }, [token]);
+  // Clear stale data immediately when client switches
+  useEffect(() => { setAccounts([]); }, [clientId]);
+  useEffect(() => { if (clientId > 0) fetchAccounts(); }, [token, clientId]);
 
   const fetchAccounts = async () => {
-    if (!token) return;
+    if (!token || clientId === 0) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/accounts`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE}/api/accounts?clientId=${clientId}`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) setAccounts(await res.json());
     } catch {}
     finally { setLoading(false); }
   };
 
   const handleConnect = (plat: Platform) => {
-    // OAuth platforms → redirect directly
-   if (plat.oauthUrl) {
-  window.location.href = `${plat.oauthUrl}?token=${encodeURIComponent(token ?? "")}`;
-  return;
-}
+    // OAuth platforms → redirect with token + clientId
+    if (plat.oauthUrl) {
+      window.location.href = `${plat.oauthUrl}?token=${encodeURIComponent(token ?? "")}&clientId=${clientId}`;
+      return;
+    }
     setEditingAccount(undefined);
     setModalPlatform(plat);
   };
@@ -402,11 +406,13 @@ export default function ConnectedAccountsView() {
   };
 
   const handleSave = async (data: Record<string, string>) => {
-    if (!modalPlatform) return;
+    if (!modalPlatform || clientId === 0) return;
     setSaving(true);
     try {
       const body: Record<string, any> = {
-        platform:     modalPlatform.id,
+        id:           editingAccount?.id ?? 0,
+        clientId:     clientId,
+        platformId:   modalPlatform.platformId,
         accountId:    data.accountId    || editingAccount?.accountId || null,
         username:     data.username     || editingAccount?.username  || null,
         refreshToken: data.refreshToken ?? null,
@@ -430,7 +436,7 @@ export default function ConnectedAccountsView() {
   };
 
   const handleDisconnect = async (account: Account) => {
-    if (!confirm(`Disconnect ${account.platform}?`)) return;
+    if (!confirm(`Disconnect this account?`)) return;
     try {
       const res = await fetch(`${API_BASE}/api/accounts/${account.id}`, {
         method: "DELETE", headers: { Authorization: `Bearer ${token}` },
@@ -441,14 +447,16 @@ export default function ConnectedAccountsView() {
     } catch { toast.error("Failed to disconnect"); }
   };
 
-  const connectedIds   = new Set(accounts.map(a => a.platform));
-  const connectedPlats = PLATFORMS.filter(p => connectedIds.has(p.id));
-  const availablePlats = PLATFORMS.filter(p => !connectedIds.has(p.id));
+  const accountsByPlatform = Object.fromEntries(
+    PLATFORMS.map(p => [p.id, accounts.filter(a => a.platformId === p.platformId)])
+  );
+  const connectedPlats = PLATFORMS.filter(p => accountsByPlatform[p.id].length > 0);
+  const availablePlats = PLATFORMS.filter(p => accountsByPlatform[p.id].length === 0);
 
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "40vh" }}>
       <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#e65787" }} />
+        style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid #e2e8f0", borderTopColor: "#dc2626" }} />
     </div>
   );
 
@@ -462,7 +470,7 @@ export default function ConnectedAccountsView() {
         display: "flex", alignItems: "center", gap: 12, marginBottom: 28,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#fff1f3", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>🔗</div>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>🔗</div>
           <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Connected Accounts</span>
         </div>
         <div style={{ width: 1, height: 22, background: "#f0f0f0" }} />
@@ -490,98 +498,104 @@ export default function ConnectedAccountsView() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {connectedPlats.map((plat, i) => {
-              const account = accounts.find(a => a.platform === plat.id)!;
+              const platAccounts = accountsByPlatform[plat.id];
               return (
                 <motion.div key={plat.id}
                   initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.06, type: "spring", stiffness: 340 }}
-                  style={{
-                    background: plat.pastel, borderRadius: 16,
-                    border: `1px solid ${plat.pastelBorder}`,
-                    padding: "16px 20px",
-                    display: "flex", alignItems: "center", gap: 16,
-                  }}>
+                  style={{ background: plat.pastel, borderRadius: 16, border: `1px solid ${plat.pastelBorder}`, overflow: "hidden" }}>
 
-                  {/* Profile picture or logo */}
-                  <div style={{ position: "relative", flexShrink: 0 }}>
-                    {account.profilePicture ? (
-                      <img src={account.profilePicture} alt=""
-                        style={{ width: 52, height: 52, borderRadius: 14, objectFit: "cover",
-                          boxShadow: `0 4px 12px ${plat.color}30`, border: `2px solid ${plat.pastelBorder}` }} />
-                    ) : (
-                      <div style={{ width: 52, height: 52, borderRadius: 14, background: "#fff",
-                        boxShadow: `0 4px 12px ${plat.color}20`, border: `1.5px solid ${plat.pastelBorder}`,
-                        display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {LOGOS[plat.id]}
-                      </div>
-                    )}
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
-                      transition={{ delay: i * 0.06 + 0.3, type: "spring" }}
-                      style={{ position: "absolute", bottom: -3, right: -3,
-                        width: 16, height: 16, borderRadius: "50%",
-                        background: "#10b981", border: "2.5px solid #fff",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        boxShadow: "0 2px 6px rgba(16,185,129,0.4)" }}>
-                      <FiCheck size={8} color="#fff" strokeWidth={3} />
-                    </motion.div>
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.2px" }}>{plat.label}</span>
-                      <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
-                        background: "#fff", color: "#10b981", border: "1px solid #a7f3d0" }}>✓ Active</span>
+                  {/* Platform header */}
+                  <div style={{ padding: "12px 20px", display: "flex", alignItems: "center", gap: 12, borderBottom: `1px solid ${plat.pastelBorder}` }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: "#fff", flexShrink: 0,
+                      boxShadow: `0 2px 8px ${plat.color}20`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {LOGOS[plat.id]}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: "#0f172a" }}>{plat.label}</span>
+                      <span style={{ fontSize: 11, color: "#94a3b8", marginLeft: 8 }}>
+                        {platAccounts.length} account{platAccounts.length > 1 ? "s" : ""}
+                      </span>
                       {plat.oauthUrl && (
-                        <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20,
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 7px", borderRadius: 20, marginLeft: 6,
                           background: plat.pastel, color: plat.color, border: `1px solid ${plat.pastelBorder}` }}>OAuth</span>
                       )}
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                      {account.username && (
-                        <span style={{ fontSize: 13, color: "#374151", fontWeight: 600 }}>
-                          @{account.username.replace("@", "")}
-                        </span>
-                      )}
-                      {account.followersCount != null && account.followersCount > 0 && (
-                        <span style={{ fontSize: 11, color: "#64748b", padding: "2px 8px", borderRadius: 20, background: "rgba(255,255,255,0.7)" }}>
-                          {account.followersCount.toLocaleString()} followers
-                        </span>
-                      )}
-                      <span style={{ fontSize: 10, color: "#94a3b8" }}>
-                        Connected {new Date(account.connectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 5 }}>
-                      <div style={{ width: 5, height: 5, borderRadius: "50%", background: account.hasToken ? "#10b981" : "#f59e0b" }} />
-                      <span style={{ fontSize: 10, color: account.hasToken ? "#059669" : "#d97706", fontWeight: 600 }}>
-                        {account.hasToken ? "Token active" : "Token missing — update needed"}
-                      </span>
-                    </div>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                      onClick={() => handleConnect(plat)}
+                      style={{ height: 30, padding: "0 12px", borderRadius: 8, border: `1.5px solid ${plat.pastelBorder}`,
+                        background: "#fff", cursor: "pointer", fontSize: 11, color: plat.color, fontWeight: 700,
+                        display: "flex", alignItems: "center", gap: 4 }}>
+                      <FiPlus size={11} /> Add account
+                    </motion.button>
                   </div>
 
-                  {/* Actions */}
-                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                      onClick={() => handleUpdate(plat, account)}
-                      style={{ height: 34, padding: "0 14px", borderRadius: 9,
-                        background: "#fff", border: `1.5px solid ${plat.pastelBorder}`,
-                        cursor: "pointer", fontSize: 12, color: plat.color, fontWeight: 700,
-                        display: "flex", alignItems: "center", gap: 5,
-                        boxShadow: `0 2px 8px ${plat.color}15` }}>
-                      {plat.oauthUrl ? "🔄 Reconnect" : <><FiEdit2 size={11} /> Update</>}
-                    </motion.button>
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                      onClick={() => handleDisconnect(account)}
-                      style={{ width: 34, height: 34, borderRadius: 9,
-                        border: "1.5px solid #fecaca", background: "#fff",
-                        cursor: "pointer", display: "flex", alignItems: "center",
-                        justifyContent: "center", color: "#ef4444" }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#fef2f2"}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "#fff"}>
-                      <FiX size={13} />
-                    </motion.button>
-                  </div>
+                  {/* Account rows */}
+                  {platAccounts.map((account, j) => (
+                    <div key={account.id} style={{
+                      padding: "12px 20px", display: "flex", alignItems: "center", gap: 12,
+                      background: "rgba(255,255,255,0.55)",
+                      borderBottom: j < platAccounts.length - 1 ? `1px solid ${plat.pastelBorder}` : "none",
+                    }}>
+                      {/* Profile pic */}
+                      <div style={{ position: "relative", flexShrink: 0 }}>
+                        {account.profilePicture ? (
+                          <img src={account.profilePicture} alt=""
+                            style={{ width: 42, height: 42, borderRadius: 12, objectFit: "cover", border: `1.5px solid ${plat.pastelBorder}` }} />
+                        ) : (
+                          <div style={{ width: 42, height: 42, borderRadius: 12, background: plat.pastel,
+                            border: `1.5px solid ${plat.pastelBorder}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {LOGOS[plat.id]}
+                          </div>
+                        )}
+                        <div style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14,
+                          borderRadius: "50%", background: "#10b981", border: "2px solid #fff",
+                          display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <FiCheck size={7} color="#fff" strokeWidth={3} />
+                        </div>
+                      </div>
+
+                      {/* Info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                          {account.username ? `@${account.username.replace("@", "")}` : `Account #${account.id}`}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2, flexWrap: "wrap" }}>
+                          {account.followersCount != null && account.followersCount > 0 && (
+                            <span style={{ fontSize: 10, color: "#64748b" }}>{account.followersCount.toLocaleString()} followers ·</span>
+                          )}
+                          <div style={{ width: 5, height: 5, borderRadius: "50%", background: account.hasToken ? "#10b981" : "#f59e0b" }} />
+                          <span style={{ fontSize: 10, color: account.hasToken ? "#059669" : "#d97706", fontWeight: 600 }}>
+                            {account.hasToken ? "Token active" : "Token missing"}
+                          </span>
+                          <span style={{ fontSize: 10, color: "#94a3b8" }}>
+                            · {new Date(account.connectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                          onClick={() => handleUpdate(plat, account)}
+                          style={{ height: 30, padding: "0 12px", borderRadius: 8, background: "#fff",
+                            border: `1.5px solid ${plat.pastelBorder}`, cursor: "pointer",
+                            fontSize: 11, color: plat.color, fontWeight: 700,
+                            display: "flex", alignItems: "center", gap: 4 }}>
+                          {plat.oauthUrl ? "🔄" : <><FiEdit2 size={10} /> Update</>}
+                        </motion.button>
+                        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                          onClick={() => handleDisconnect(account)}
+                          style={{ width: 30, height: 30, borderRadius: 8, border: "1.5px solid #fecaca",
+                            background: "#fff", cursor: "pointer", display: "flex",
+                            alignItems: "center", justifyContent: "center", color: "#ef4444" }}
+                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#fef2f2"}
+                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "#fff"}>
+                          <FiX size={12} />
+                        </motion.button>
+                      </div>
+                    </div>
+                  ))}
                 </motion.div>
               );
             })}
