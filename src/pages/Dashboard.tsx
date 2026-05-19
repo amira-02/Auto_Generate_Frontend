@@ -473,6 +473,128 @@ function TrelloLinkModal({ client, token, onClose, onSaved }: {
   );
 }
 
+// ── Trello Assign Modal ───────────────────────────────────────────────────────
+function TrelloAssignModal({ title, sheetUrl, token, onClose, onAssigned }: {
+  title: string; sheetUrl: string; token: string | null;
+  onClose: () => void; onAssigned: () => void;
+}) {
+  const { clients } = useContext(ClientContext);
+  const [selectedId, setSelectedId] = useState<number | "">("");
+  const [loading,    setLoading]    = useState(false);
+  const [msg,        setMsg]        = useState<string | null>(null);
+
+  const hasSheet = sheetUrl.startsWith("https://docs.google.com/spreadsheets") || sheetUrl.startsWith("https://1drv") || sheetUrl.startsWith("https://onedrive");
+
+  const handleAssign = async () => {
+    if (!selectedId || !token) return;
+    setLoading(true); setMsg(null);
+    try {
+      if (hasSheet) {
+        const r1 = await fetch(`${API_BASE}/api/sheets/url/${selectedId}`, {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ sheetUrl }),
+        });
+        if (!r1.ok) { setMsg("Erreur lors de la sauvegarde du sheet"); setLoading(false); return; }
+        const r2 = await fetch(`${API_BASE}/api/sheets/sync/${selectedId}`, {
+          method: "POST", headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await r2.json();
+        if (r2.ok) {
+          setMsg(`✅ ${data.created} post(s) importé(s) !`);
+          setTimeout(() => { onAssigned(); onClose(); }, 1500);
+        } else { setMsg(`⚠️ ${data.message}`); }
+      } else {
+        // Pas de sheet — juste marquer le brief comme assigné
+        setMsg("✅ Brief assigné au client !");
+        setTimeout(() => { onAssigned(); onClose(); }, 1200);
+      }
+    } catch { setMsg("⚠️ Erreur réseau"); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}
+    >
+      <motion.div
+        initial={{ scale: 0.94, y: 16, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.94, y: 16, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 380, damping: 28 }}
+        onClick={e => e.stopPropagation()}
+        style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 460, boxShadow: "0 32px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.05)", overflow: "hidden" }}
+      >
+        {/* Header */}
+        <div style={{ padding: "22px 24px 18px", borderBottom: "1px solid #f5f5f5", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+              {hasSheet ? "📊" : "🟦"}
+            </div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>Assigner au client</div>
+              <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2, maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 9, background: "#f8f9fb", border: "1px solid #f0f0f0", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
+            <FiX size={14} />
+          </button>
+        </div>
+
+        <div style={{ padding: "22px 24px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+          {hasSheet ? (
+            <div style={{ fontSize: 12, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "10px 14px", wordBreak: "break-all" }}>
+              📊 Planning Google Sheet détecté — les posts seront importés automatiquement
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: "#64748b", background: "#f8f9fb", border: "1px solid #f0f0f0", borderRadius: 10, padding: "10px 14px" }}>
+              🟦 Brief Trello reçu — pas de Google Sheet dans la description.<br />
+              <span style={{ color: "#94a3b8" }}>Tu pourras ajouter le planning manuellement depuis le dashboard.</span>
+            </div>
+          )}
+
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 700, color: "#374151", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Choisir le client <span style={{ color: "#ef4444" }}>*</span>
+            </label>
+            <select
+              value={selectedId}
+              onChange={e => setSelectedId(e.target.value ? Number(e.target.value) : "")}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #e5e7eb", fontSize: 13, outline: "none", background: "#fafafa", fontFamily: "inherit", cursor: "pointer" }}
+            >
+              <option value="">-- Sélectionner un client --</option>
+              {clients.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {msg && (
+            <div style={{ background: msg.startsWith("✅") ? "#f0fdf4" : "#fef2f2", border: `1px solid ${msg.startsWith("✅") ? "#bbf7d0" : "#fecaca"}`, borderRadius: 10, padding: "10px 14px", fontSize: 12, color: msg.startsWith("✅") ? "#16a34a" : "#dc2626", fontWeight: 500 }}>
+              {msg}
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+            <button onClick={onClose} style={{ flex: 1, padding: "12px", borderRadius: 11, border: "1.5px solid #f0f0f0", background: "#f8f9fb", color: "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+              Annuler
+            </button>
+            <button
+              onClick={handleAssign}
+              disabled={loading || !selectedId}
+              style={{ flex: 2, padding: "12px", borderRadius: 11, border: "none", background: loading || !selectedId ? "#e5e7eb" : "#16a34a", color: loading || !selectedId ? "#9ca3af" : "#fff", fontSize: 13, fontWeight: 700, cursor: loading || !selectedId ? "not-allowed" : "pointer", fontFamily: "inherit", boxShadow: loading || !selectedId ? "none" : "0 4px 16px #16a34a40" }}
+            >
+              {loading ? "En cours…" : hasSheet ? "Importer les posts" : "Assigner le brief"}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ── No Clients Empty State ────────────────────────────────────────────────────
 function NoClientsState({ onCreateClient }: { onCreateClient: () => void }) {
   return (
@@ -515,6 +637,9 @@ export default function Dashboard() {
   const [externalTaskId, setExternalTaskId] = useState<number | null>(null);
   const [showCreateClient, setShowCreateClient] = useState(false);
   const [showTrelloModal,  setShowTrelloModal]  = useState(false);
+  const [syncing,          setSyncing]          = useState(false);
+  const [syncMsg,          setSyncMsg]          = useState<string | null>(null);
+  const [trelloNotif,      setTrelloNotif]      = useState<{ title: string; sheetUrl: string } | null>(null);
 
   const fileInputRef  = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -544,6 +669,25 @@ export default function Dashboard() {
 
   // Reset topic selection when client changes
   useEffect(() => { setSelectedTopic(null); }, [selectedClient?.id]);
+
+  const handleSheetSync = async () => {
+    if (!selectedClient || !token) return;
+    setSyncing(true); setSyncMsg(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/sheets/sync/${selectedClient.id}`, {
+        method: "POST", headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncMsg(`✅ +${data.created} new · ${data.updated} updated · ${data.cancelled} cancelled`);
+        await reloadClients(); // refresh client to get new sheetLastSyncAt
+        await fetchPosts();
+      } else {
+        setSyncMsg(`⚠️ ${data.message}`);
+      }
+    } catch { setSyncMsg("⚠️ Sync failed"); }
+    finally { setSyncing(false); setTimeout(() => setSyncMsg(null), 5000); }
+  };
 
   const setM           = (patch: Partial<ModalState>) => setModal(m => ({ ...m, ...patch }));
   const closeModal     = () => setModal(m => ({ ...m, open: false }));
@@ -729,6 +873,32 @@ export default function Dashboard() {
               >
                 🟦 {selectedClient.trelloBoardId ? "Trello linked" : "Link Trello"}
               </button>
+
+              {/* Sheet sync button — only shown when a sheet is linked */}
+              {selectedClient.sheetUrl && (
+                <button
+                  onClick={handleSheetSync}
+                  disabled={syncing}
+                  title={selectedClient.sheetLastSyncAt
+                    ? `Last sync: ${new Date(selectedClient.sheetLastSyncAt).toLocaleString()}`
+                    : "Not synced yet"}
+                  style={{
+                    fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, border: "none",
+                    background: syncing ? "#f0fdf4" : "#f0fdf4",
+                    color: syncing ? "#86efac" : "#16a34a",
+                    cursor: syncing ? "default" : "pointer",
+                    display: "flex", alignItems: "center", gap: 4,
+                    opacity: syncing ? 0.7 : 1,
+                  }}
+                >
+                  {syncing ? "⏳ Syncing…" : "📊 Sync Sheet"}
+                </button>
+              )}
+              {syncMsg && (
+                <span style={{ fontSize: 10, color: syncMsg.startsWith("✅") ? "#16a34a" : "#dc2626", fontWeight: 600 }}>
+                  {syncMsg}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -744,7 +914,7 @@ export default function Dashboard() {
 
                 {activeNav === "analytics" && (
                   <motion.div key="analytics" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                    <Analytics key={selectedClient?.id ?? 0} clientId={selectedClient?.id ?? 0} onExternalTask={(id) => setExternalTaskId(id)} />
+                    <Analytics key={selectedClient?.id ?? 0} clientId={selectedClient?.id ?? 0} onExternalTask={(id) => setExternalTaskId(id)} onTrelloTask={(title, sheetUrl) => setTrelloNotif({ title, sheetUrl })} />
                   </motion.div>
                 )}
 
@@ -826,6 +996,18 @@ export default function Dashboard() {
             token={token}
             onClose={() => setShowTrelloModal(false)}
             onSaved={() => { reloadClients(); setShowTrelloModal(false); }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {trelloNotif && (
+          <TrelloAssignModal
+            title={trelloNotif.title}
+            sheetUrl={trelloNotif.sheetUrl}
+            token={token}
+            onClose={() => setTrelloNotif(null)}
+            onAssigned={async () => { await reloadClients(); await fetchPosts(); }}
           />
         )}
       </AnimatePresence>

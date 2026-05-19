@@ -12,6 +12,8 @@ export type Client = {
   description: string | null;
   createdAt: string;
   trelloBoardId: string | null;
+  sheetUrl: string | null;
+  sheetLastSyncAt: string | null;
   accountsCount: number;
   postsCount: number;
 };

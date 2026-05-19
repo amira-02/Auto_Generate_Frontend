@@ -42,10 +42,11 @@ const SUMMARY_URL: Record<number, string> = {
 
 type Props = {
   onExternalTask?: (taskId: number) => void;
+  onTrelloTask?:   (title: string, sheetUrl: string) => void;
   clientId: number;
 };
 
-export default function Analytics({ onExternalTask, clientId }: Props) {
+export default function Analytics({ onExternalTask, onTrelloTask, clientId }: Props) {
   const { token } = useContext(AuthContext);
 
   // ── Global data (used by Overview + Content) ─────────────────────────────
@@ -282,7 +283,7 @@ export default function Analytics({ onExternalTask, clientId }: Props) {
         <NavBtn active={view === "content"} onClick={() => setView("content")}>Content</NavBtn>
 
         <div style={{ flex: 1 }} />
-        <NotificationBell token={token} onExternalTask={onExternalTask} />
+        <NotificationBell token={token} onExternalTask={onExternalTask} onTrelloTask={onTrelloTask} />
       </div>
 
       {/* ── Tab Content ──────────────────────────────────────────────────── */}

@@ -228,48 +228,19 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
     .slice(0, 5);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-      {/* ── 1. KPI tiles ───────────────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
-        <KpiTile label="Total posts"  value={posts.length}     delta={growthPct} sub="vs last month" accent="#dc2626" />
+      {/* ── 1. KPIs ─────────────────────────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        <KpiTile label="Total Posts"  value={posts.length}     delta={growthPct} sub="vs last month" accent="#dc2626" />
         <KpiTile label="Published"    value={published.length}                   sub="all time"      accent="#10b981" />
-        <KpiTile label="Scheduled"    value={scheduled.length}                   sub="waiting"       accent="#dc2626" />
-        <KpiTile label="In review"    value={inReview.length}                    sub="pending"       accent="#f59e0b" />
+        <KpiTile label="Scheduled"    value={scheduled.length}                   sub="upcoming"      accent="#dc2626" />
+        <KpiTile label="In Review"    value={inReview.length}                    sub="pending"       accent="#f59e0b" />
       </div>
 
-      {/* ── 2. Audience + Monthly trend ────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 14 }}>
+      {/* ── 2. Content trend + Audience ─────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 14 }}>
 
-        {/* Audience bar chart */}
-        <div style={{ ...card }}>
-          <ChartHead
-            title="Audience Overview"
-            sub="Total followers per connected platform"
-            right={<span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, background: "#f0fdf4", color: "#16a34a", fontWeight: 600 }}>LIVE</span>}
-          />
-          {audienceData.length === 0
-            ? <div style={{ textAlign: "center", padding: "50px 0", color: "#cbd5e1", fontSize: 12 }}>
-                No platform connected yet
-              </div>
-            : <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={audienceData} margin={{ top: 0, right: 0, left: -10, bottom: 0 }} barSize={36}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
-                  <XAxis dataKey="platform" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false}
-                    tickFormatter={(v) => fmtNum(v)} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="followers" name="Followers" radius={[6, 6, 0, 0]}>
-                    {audienceData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-          }
-        </div>
-
-        {/* Monthly posts trend */}
         <div style={{ ...card }}>
           <ChartHead
             title="Monthly Content Trend"
@@ -282,7 +253,7 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
             }
           />
           <ResponsiveContainer width="100%" height={200}>
-            <ComposedChart data={monthlyData} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
+            <ComposedChart data={monthlyData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
@@ -293,62 +264,80 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-      </div>
 
-      {/* ── 3. Cross-platform reach + Status ───────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 14 }}>
-
-        {/* Cross-platform reach timeline */}
         <div style={{ ...card }}>
           <ChartHead
-            title="Cross-Platform Reach"
-            sub="Instagram reach · Facebook impressions — last 14 days"
-            right={
-              <div style={{ display: "flex", gap: 12 }}>
-                {igTimeline.length > 0 && <Dot color="#e1306c" label="IG Reach" />}
-                {fbTimeline.length > 0 && <Dot color="#1877f2" label="FB Impressions" />}
-              </div>
-            }
+            title="Audience Overview"
+            sub="Total followers per platform"
+            right={<span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, background: "#f0fdf4", color: "#16a34a", fontWeight: 600 }}>LIVE</span>}
           />
-          {!hasReach
-            ? <div style={{ textAlign: "center", padding: "50px 0", color: "#cbd5e1", fontSize: 12 }}>
-                Connect Instagram or Facebook to see reach data
-              </div>
-            : <ResponsiveContainer width="100%" height={190}>
-                <AreaChart data={reachData} margin={{ top: 0, right: 0, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gOvIg" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#e1306c" stopOpacity={0.18} />
-                      <stop offset="95%" stopColor="#e1306c" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="gOvFb" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#1877f2" stopOpacity={0.18} />
-                      <stop offset="95%" stopColor="#1877f2" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
-                  <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false}
-                    tickFormatter={(v) => fmtNum(v)} />
+          {audienceData.length === 0
+            ? <div style={{ textAlign: "center", padding: "50px 0", color: "#cbd5e1", fontSize: 12 }}>No platform connected</div>
+            : <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={audienceData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }} barSize={36}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
+                  <XAxis dataKey="platform" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtNum(v)} />
                   <Tooltip content={<CustomTooltip />} />
-                  {igTimeline.length > 0 && (
-                    <Area type="monotone" dataKey="ig" name="IG Reach"
-                      stroke="#e1306c" strokeWidth={2} fill="url(#gOvIg)"
-                      dot={false} activeDot={{ r: 4, fill: "#e1306c" }} />
-                  )}
-                  {fbTimeline.length > 0 && (
-                    <Area type="monotone" dataKey="fb" name="FB Impressions"
-                      stroke="#1877f2" strokeWidth={2} fill="url(#gOvFb)"
-                      dot={false} activeDot={{ r: 4, fill: "#1877f2" }} />
-                  )}
-                </AreaChart>
+                  <Bar dataKey="followers" name="Followers" radius={[6, 6, 0, 0]}>
+                    {audienceData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
           }
         </div>
+      </div>
 
-        {/* Status breakdown */}
+      {/* ── 3. Cross-platform reach (full width) ────────────────────────────── */}
+      <div style={{ ...card }}>
+        <ChartHead
+          title="Cross-Platform Reach"
+          sub="Instagram reach · Facebook impressions — last 14 days"
+          right={
+            <div style={{ display: "flex", gap: 12 }}>
+              {igTimeline.length > 0 && <Dot color="#e1306c" label="IG Reach" />}
+              {fbTimeline.length > 0 && <Dot color="#1877f2" label="FB Impressions" />}
+            </div>
+          }
+        />
+        {!hasReach
+          ? <div style={{ textAlign: "center", padding: "50px 0", color: "#cbd5e1", fontSize: 12 }}>
+              Connect Instagram or Facebook to see reach data
+            </div>
+          : <ResponsiveContainer width="100%" height={180}>
+              <AreaChart data={reachData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="gOvIg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#e1306c" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#e1306c" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="gOvFb" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#1877f2" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#1877f2" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtNum(v)} />
+                <Tooltip content={<CustomTooltip />} />
+                {igTimeline.length > 0 && (
+                  <Area type="monotone" dataKey="ig" name="IG Reach"
+                    stroke="#e1306c" strokeWidth={2} fill="url(#gOvIg)" dot={false} activeDot={{ r: 4, fill: "#e1306c" }} />
+                )}
+                {fbTimeline.length > 0 && (
+                  <Area type="monotone" dataKey="fb" name="FB Impressions"
+                    stroke="#1877f2" strokeWidth={2} fill="url(#gOvFb)" dot={false} activeDot={{ r: 4, fill: "#1877f2" }} />
+                )}
+              </AreaChart>
+            </ResponsiveContainer>
+        }
+      </div>
+
+      {/* ── 4. Status + Platform engagement ─────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: 14 }}>
+
         <div style={{ ...card }}>
-          <ChartHead title="Post Status Breakdown" sub="Distribution across all posts" />
+          <ChartHead title="Post Status" sub="Distribution across all posts" />
           {statusData.length === 0
             ? <div style={{ textAlign: "center", padding: "50px 0", color: "#cbd5e1", fontSize: 12 }}>No posts yet</div>
             : (
@@ -368,19 +357,12 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
                         </div>
                       </div>
                       <div style={{ height: 6, borderRadius: 6, background: "#f1f5f9", overflow: "hidden" }}>
-                        <div style={{
-                          height: "100%", borderRadius: 6,
-                          background: s.color,
-                          width: `${pct}%`,
-                          transition: "width .6s ease",
-                        }} />
+                        <div style={{ height: "100%", borderRadius: 6, background: s.color, width: `${pct}%`, transition: "width .6s ease" }} />
                       </div>
                     </div>
                   );
                 })}
-
-                {/* Total at bottom */}
-                <div style={{ marginTop: 4, paddingTop: 12, borderTop: "1px solid #f0f0f0",
+                <div style={{ paddingTop: 12, borderTop: "1px solid #f0f0f0",
                   display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 11, color: "#94a3b8" }}>Total posts</span>
                   <span style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.5px" }}>{totalPosts}</span>
@@ -389,13 +371,7 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
             )
           }
         </div>
-      </div>
 
-      {/* ── 4. Calendar + Engagement KPIs ──────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(320px, 430px) 1fr", gap: 14, alignItems: "start" }}>
-        <PostActivityCalendar posts={posts} />
-
-        {/* Platform engagement summary */}
         <div style={{ ...card }}>
           <ChartHead title="Platform Engagement" sub="Key metrics from connected accounts" />
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -410,17 +386,17 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
             {fbData && (
               <PlatformRow color="#1877f2" badge="FB" name="Facebook"
                 metrics={[
-                  { label: "Fans",         value: fmtNum(fbData.fans) },
-                  { label: "Impressions",  value: fmtNum(fbData.totalImpressions) },
-                  { label: "Engaged",      value: fmtNum(fbData.totalEngagedUsers) },
+                  { label: "Fans",        value: fmtNum(fbData.fans) },
+                  { label: "Impressions", value: fmtNum(fbData.totalImpressions) },
+                  { label: "Engaged",     value: fmtNum(fbData.totalEngagedUsers) },
                 ]} />
             )}
             {liData && (
               <PlatformRow color="#0077b5" badge="LI" name="LinkedIn"
                 metrics={[
-                  { label: "Followers",    value: fmtNum(liData.followers) },
-                  { label: "Impressions",  value: fmtNum(liData.totalImpressions) },
-                  { label: "Reactions",    value: fmtNum(liData.totalReactions) },
+                  { label: "Followers",   value: fmtNum(liData.followers) },
+                  { label: "Impressions", value: fmtNum(liData.totalImpressions) },
+                  { label: "Reactions",   value: fmtNum(liData.totalReactions) },
                 ]} />
             )}
             {ttData && (
@@ -432,47 +408,52 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
                 ]} />
             )}
             {!igData && !fbData && !liData && !ttData && (
-              <div style={{ textAlign: "center", padding: "30px 0", color: "#cbd5e1", fontSize: 12 }}>
-                No platforms connected
-              </div>
+              <div style={{ textAlign: "center", padding: "30px 0", color: "#cbd5e1", fontSize: 12 }}>No platforms connected</div>
             )}
           </div>
         </div>
       </div>
 
-      {/* ── 5. Recently published posts ────────────────────────────────────── */}
-      {recentPosts.length > 0 && (
-        <div style={{ ...card }}>
-          <ChartHead title="Recent Posts" sub="Latest published content" />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 }}>
-            {recentPosts.map(p => (
-              <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10,
-                padding: "10px 12px", borderRadius: 12, background: "#f8fafc", border: "1px solid #f0f0f0" }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-                  overflow: "hidden", background: "#e2e8f0" }}>
-                  {p.imageUrl
-                    ? <img src={p.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center",
-                        justifyContent: "center", fontSize: 16 }}>📝</div>
-                  }
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, fontWeight: 500, color: "#374151",
-                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {p.caption?.slice(0, 32) ?? p.topicName ?? "Untitled"}
-                  </div>
-                  <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>
-                    {new Date(p.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </div>
-                </div>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", flexShrink: 0, display: "block" }} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* ── 5. Calendar + Recent posts ──────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start" }}>
+        <PostActivityCalendar posts={posts} />
 
-      {/* ── 6. AI recommendations ──────────────────────────────────────────── */}
+        {recentPosts.length > 0 ? (
+          <div style={{ ...card }}>
+            <ChartHead title="Recent Posts" sub="Latest published content" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {recentPosts.map(p => (
+                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12,
+                  padding: "10px 12px", borderRadius: 12, background: "#f8fafc", border: "1px solid #f0f0f0" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                    overflow: "hidden", background: "#e2e8f0" }}>
+                    {p.imageUrl
+                      ? <img src={p.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <div style={{ width: "100%", height: "100%", background: "#f1f5f9", borderRadius: 10 }} />
+                    }
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: "#374151",
+                      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {p.caption?.slice(0, 40) ?? p.topicName ?? "Untitled"}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>
+                      {new Date(p.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </div>
+                  </div>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", flexShrink: 0 }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ textAlign: "center", color: "#cbd5e1", fontSize: 12 }}>No published posts yet</div>
+          </div>
+        )}
+      </div>
+
+      {/* ── 6. AI recommendations ───────────────────────────────────────────── */}
       <Airecommendations posts={posts} igData={igData} fbData={fbData} token={token} />
     </div>
   );

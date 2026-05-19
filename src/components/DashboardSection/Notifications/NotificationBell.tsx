@@ -18,9 +18,10 @@ type Notif = {
 type Props = {
   token:           string | null;
   onExternalTask?: (taskId: number) => void;
+  onTrelloTask?:   (title: string, sheetUrl: string) => void;
 };
 
-export default function NotificationBell({ token, onExternalTask }: Props) {
+export default function NotificationBell({ token, onExternalTask, onTrelloTask }: Props) {
   const [open,    setOpen]    = useState(false);
   const [notifs,  setNotifs]  = useState<Notif[]>([]);
   const [count,   setCount]   = useState(0);
@@ -83,9 +84,14 @@ export default function NotificationBell({ token, onExternalTask }: Props) {
   const handleClick = async (notif: Notif) => {
     if (!notif.isRead) await markRead(notif.id);
 
-    // Si c'est une tâche externe → ouvre le modal de sélection de topic
     if (notif.type === "external_task" && onExternalTask) {
       onExternalTask(Number(notif.referenceId));
+      setOpen(false);
+    }
+
+    // Trello brief → ouvre le modal d'assignation client (avec ou sans sheet URL)
+    if (notif.type === "trello_task" && onTrelloTask) {
+      onTrelloTask(notif.title, notif.referenceId ?? "");
       setOpen(false);
     }
   };
@@ -174,11 +180,13 @@ export default function NotificationBell({ token, onExternalTask }: Props) {
                   <div style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0,
                     background: n.type === "external_task" ? "#fef2f2"
                               : n.type === "trello_task"   ? "#eff6ff"
+                              : n.type === "sheet_sync"    ? "#f0fdf4"
                               : "#f8fafc",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 14 }}>
                     {n.type === "external_task" ? "🔗"
                    : n.type === "trello_task"   ? "🟦"
+                   : n.type === "sheet_sync"    ? "📊"
                    : "🔔"}
                   </div>
 
@@ -186,7 +194,7 @@ export default function NotificationBell({ token, onExternalTask }: Props) {
                     <div style={{ fontSize: 12, fontWeight: n.isRead ? 500 : 700,
                       color: "#0f172a", marginBottom: 4 }}>{n.title}</div>
 
-                    {n.type === "trello_task" ? (
+                    {(n.type === "trello_task" || n.type === "sheet_sync") ? (
                       <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.6 }}>
                         {n.message.split("\n").map((line, i) => (
                           <div key={i}>{line}</div>
@@ -204,7 +212,12 @@ export default function NotificationBell({ token, onExternalTask }: Props) {
                       {timeAgo(n.createdAt)}
                       {n.type === "external_task" && (
                         <span style={{ marginLeft: 6, color: "#dc2626", fontWeight: 600 }}>
-                          → Click to assign topic
+                          → Cliquer pour assigner
+                        </span>
+                      )}
+                      {n.type === "trello_task" && n.referenceId?.startsWith("http") && (
+                        <span style={{ marginLeft: 6, color: "#1d4ed8", fontWeight: 600 }}>
+                          → Cliquer pour assigner au client
                         </span>
                       )}
                     </div>
