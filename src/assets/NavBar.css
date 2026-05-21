@@ -23,8 +23,8 @@
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(228, 73, 125, 0.15);
-  box-shadow: 0 1px 20px rgba(228, 73, 125, 0.08);
+  border-bottom: 1px solid rgba(220, 38, 38, 0.15);
+  box-shadow: 0 1px 20px rgba(220, 38, 38, 0.08);
 }
 
 /* ── Logo ───────────────────────────────────────────────────────── */
@@ -48,7 +48,7 @@
 .logo-icon {
   width: 26px;
   height: 26px;
-  background: #e4497d;
+  background: #dc2626;
   border-radius: 7px;
   display: flex;
   align-items: center;
@@ -57,7 +57,7 @@
   font-weight: 800;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(228, 73, 125, 0.25);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
 }
 
 /* ── Nav links ──────────────────────────────────────────────────── */
@@ -83,8 +83,8 @@
 }
 
 .nav-links li:hover {
-  color: #e4497d;
-  background: rgba(228, 73, 125, 0.08);
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
 }
 
 /* ── Right buttons ──────────────────────────────────────────────── */
@@ -98,7 +98,7 @@
 .signin {
   padding: 8px 18px;
   border-radius: 50px;
-  border: 1px solid rgba(228, 73, 125, 0.18);
+  border: 1px solid rgba(220, 38, 38, 0.18);
   background: transparent;
   color: #374151;
   font-size: 13px;
@@ -111,16 +111,16 @@
 }
 
 .signin:hover {
-  border-color: #e4497d;
-  color: #e4497d;
-  background: rgba(228, 73, 125, 0.06);
+  border-color: #dc2626;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.06);
 }
 
 .signup {
   padding: 8px 18px;
   border-radius: 50px;
   border: none;
-  background: #e4497d;
+  background: #dc2626;
   color: white;
   font-size: 13px;
   font-weight: 600;
@@ -129,13 +129,13 @@
     opacity 0.2s ease,
     transform 0.15s ease,
     box-shadow 0.2s ease;
-  box-shadow: 0 6px 18px rgba(228, 73, 125, 0.28);
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.28);
 }
 
 .signup:hover {
   opacity: 0.92;
   transform: scale(1.03);
-  box-shadow: 0 8px 24px rgba(228, 73, 125, 0.35);
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35);
 }
 
 .signup:active {
@@ -154,7 +154,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(228, 73, 125, 0.12);
+  border: 1px solid rgba(220, 38, 38, 0.12);
 }
 .links-container {
   display: flex;
@@ -167,8 +167,8 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 
-  border: 1px solid rgba(228, 73, 125, 0.12);
+  border: 1px solid rgba(220, 38, 38, 0.12);
 
   box-shadow:
-    0 4px 20px rgba(228, 73, 125, 0.06);
+    0 4px 20px rgba(220, 38, 38, 0.06);
 }

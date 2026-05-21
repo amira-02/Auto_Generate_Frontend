@@ -89,8 +89,9 @@ export default function NotificationBell({ token, onExternalTask, onTrelloTask }
       setOpen(false);
     }
 
-    // Trello brief → ouvre le modal d'assignation client (avec ou sans sheet URL)
-    if (notif.type === "trello_task" && onTrelloTask) {
+    // trello_brief = new flow (briefId in referenceId)
+    // trello_task  = legacy fallback
+    if ((notif.type === "trello_brief" || notif.type === "trello_task") && onTrelloTask) {
       onTrelloTask(notif.title, notif.referenceId ?? "");
       setOpen(false);
     }
@@ -178,15 +179,15 @@ export default function NotificationBell({ token, onExternalTask, onTrelloTask }
 
                   {/* Icône type */}
                   <div style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0,
-                    background: n.type === "external_task" ? "#fef2f2"
-                              : n.type === "trello_task"   ? "#eff6ff"
-                              : n.type === "sheet_sync"    ? "#f0fdf4"
+                    background: n.type === "external_task"                   ? "#fef2f2"
+                              : (n.type === "trello_brief" || n.type === "trello_task") ? "#eff6ff"
+                              : n.type === "sheet_sync"                    ? "#f0fdf4"
                               : "#f8fafc",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 14 }}>
-                    {n.type === "external_task" ? "🔗"
-                   : n.type === "trello_task"   ? "🟦"
-                   : n.type === "sheet_sync"    ? "📊"
+                    {n.type === "external_task"                                   ? "🔗"
+                   : (n.type === "trello_brief" || n.type === "trello_task")      ? "🟦"
+                   : n.type === "sheet_sync"                                      ? "📊"
                    : "🔔"}
                   </div>
 
@@ -215,7 +216,7 @@ export default function NotificationBell({ token, onExternalTask, onTrelloTask }
                           → Cliquer pour assigner
                         </span>
                       )}
-                      {n.type === "trello_task" && n.referenceId?.startsWith("http") && (
+                      {(n.type === "trello_brief" || n.type === "trello_task") && (
                         <span style={{ marginLeft: 6, color: "#1d4ed8", fontWeight: 600 }}>
                           → Cliquer pour assigner au client
                         </span>

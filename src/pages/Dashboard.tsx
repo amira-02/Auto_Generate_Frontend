@@ -18,6 +18,7 @@ import TopicDetailView from "../components/DashboardSection/Topics/TopicDetailVi
 import ConnectedAccountsView from "../components/DashboardSection/SocialAccounts/ConnectedAccountsView";
 import Analytics from "../components/DashboardSection/Analytics/index";
 import ExternalTaskModal from "../components/DashboardSection/Notifications/ExternalTaskModal";
+import BriefsView from "../components/DashboardSection/Briefs/BriefsView";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
@@ -54,10 +55,11 @@ const INITIAL_MODAL: ModalState = {
 };
 
 const NAV = [
-  { id: "analytics", label: "Analytics", icon: "◈" },
-  { id: "topics",    label: "Topics",    icon: "◉" },
-  { id: "posts",     label: "Posts",     icon: "◧" },
-  { id: "calendar",  label: "Calendar",  icon: "▦" },
+  { id: "analytics", label: "Analytics",     icon: "◈" },
+  { id: "topics",    label: "Topics",        icon: "◉" },
+  { id: "posts",     label: "Posts",         icon: "◧" },
+  { id: "calendar",  label: "Calendar",      icon: "▦" },
+  { id: "briefs",    label: "Briefs Trello", icon: "🟦" },
 ];
 
 const MANAGE = [
@@ -474,41 +476,56 @@ function TrelloLinkModal({ client, token, onClose, onSaved }: {
 }
 
 // ── Trello Assign Modal ───────────────────────────────────────────────────────
-function TrelloAssignModal({ title, sheetUrl, token, onClose, onAssigned }: {
-  title: string; sheetUrl: string; token: string | null;
+function TrelloAssignModal({ title, briefId, token, onClose, onAssigned }: {
+  title: string; briefId: number; token: string | null;
   onClose: () => void; onAssigned: () => void;
 }) {
   const { clients } = useContext(ClientContext);
   const [selectedId, setSelectedId] = useState<number | "">("");
   const [loading,    setLoading]    = useState(false);
   const [msg,        setMsg]        = useState<string | null>(null);
+  const [briefInfo,  setBriefInfo]  = useState<{ sheetUrl: string | null } | null>(null);
 
-  const hasSheet = sheetUrl.startsWith("https://docs.google.com/spreadsheets") || sheetUrl.startsWith("https://1drv") || sheetUrl.startsWith("https://onedrive");
+  // Fetch brief to know if it has a sheet URL
+  useEffect(() => {
+    if (!briefId || !token) return;
+    fetch(`${API_BASE}/api/trello/briefs/${briefId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setBriefInfo({ sheetUrl: d.sheetUrl ?? null }))
+      .catch(() => {});
+  }, [briefId, token]);
+
+  const hasSheet = !!briefInfo?.sheetUrl;
 
   const handleAssign = async () => {
     if (!selectedId || !token) return;
     setLoading(true); setMsg(null);
     try {
+      // 1. Link brief to the chosen client
+      const r1 = await fetch(`${API_BASE}/api/trello/briefs/${briefId}/assign`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId: selectedId }),
+      });
+      if (!r1.ok) { setMsg("⚠️ Erreur lors de l'assignation"); setLoading(false); return; }
+
+      // 2. If brief has a sheet URL, trigger sync
       if (hasSheet) {
-        const r1 = await fetch(`${API_BASE}/api/sheets/url/${selectedId}`, {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ sheetUrl }),
-        });
-        if (!r1.ok) { setMsg("Erreur lors de la sauvegarde du sheet"); setLoading(false); return; }
         const r2 = await fetch(`${API_BASE}/api/sheets/sync/${selectedId}`, {
           method: "POST", headers: { Authorization: `Bearer ${token}` },
         });
         const data = await r2.json();
-        if (r2.ok) {
-          setMsg(`✅ ${data.created} post(s) importé(s) !`);
-          setTimeout(() => { onAssigned(); onClose(); }, 1500);
-        } else { setMsg(`⚠️ ${data.message}`); }
+        setMsg(r2.ok
+          ? `✅ Brief assigné — ${data.created} post(s) importé(s) !`
+          : `✅ Brief assigné (sync : ${data.message})`
+        );
       } else {
-        // Pas de sheet — juste marquer le brief comme assigné
         setMsg("✅ Brief assigné au client !");
-        setTimeout(() => { onAssigned(); onClose(); }, 1200);
       }
+
+      setTimeout(() => { onAssigned(); onClose(); }, 1500);
     } catch { setMsg("⚠️ Erreur réseau"); }
     finally { setLoading(false); }
   };
@@ -545,13 +562,12 @@ function TrelloAssignModal({ title, sheetUrl, token, onClose, onAssigned }: {
 
         <div style={{ padding: "22px 24px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
           {hasSheet ? (
-            <div style={{ fontSize: 12, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "10px 14px", wordBreak: "break-all" }}>
+            <div style={{ fontSize: 12, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 10, padding: "10px 14px" }}>
               📊 Planning Google Sheet détecté — les posts seront importés automatiquement
             </div>
           ) : (
             <div style={{ fontSize: 12, color: "#64748b", background: "#f8f9fb", border: "1px solid #f0f0f0", borderRadius: 10, padding: "10px 14px" }}>
-              🟦 Brief Trello reçu — pas de Google Sheet dans la description.<br />
-              <span style={{ color: "#94a3b8" }}>Tu pourras ajouter le planning manuellement depuis le dashboard.</span>
+              🟦 Brief Trello reçu — tu pourras lier un planning depuis la vue Briefs.
             </div>
           )}
 
@@ -639,7 +655,7 @@ export default function Dashboard() {
   const [showTrelloModal,  setShowTrelloModal]  = useState(false);
   const [syncing,          setSyncing]          = useState(false);
   const [syncMsg,          setSyncMsg]          = useState<string | null>(null);
-  const [trelloNotif,      setTrelloNotif]      = useState<{ title: string; sheetUrl: string } | null>(null);
+  const [trelloNotif,      setTrelloNotif]      = useState<{ title: string; briefId: number } | null>(null);
 
   const fileInputRef  = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -914,7 +930,7 @@ export default function Dashboard() {
 
                 {activeNav === "analytics" && (
                   <motion.div key="analytics" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                    <Analytics key={selectedClient?.id ?? 0} clientId={selectedClient?.id ?? 0} onExternalTask={(id) => setExternalTaskId(id)} onTrelloTask={(title, sheetUrl) => setTrelloNotif({ title, sheetUrl })} />
+                    <Analytics key={selectedClient?.id ?? 0} clientId={selectedClient?.id ?? 0} onExternalTask={(id) => setExternalTaskId(id)} onTrelloTask={(title, referenceId) => setTrelloNotif({ title, briefId: Number(referenceId) })} />
                   </motion.div>
                 )}
 
@@ -938,6 +954,12 @@ export default function Dashboard() {
                 {activeNav === "calendar" && (
                   <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ height: "calc(100vh - 180px)" }}>
                     <CalendarView key={selectedClient?.id ?? 0} posts={posts} token={token ?? ""} apiBase={API_BASE} clientId={selectedClient?.id ?? 0} />
+                  </motion.div>
+                )}
+
+                {activeNav === "briefs" && (
+                  <motion.div key="briefs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <BriefsView key={selectedClient?.id ?? 0} clientId={selectedClient?.id ?? 0} token={token} />
                   </motion.div>
                 )}
 
@@ -1004,7 +1026,7 @@ export default function Dashboard() {
         {trelloNotif && (
           <TrelloAssignModal
             title={trelloNotif.title}
-            sheetUrl={trelloNotif.sheetUrl}
+            briefId={trelloNotif.briefId}
             token={token}
             onClose={() => setTrelloNotif(null)}
             onAssigned={async () => { await reloadClients(); await fetchPosts(); }}
