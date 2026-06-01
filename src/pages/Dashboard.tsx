@@ -19,6 +19,8 @@ import ConnectedAccountsView from "../components/DashboardSection/SocialAccounts
 import Analytics from "../components/DashboardSection/Analytics/index";
 import ExternalTaskModal from "../components/DashboardSection/Notifications/ExternalTaskModal";
 import BriefsView from "../components/DashboardSection/Briefs/BriefsView";
+import TeamView from "../components/DashboardSection/Team/TeamView";
+import MyTasksView from "../components/DashboardSection/Team/MyTasksView";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
@@ -57,9 +59,11 @@ const INITIAL_MODAL: ModalState = {
 const NAV = [
   { id: "analytics", label: "Analytics",     icon: "◈" },
   { id: "topics",    label: "Topics",        icon: "◉" },
-  { id: "posts",     label: "Posts",         icon: "◧" },
+  // { id: "posts",     label: "Posts",         icon: "◧" },
   { id: "calendar",  label: "Calendar",      icon: "▦" },
   { id: "briefs",    label: "Briefs Trello", icon: "🟦" },
+  { id: "team",      label: "Équipe",        icon: "👥" },
+  { id: "mytasks",   label: "Mes tâches",    icon: "✅" },
 ];
 
 const MANAGE = [
@@ -653,21 +657,141 @@ export default function Dashboard() {
   const [externalTaskId, setExternalTaskId] = useState<number | null>(null);
   const [showCreateClient, setShowCreateClient] = useState(false);
   const [showTrelloModal,  setShowTrelloModal]  = useState(false);
-  const [syncing,          setSyncing]          = useState(false);
-  const [syncMsg,          setSyncMsg]          = useState<string | null>(null);
   const [trelloNotif,      setTrelloNotif]      = useState<{ title: string; briefId: number } | null>(null);
 
   const fileInputRef  = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
-  let userEmail = "user@mail.com", userInitial = "U";
+  let userEmail = "user@mail.com", userInitial = "U", userRole = "Editor";
   if (token) {
     try {
       const d: any = jwtDecode(token);
       userEmail   = d.email ?? d["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ?? "user@mail.com";
+      userRole    = d.role
+                 ?? d["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+                 ?? "Editor";
       userInitial = userEmail.charAt(0).toUpperCase();
     } catch {}
+  }
+
+  const isTeamMember = userRole === "Graphiste" || userRole === "Redacteur" || userRole === "ChefVisuel" || userRole === "ChefRedac" || userRole === "ChefEquipe";
+
+  const roleLabel = userRole === "Graphiste"  ? "🎨 Graphiste"
+                  : userRole === "Redacteur"  ? "✍️ Rédacteur"
+                  : userRole === "ChefVisuel" ? "👑 Chef Visuel"
+                  : userRole === "ChefRedac"  ? "👑 Chef Rédaction"
+                  : userRole === "ChefEquipe" ? "👑 Chef d'équipe"
+                  : userRole ?? "";
+
+  // ── Team member / Chef d'équipe: show only their task view ───────────────
+  if (isTeamMember) {
+    const roleColor =
+      userRole === "Graphiste"  ? "#7c3aed" :
+      userRole === "Redacteur"  ? "#0ea5e9" :
+      userRole === "ChefVisuel" || userRole === "ChefRedac" || userRole === "ChefEquipe"
+        ? "#e11d48" : "#64748b";
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden",
+        background: "#f0f1f5", fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+
+        {/* ── Top bar ── */}
+        <div style={{
+          height: 64, background: "#fff",
+          borderRadius: 20,
+          margin: "14px 16px 0",
+          border: "1.5px solid #f0f0f5",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 24px", flexShrink: 0,
+          boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
+        }}>
+
+          {/* Brand */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 11,
+              background: "linear-gradient(135deg,#e11d48,#f43f5e)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 12px #e11d4830" }}>
+              <span style={{ color: "#fff", fontSize: 15, fontWeight: 900, letterSpacing: "-0.03em" }}>A</span>
+            </div>
+            <span style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.02em" }}>
+              Auto<span style={{ color: "#e11d48" }}>Generate</span>
+            </span>
+          </div>
+
+          {/* Right: user info + logout */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+
+            {/* Role badge */}
+            <div style={{ padding: "5px 14px", borderRadius: 100,
+              background: roleColor + "12", border: `1.5px solid ${roleColor}25`,
+              fontSize: 11, fontWeight: 700, color: roleColor, letterSpacing: "0.02em" }}>
+              {roleLabel}
+            </div>
+
+            {/* Divider */}
+            <div style={{ width: 1, height: 28, background: "#f0f0f5" }} />
+
+            {/* Avatar + name */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 13,
+                background: `linear-gradient(135deg, ${roleColor}, ${roleColor}cc)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "#fff", fontSize: 15, fontWeight: 800,
+                boxShadow: `0 4px 12px ${roleColor}30`, flexShrink: 0 }}>
+                {userInitial}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", lineHeight: 1.2 }}>
+                  {userEmail.split("@")[0]}
+                </div>
+                <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 1, fontWeight: 500 }}>
+                  {userEmail}
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div style={{ width: 1, height: 28, background: "#f0f0f5" }} />
+
+            {/* Logout */}
+            <button onClick={() => { logout(); navigate("/"); }}
+              style={{ display: "flex", alignItems: "center", gap: 7,
+                padding: "8px 18px", borderRadius: 12,
+                border: "1.5px solid #f0f0f5", background: "#fafafa",
+                color: "#64748b", fontSize: 12, fontWeight: 700,
+                cursor: "pointer", fontFamily: "inherit", transition: "all .18s" }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = "#fff1f2";
+                el.style.color = "#e11d48";
+                el.style.borderColor = "#fecdd3";
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = "#fafafa";
+                el.style.color = "#64748b";
+                el.style.borderColor = "#f0f0f5";
+              }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Déconnexion
+            </button>
+          </div>
+        </div>
+
+        {/* ── Workspace ── */}
+        <div style={{ flex: 1, overflow: "hidden", display: "flex",
+          padding: "14px 0 0", boxSizing: "border-box" }}>
+          <MyTasksView token={token} role={userRole} />
+        </div>
+      </div>
+    );
   }
 
   const fetchPosts = async () => {
@@ -683,27 +807,17 @@ export default function Dashboard() {
 
   useEffect(() => { fetchPosts(); }, [token, selectedClient?.id]);
 
+  // Auto-refresh every 2 minutes — backend sheet sync runs on same interval
+  useEffect(() => {
+    const id = setInterval(async () => {
+      await reloadClients();
+      await fetchPosts();
+    }, 2 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [token, selectedClient?.id]);
+
   // Reset topic selection when client changes
   useEffect(() => { setSelectedTopic(null); }, [selectedClient?.id]);
-
-  const handleSheetSync = async () => {
-    if (!selectedClient || !token) return;
-    setSyncing(true); setSyncMsg(null);
-    try {
-      const res = await fetch(`${API_BASE}/api/sheets/sync/${selectedClient.id}`, {
-        method: "POST", headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setSyncMsg(`✅ +${data.created} new · ${data.updated} updated · ${data.cancelled} cancelled`);
-        await reloadClients(); // refresh client to get new sheetLastSyncAt
-        await fetchPosts();
-      } else {
-        setSyncMsg(`⚠️ ${data.message}`);
-      }
-    } catch { setSyncMsg("⚠️ Sync failed"); }
-    finally { setSyncing(false); setTimeout(() => setSyncMsg(null), 5000); }
-  };
 
   const setM           = (patch: Partial<ModalState>) => setModal(m => ({ ...m, ...patch }));
   const closeModal     = () => setModal(m => ({ ...m, open: false }));
@@ -890,29 +1004,10 @@ export default function Dashboard() {
                 🟦 {selectedClient.trelloBoardId ? "Trello linked" : "Link Trello"}
               </button>
 
-              {/* Sheet sync button — only shown when a sheet is linked */}
-              {selectedClient.sheetUrl && (
-                <button
-                  onClick={handleSheetSync}
-                  disabled={syncing}
-                  title={selectedClient.sheetLastSyncAt
-                    ? `Last sync: ${new Date(selectedClient.sheetLastSyncAt).toLocaleString()}`
-                    : "Not synced yet"}
-                  style={{
-                    fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, border: "none",
-                    background: syncing ? "#f0fdf4" : "#f0fdf4",
-                    color: syncing ? "#86efac" : "#16a34a",
-                    cursor: syncing ? "default" : "pointer",
-                    display: "flex", alignItems: "center", gap: 4,
-                    opacity: syncing ? 0.7 : 1,
-                  }}
-                >
-                  {syncing ? "⏳ Syncing…" : "📊 Sync Sheet"}
-                </button>
-              )}
-              {syncMsg && (
-                <span style={{ fontSize: 10, color: syncMsg.startsWith("✅") ? "#16a34a" : "#dc2626", fontWeight: 600 }}>
-                  {syncMsg}
+              {/* Auto-sync indicator — shows last sync time */}
+              {selectedClient.sheetUrl && selectedClient.sheetLastSyncAt && (
+                <span style={{ fontSize: 10, color: "#16a34a", fontWeight: 600 }}>
+                  ✅ Sync: {new Date(selectedClient.sheetLastSyncAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
               )}
             </div>
@@ -945,11 +1040,11 @@ export default function Dashboard() {
                   </motion.div>
                 )}
 
-                {activeNav === "posts" && (
+                {/* {activeNav === "posts" && (
                   <motion.div key="posts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <PostsView key={selectedClient?.id ?? 0} clientId={selectedClient?.id ?? 0} />
                   </motion.div>
-                )}
+                )} */}
 
                 {activeNav === "calendar" && (
                   <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ height: "calc(100vh - 180px)" }}>
@@ -966,6 +1061,18 @@ export default function Dashboard() {
                 {activeNav === "accounts" && (
                   <motion.div key="accounts" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <ConnectedAccountsView key={selectedClient?.id ?? 0} clientId={selectedClient?.id ?? 0} />
+                  </motion.div>
+                )}
+
+                {activeNav === "team" && (
+                  <motion.div key="team" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <TeamView token={token} />
+                  </motion.div>
+                )}
+
+                {activeNav === "mytasks" && (
+                  <motion.div key="mytasks" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <MyTasksView token={token} />
                   </motion.div>
                 )}
 

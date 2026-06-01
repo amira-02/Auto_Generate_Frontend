@@ -1,6 +1,7 @@
 // Auth.tsx
 import { useState, useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 import { AuthContext } from "../hooks/AuthContext";
 import { API } from "../services/api";
 import "../assets/Auth.css";
@@ -23,6 +24,11 @@ export default function Auth() {
       if (isLogin) {
         const res = await API.post("/auth/login", { email, password });
         login(res.data.token);
+        try {
+          const decoded: any = jwtDecode(res.data.token);
+          const role = decoded.role ?? decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+          if (role === "Graphiste" || role === "Redacteur" || role === "ChefVisuel" || role === "ChefRedac" || role === "ChefEquipe") { navigate("/dashboard"); return; }
+        } catch {}
         navigate("/");
       } else {
         await API.post("/auth/register", { email, password });

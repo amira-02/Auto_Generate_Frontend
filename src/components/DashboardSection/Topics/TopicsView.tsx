@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  FiPlus, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight, 
+import {
+  FiPlus, FiTrash2, FiSearch, FiChevronLeft, FiChevronRight,
   FiFolder, FiHash, FiCalendar, FiTrendingUp, FiX, FiHome
 } from "react-icons/fi";
 import { AuthContext } from "../../../hooks/AuthContext";
@@ -54,12 +54,11 @@ export default function TopicsView({ onSelectTopic, clientId }: Props) {
   const [error, setError]           = useState("");
   const [search, setSearch]         = useState("");
   const [page, setPage]             = useState(1);
-  const [selectedPlatform, setSelectedPlatform] = useState<string>("all");
 
   // Clear stale data immediately when client switches
   useEffect(() => { setTopics([]); setPage(1); setSearch(""); }, [clientId]);
   useEffect(() => { if (clientId > 0) fetchTopics(); }, [token, clientId]);
-  useEffect(() => { setPage(1); }, [search, selectedPlatform]);
+  useEffect(() => { setPage(1); }, [search]);
 
   const fetchTopics = async () => {
     if (!token || clientId === 0) return;
@@ -100,29 +99,21 @@ export default function TopicsView({ onSelectTopic, clientId }: Props) {
     } catch { toast.error("Failed to delete topic"); }
   };
 
-  const filtered = topics.filter(t => {
-    const matchesSearch = !search ||
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      (t.description ?? "").toLowerCase().includes(search.toLowerCase());
-    const matchesPlatform = selectedPlatform === "all" || t.platform === selectedPlatform;
-    return matchesSearch && matchesPlatform;
-  });
+  const filtered = topics.filter(t =>
+    !search ||
+    t.name.toLowerCase().includes(search.toLowerCase()) ||
+    (t.description ?? "").toLowerCase().includes(search.toLowerCase())
+  );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  
+
   const totalPosts = topics.reduce((sum, t) => sum + (t.postCount || 0), 0);
   const avgPosts = topics.length > 0 ? Math.round(totalPosts / topics.length) : 0;
 
-  const platformStats = PLATFORMS.map(platform => ({
-    ...platform,
-    count: topics.filter(t => t.platform === platform.id).length,
-    posts: topics.filter(t => t.platform === platform.id).reduce((sum, t) => sum + (t.postCount || 0), 0),
-  })).filter(p => p.count > 0);
-
   return (
     <div style={{ background: ui.bg, minHeight: "100vh", padding: "24px", fontFamily: "'DM Sans', 'Inter', system-ui, sans-serif" }}>
-      
+
       {/* Controls Bar */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -135,7 +126,7 @@ export default function TopicsView({ onSelectTopic, clientId }: Props) {
           border: `1px solid ${ui.border}`,
         }}
       >
-        <div style={{ 
+        <div style={{
           display: "flex", alignItems: "center", gap: 10, flex: 1,
           background: "#f8fafc", padding: "8px 14px", borderRadius: 12,
           border: `1px solid ${ui.border}`
@@ -146,8 +137,8 @@ export default function TopicsView({ onSelectTopic, clientId }: Props) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search topics..."
-            style={{ 
-              flex: 1, border: "none", background: "transparent", 
+            style={{
+              flex: 1, border: "none", background: "transparent",
               outline: "none", fontSize: 14, color: "#374151",
               padding: "4px 0"
             }}
@@ -161,36 +152,6 @@ export default function TopicsView({ onSelectTopic, clientId }: Props) {
               <FiX size={14} /> Clear
             </button>
           )}
-        </div>
-
-        <div style={{ display: "flex", gap: 8, overflowX: "auto", flexWrap: "wrap" }}>
-          <button
-            onClick={() => setSelectedPlatform("all")}
-            style={{
-              padding: "8px 20px", borderRadius: 40, fontSize: 13, fontWeight: 500,
-              background: selectedPlatform === "all" ? ui.primary : "transparent",
-              color: selectedPlatform === "all" ? "white" : "#6b7280",
-              border: selectedPlatform === "all" ? "none" : `1px solid ${ui.border}`,
-              cursor: "pointer", transition: "all 0.2s",
-            }}
-          >
-            All Topics
-          </button>
-          {PLATFORMS.map(p => (
-            <button
-              key={p.id}
-              onClick={() => setSelectedPlatform(p.id)}
-              style={{
-                padding: "8px 20px", borderRadius: 40, fontSize: 13, fontWeight: 500,
-                background: selectedPlatform === p.id ? p.color : "transparent",
-                color: selectedPlatform === p.id ? "white" : "#6b7280",
-                border: `1px solid ${selectedPlatform === p.id ? p.color : "#e5e7eb"}`,
-                cursor: "pointer", transition: "all 0.2s",
-              }}
-            >
-              {p.label}
-            </button>
-          ))}
         </div>
 
         <motion.button
@@ -223,7 +184,7 @@ export default function TopicsView({ onSelectTopic, clientId }: Props) {
           { label: "Total Topics", value: topics.length, icon: FiFolder, color: "#dc2626", bg: "#fce7ef" },
           { label: "Total Posts", value: totalPosts, icon: FiHash, color: "#f59e0b", bg: "#fed7aa" },
           { label: "Avg Posts/Topic", value: avgPosts, icon: FiTrendingUp, color: "#10b981", bg: "#d1fae5" },
-          { label: "Active Platforms", value: platformStats.length, icon: FiHome, color: "#ef4444", bg: "#fee2e2" },
+          { label: "This Month", value: topics.filter(t => new Date(t.createdAt) > new Date(Date.now() - 30*24*60*60*1000)).length, icon: FiHome, color: "#ef4444", bg: "#fee2e2" },
         ].map((stat, idx) => (
           <motion.div
             key={stat.label}
@@ -249,22 +210,6 @@ export default function TopicsView({ onSelectTopic, clientId }: Props) {
           </motion.div>
         ))}
       </motion.div>
-
-      {/* Platform Chips (if filtered) */}
-      {selectedPlatform !== "all" && (
-        <div style={{ marginBottom: 24 }}>
-          <div style={{
-            background: `linear-gradient(135deg, ${PLATFORMS.find(p => p.id === selectedPlatform)?.color}15, transparent)`,
-            borderRadius: 16, padding: "12px 20px", borderLeft: `4px solid ${PLATFORMS.find(p => p.id === selectedPlatform)?.color}`
-          }}>
-            <span style={{ fontWeight: 600, color: "#1f2937", fontSize: 14 }}>
-              Showing topics for <span style={{ color: PLATFORMS.find(p => p.id === selectedPlatform)?.color }}>
-                {PLATFORMS.find(p => p.id === selectedPlatform)?.label}
-              </span>
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* Search Info */}
       {search && (
@@ -340,7 +285,7 @@ export default function TopicsView({ onSelectTopic, clientId }: Props) {
             {paginated.map((topic, idx) => {
               const platform = PLATFORMS.find(p => p.id === topic.platform);
               const postDensity = topic.postCount > 50 ? "🔥 High" : topic.postCount > 20 ? "📈 Medium" : "🌱 Low";
-              
+
               return (
                 <motion.div
                   key={topic.id}
@@ -474,9 +419,9 @@ export default function TopicsView({ onSelectTopic, clientId }: Props) {
               else if (page <= 3) pageNum = i + 1;
               else if (page >= totalPages - 2) pageNum = totalPages - 4 + i;
               else pageNum = page - 2 + i;
-              
+
               if (pageNum < 1 || pageNum > totalPages) return null;
-              
+
               return (
                 <button key={pageNum} onClick={() => setPage(pageNum)} style={{
                   width: 40, height: 40, borderRadius: 12, cursor: "pointer",
@@ -585,35 +530,6 @@ export default function TopicsView({ onSelectTopic, clientId }: Props) {
                     onBlur={e => e.target.style.borderColor = ui.border}
                   />
                 </div>
-
-                {/* <div>
-                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 12, display: "block" }}>
-                    Platform
-                  </label>
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    {PLATFORMS.map(p => {
-                      const isSelected = form.platform === p.id;
-                      return (
-                        <motion.button
-                          key={p.id}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => setForm(f => ({ ...f, platform: isSelected ? "" : p.id }))}
-                          style={{
-                            padding: "8px 20px", borderRadius: 40, fontSize: 13,
-                            fontWeight: isSelected ? 600 : 500,
-                            border: `2px solid ${isSelected ? p.color : "#e5e7eb"}`,
-                            background: isSelected ? `${p.color}15` : "transparent",
-                            color: isSelected ? p.color : "#6b7280",
-                            cursor: "pointer", transition: "all 0.2s",
-                          }}
-                        >
-                          {p.label}
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </div> */}
 
                 {error && (
                   <div style={{

@@ -216,8 +216,14 @@ function Orb({ color, size, top, left, right, bottom, delay = 0 }: {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function Home() {
-  const navigate  = useNavigate();
-  const { token } = useContext(AuthContext);
+  const navigate        = useNavigate();
+  const { token, role } = useContext(AuthContext);
+
+  // Team members have no access to the landing page
+  if (token && (role === "Graphiste" || role === "Redacteur" || role === "ChefVisuel" || role === "ChefRedac" || role === "ChefEquipe")) {
+    navigate("/dashboard", { replace: true });
+    return null;
+  }
 
   const aboutRef            = useRef<HTMLDivElement>(null!);
   const generateRef         = useRef<HTMLDivElement>(null!);
