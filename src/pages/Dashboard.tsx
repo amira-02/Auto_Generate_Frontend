@@ -658,6 +658,7 @@ export default function Dashboard() {
   const [showCreateClient, setShowCreateClient] = useState(false);
   const [showTrelloModal,  setShowTrelloModal]  = useState(false);
   const [trelloNotif,      setTrelloNotif]      = useState<{ title: string; briefId: number } | null>(null);
+  const [showProfile,      setShowProfile]      = useState(false);
 
   const fileInputRef  = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -694,102 +695,167 @@ export default function Dashboard() {
 
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden",
-        background: "#f0f1f5", fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+        background: "#fff", fontFamily: "'DM Sans', system-ui, sans-serif" }}>
 
         {/* ── Top bar ── */}
-        <div style={{
-          height: 64, background: "#fff",
-          borderRadius: 20,
-          margin: "14px 16px 0",
-          border: "1.5px solid #f0f0f5",
+        <div style={{ height: 52, background: "#fff", border: "1px solid #ebebf0",
+          borderRadius: 14, margin: "12px 16px 0",
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "0 24px", flexShrink: 0,
-          boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
-        }}>
+          padding: "0 20px", flexShrink: 0 }}>
 
-          {/* Brand */}
+          {/* Left — role badge */}
+          <span style={{ fontSize: 11, color: "#64748b",
+            background: "#f4f5f7", padding: "5px 14px",
+            borderRadius: 100, border: "1px solid #e8eaf0", letterSpacing: "0.02em" }}>
+            {roleLabel}
+          </span>
+
+          {/* Right — avatar + logout */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: 11,
-              background: "linear-gradient(135deg,#e11d48,#f43f5e)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 4px 12px #e11d4830" }}>
-              <span style={{ color: "#fff", fontSize: 15, fontWeight: 900, letterSpacing: "-0.03em" }}>A</span>
-            </div>
-            <span style={{ fontSize: 15, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.02em" }}>
-              Auto<span style={{ color: "#e11d48" }}>Generate</span>
-            </span>
-          </div>
 
-          {/* Right: user info + logout */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-
-            {/* Role badge */}
-            <div style={{ padding: "5px 14px", borderRadius: 100,
-              background: roleColor + "12", border: `1.5px solid ${roleColor}25`,
-              fontSize: 11, fontWeight: 700, color: roleColor, letterSpacing: "0.02em" }}>
-              {roleLabel}
-            </div>
-
-            {/* Divider */}
-            <div style={{ width: 1, height: 28, background: "#f0f0f5" }} />
-
-            {/* Avatar + name */}
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ width: 38, height: 38, borderRadius: 13,
-                background: `linear-gradient(135deg, ${roleColor}, ${roleColor}cc)`,
+            {/* Clickable avatar → profile */}
+            <button onClick={() => setShowProfile(true)}
+              style={{ display: "flex", alignItems: "center", gap: 10,
+                background: "none", border: "none", cursor: "pointer",
+                padding: "4px 8px", borderRadius: 10,
+                transition: "background .15s", fontFamily: "inherit" }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#f4f5f7")}
+              onMouseLeave={e => (e.currentTarget.style.background = "none")}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%",
+                background: "#f1f5f9", border: "1.5px solid #e2e8f0",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#fff", fontSize: 15, fontWeight: 800,
-                boxShadow: `0 4px 12px ${roleColor}30`, flexShrink: 0 }}>
+                color: "#475569", fontSize: 12, flexShrink: 0 }}>
                 {userInitial}
               </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", lineHeight: 1.2 }}>
+              <div style={{ textAlign: "left" }}>
+                <div style={{ fontSize: 12, color: "#0f172a", lineHeight: 1.2 }}>
                   {userEmail.split("@")[0]}
                 </div>
-                <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 1, fontWeight: 500 }}>
-                  {userEmail}
-                </div>
+                <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 1 }}>{userEmail}</div>
               </div>
-            </div>
+            </button>
 
-            {/* Divider */}
-            <div style={{ width: 1, height: 28, background: "#f0f0f5" }} />
+            <div style={{ width: 1, height: 22, background: "#f0f0f5" }} />
 
-            {/* Logout */}
+            {/* Logout icon */}
             <button onClick={() => { logout(); navigate("/"); }}
-              style={{ display: "flex", alignItems: "center", gap: 7,
-                padding: "8px 18px", borderRadius: 12,
-                border: "1.5px solid #f0f0f5", background: "#fafafa",
-                color: "#64748b", fontSize: 12, fontWeight: 700,
-                cursor: "pointer", fontFamily: "inherit", transition: "all .18s" }}
+              title="Déconnexion"
+              style={{ width: 34, height: 34, borderRadius: 10, border: "1px solid #ebebf0",
+                background: "#fff", display: "flex", alignItems: "center",
+                justifyContent: "center", cursor: "pointer", color: "#94a3b8",
+                transition: "all .15s" }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement;
-                el.style.background = "#fff1f2";
-                el.style.color = "#e11d48";
+                el.style.background = "#fff1f2"; el.style.color = "#e11d48";
                 el.style.borderColor = "#fecdd3";
               }}
               onMouseLeave={e => {
                 const el = e.currentTarget as HTMLElement;
-                el.style.background = "#fafafa";
-                el.style.color = "#64748b";
-                el.style.borderColor = "#f0f0f5";
+                el.style.background = "#fff"; el.style.color = "#94a3b8";
+                el.style.borderColor = "#ebebf0";
               }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              Déconnexion
             </button>
           </div>
         </div>
 
         {/* ── Workspace ── */}
-        <div style={{ flex: 1, overflow: "hidden", display: "flex",
-          padding: "14px 0 0", boxSizing: "border-box" }}>
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", boxSizing: "border-box" }}>
           <MyTasksView token={token} role={userRole} />
         </div>
+
+        {/* ── Profile modal ── */}
+        {showProfile && (
+          <div onClick={() => setShowProfile(false)}
+            style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.4)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              zIndex: 2000, padding: "24px", backdropFilter: "blur(4px)" }}>
+            <div onClick={e => e.stopPropagation()}
+              style={{ width: 420, borderRadius: 24, background: "#fff",
+                border: "1.5px solid #ebebf0", overflow: "hidden",
+                fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+
+              {/* Header band */}
+              <div style={{ height: 80, background: "linear-gradient(135deg, #f8f9fc, #f0f1f5)",
+                borderBottom: "1px solid #f0f0f5", position: "relative",
+                display: "flex", alignItems: "flex-end", padding: "0 28px 0" }}>
+                <div style={{ position: "absolute", top: 14, right: 14 }}>
+                  <button onClick={() => setShowProfile(false)}
+                    style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid #ebebf0",
+                      background: "#fff", cursor: "pointer", color: "#94a3b8", fontSize: 16,
+                      display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              {/* Avatar overlapping */}
+              <div style={{ padding: "0 28px", marginTop: -28 }}>
+                <div style={{ width: 56, height: 56, borderRadius: "50%",
+                  background: "#fff", border: "3px solid #fff",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 20, color: "#475569",
+                  background: "#f1f5f9" as any }}>
+                  {userInitial}
+                </div>
+              </div>
+
+              {/* Info */}
+              <div style={{ padding: "12px 28px 28px", display: "flex", flexDirection: "column", gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 18, color: "#0f172a", lineHeight: 1.2, marginBottom: 4 }}>
+                    {userEmail.split("@")[0]}
+                  </div>
+                  <span style={{ fontSize: 11, color: "#64748b",
+                    background: "#f4f5f7", padding: "3px 10px",
+                    borderRadius: 100, border: "1px solid #e8eaf0" }}>
+                    {roleLabel}
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {[
+                    { label: "Email",  value: userEmail  },
+                    { label: "Rôle",   value: userRole   },
+                  ].map(row => (
+                    <div key={row.label} style={{ display: "flex", alignItems: "center",
+                      padding: "12px 16px", borderRadius: 12,
+                      background: "#f8f9fc", border: "1px solid #f0f0f5" }}>
+                      <div style={{ fontSize: 11, color: "#94a3b8", width: 70,
+                        textTransform: "uppercase", letterSpacing: "0.06em", flexShrink: 0 }}>
+                        {row.label}
+                      </div>
+                      <div style={{ fontSize: 13, color: "#1e293b" }}>{row.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <button onClick={() => { logout(); navigate("/"); }}
+                  style={{ width: "100%", padding: "12px", borderRadius: 12, border: "none",
+                    background: "#fff1f2", color: "#e11d48", fontSize: 13,
+                    cursor: "pointer", fontFamily: "inherit", display: "flex",
+                    alignItems: "center", justifyContent: "center", gap: 8,
+                    border: "1px solid #fecdd3" as any, transition: "background .15s" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "#fecdd3")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "#fff1f2")}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  Se déconnecter
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
