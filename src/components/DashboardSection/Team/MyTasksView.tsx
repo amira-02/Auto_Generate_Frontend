@@ -360,109 +360,123 @@ function DelegateWorkspace({ task, token, onRefresh }: {
         )}
       </AnimatePresence>
 
-      {/* Current delegation banner */}
-      {task.delegatedTo && (
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px",
-          borderRadius: 12, background: "#fafafa", border: "1px solid #ebebf0" }}>
-          <div style={{ width: 34, height: 34, borderRadius: "50%", background: "#f1f5f9",
-            border: "1px solid #e2e8f0", display: "flex", alignItems: "center",
-            justifyContent: "center", fontSize: 12, color: "#475569", flexShrink: 0 }}>
-            {task.delegatedTo.slice(0, 2).toUpperCase()}
+      {/* ── Tâche déjà déléguée : vue verrouillée ── */}
+      {task.delegatedTo ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px",
+            borderRadius: 14, background: "#f8f9fc", border: "1.5px solid #ebebf0" }}>
+            <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#e2e8f0",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 13, color: "#475569", fontWeight: 700, flexShrink: 0 }}>
+              {task.delegatedTo.slice(0, 2).toUpperCase()}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, color: "#0f172a", fontWeight: 500 }}>{task.delegatedTo}</div>
+              <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+                {task.delegatedStatus === "done" ? "✅ Travail soumis" : "⏳ En cours de traitement"}
+              </div>
+            </div>
           </div>
-          <div style={{ flex: 1, fontSize: 12, color: "#475569" }}>
-            Actuellement : <strong>{task.delegatedTo}</strong>
-            <span style={{ color: "#94a3b8" }}> — {task.delegatedStatus === "done" ? "soumis" : "en cours"}</span>
-          </div>
-        </div>
-      )}
 
-      {/* Member list */}
-      {members.length === 0 ? (
-        <div style={{ flex: 1, display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", gap: 8,
-          borderRadius: 14, border: "1px dashed #ebebf0", padding: "32px" }}>
-          <FiUsers size={22} color="#d1d5db" />
-          <div style={{ fontSize: 13, color: "#94a3b8" }}>Aucun membre disponible</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px",
+            borderRadius: 12, background: "#fef9c3", border: "1px solid #fde68a" }}>
+            <FiAlertCircle size={14} color="#92400e" />
+            <div style={{ fontSize: 12, color: "#92400e" }}>
+              Cette tâche est déjà en cours — impossible de la réassigner.
+            </div>
+          </div>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {members.map(m => {
-            const isSel = sel === m.id;
-            return (
-              <button key={m.id} onClick={() => setSel(isSel ? null : m.id)}
-                style={{ display: "flex", alignItems: "center", gap: 12,
-                  padding: "12px 14px", borderRadius: 12,
-                  border: `1.5px solid ${isSel ? ACCENT : "#ebebf0"}`,
-                  background: isSel ? ACCENT_LIGHT : "#fff",
-                  cursor: "pointer", fontFamily: "inherit",
-                  transition: "all .15s", textAlign: "left" }}>
-                <div style={{ width: 38, height: 38, borderRadius: "50%",
-                  background: isSel ? ACCENT : "#f1f5f9",
-                  border: `1.5px solid ${isSel ? ACCENT : "#e2e8f0"}`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 13, color: isSel ? "#fff" : "#475569", flexShrink: 0 }}>
-                  {(m.name ?? m.email).slice(0, 2).toUpperCase()}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, color: "#0f172a" }}>
-                    {m.name ?? m.email.split("@")[0]}
+        <>
+          {/* Member list */}
+          {members.length === 0 ? (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center", gap: 8,
+              borderRadius: 14, border: "1px dashed #ebebf0", padding: "32px" }}>
+              <FiUsers size={22} color="#d1d5db" />
+              <div style={{ fontSize: 13, color: "#94a3b8" }}>Aucun membre disponible</div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {members.map(m => {
+                const isSel = sel === m.id;
+                return (
+                  <button key={m.id} onClick={() => setSel(isSel ? null : m.id)}
+                    style={{ display: "flex", alignItems: "center", gap: 12,
+                      padding: "12px 14px", borderRadius: 12,
+                      border: `1.5px solid ${isSel ? ACCENT : "#ebebf0"}`,
+                      background: isSel ? ACCENT_LIGHT : "#fff",
+                      cursor: "pointer", fontFamily: "inherit",
+                      transition: "all .15s", textAlign: "left" }}>
+                    <div style={{ width: 38, height: 38, borderRadius: "50%",
+                      background: isSel ? ACCENT : "#f1f5f9",
+                      border: `1.5px solid ${isSel ? ACCENT : "#e2e8f0"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 13, color: isSel ? "#fff" : "#475569", flexShrink: 0 }}>
+                      {(m.name ?? m.email).slice(0, 2).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, color: "#0f172a" }}>
+                        {m.name ?? m.email.split("@")[0]}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1,
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {m.email}
+                      </div>
+                    </div>
+                    <div style={{ width: 20, height: 20, borderRadius: "50%",
+                      background: isSel ? ACCENT : "#f1f5f9",
+                      border: `1.5px solid ${isSel ? ACCENT : "#e2e8f0"}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      flexShrink: 0, transition: "all .15s" }}>
+                      {isSel && <FiCheck size={10} color="#fff" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Note + confirm */}
+          <AnimatePresence>
+            {selMember && (
+              <motion.div key="confirm"
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }} transition={{ duration: 0.18 }}
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+
+                <textarea value={notes} onChange={e => setNotes(e.target.value)}
+                  rows={2} placeholder="Note pour le membre (optionnel)…"
+                  style={{ width: "100%", padding: "11px 14px", borderRadius: 12,
+                    border: "1.5px solid #ebebf0", fontSize: 13, outline: "none",
+                    boxSizing: "border-box", background: "#fafafa", resize: "none",
+                    fontFamily: "inherit", lineHeight: 1.6, transition: "border .15s, background .15s" }}
+                  onFocus={e => { e.target.style.borderColor = ACCENT; e.target.style.background = "#fff"; }}
+                  onBlur={e => { e.target.style.borderColor = "#ebebf0"; e.target.style.background = "#fafafa"; }}
+                />
+
+                {msg === "error" && (
+                  <div style={{ fontSize: 12, color: ACCENT, padding: "9px 12px",
+                    borderRadius: 10, background: ACCENT_LIGHT, border: `1px solid ${ACCENT_MID}` }}>
+                    ⚠️ Erreur — réessaie
                   </div>
-                  <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1,
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {m.email}
-                  </div>
-                </div>
-                <div style={{ width: 20, height: 20, borderRadius: "50%",
-                  background: isSel ? ACCENT : "#f1f5f9",
-                  border: `1.5px solid ${isSel ? ACCENT : "#e2e8f0"}`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  flexShrink: 0, transition: "all .15s" }}>
-                  {isSel && <FiCheck size={10} color="#fff" />}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
+                )}
 
-      {/* Note + confirm — appear when member selected */}
-      <AnimatePresence>
-        {selMember && (
-          <motion.div key="confirm"
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }} transition={{ duration: 0.18 }}
-            style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-
-            <textarea value={notes} onChange={e => setNotes(e.target.value)}
-              rows={2} placeholder="Note pour le membre (optionnel)…"
-              style={{ width: "100%", padding: "11px 14px", borderRadius: 12,
-                border: "1.5px solid #ebebf0", fontSize: 13, outline: "none",
-                boxSizing: "border-box", background: "#fafafa", resize: "none",
-                fontFamily: "inherit", lineHeight: 1.6, transition: "border .15s, background .15s" }}
-              onFocus={e => { e.target.style.borderColor = ACCENT; e.target.style.background = "#fff"; }}
-              onBlur={e => { e.target.style.borderColor = "#ebebf0"; e.target.style.background = "#fafafa"; }}
-            />
-
-            {msg === "error" && (
-              <div style={{ fontSize: 12, color: ACCENT, padding: "9px 12px",
-                borderRadius: 10, background: ACCENT_LIGHT, border: `1px solid ${ACCENT_MID}` }}>
-                ⚠️ Erreur — réessaie
-              </div>
+                <button onClick={submit} disabled={busy}
+                  style={{ padding: "13px", borderRadius: 12, border: "none",
+                    background: busy ? "#f1f5f9" : ACCENT,
+                    color: busy ? "#94a3b8" : "#fff", fontSize: 13,
+                    cursor: busy ? "not-allowed" : "pointer", fontFamily: "inherit",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    gap: 8, transition: "all .18s" }}>
+                  <FiUsers size={14} />
+                  {busy ? "Assignation…" : `Assigner à ${selMember.name ?? selMember.email.split("@")[0]}`}
+                </button>
+              </motion.div>
             )}
-
-            <button onClick={submit} disabled={busy}
-              style={{ padding: "13px", borderRadius: 12, border: "none",
-                background: busy ? "#f1f5f9" : ACCENT,
-                color: busy ? "#94a3b8" : "#fff", fontSize: 13,
-                cursor: busy ? "not-allowed" : "pointer", fontFamily: "inherit",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 8, transition: "all .18s" }}>
-              <FiUsers size={14} />
-              {busy ? "Assignation…" : `Assigner à ${selMember.name ?? selMember.email.split("@")[0]}`}
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </AnimatePresence>
+        </>
+      )}
     </div>
   );
 }
@@ -1107,6 +1121,142 @@ function ChefReviewWorkspace({ task, token, onRefresh }: {
   );
 }
 
+// ─── Add Member Modal (chef sidebar) ─────────────────────────────────────────
+function AddMemberModal({ token, chefRole, onClose, onAdded }: {
+  token: string | null; chefRole: string; onClose: () => void; onAdded: () => void;
+}) {
+  const roleOptions =
+    chefRole === "ChefVisuel" ? [{ r: "Graphiste", label: "🎨 Graphiste" }] :
+    chefRole === "ChefRedac"  ? [{ r: "Redacteur", label: "✍️ Rédacteur" }] :
+    [
+      { r: "ChefVisuel", label: "👑 Chef Visuel" },
+      { r: "ChefRedac",  label: "👑 Chef Rédac"  },
+      { r: "Graphiste",  label: "🎨 Graphiste"   },
+      { r: "Redacteur",  label: "✍️ Rédacteur"   },
+    ];
+
+  const [form, setForm]     = useState({ name: "", email: "", password: "", role: roleOptions[0].r });
+  const [saving, setSaving] = useState(false);
+  const [error, setError]   = useState("");
+
+  const handleSubmit = async () => {
+    if (!form.email || !form.password) { setError("Email et mot de passe requis"); return; }
+    setSaving(true); setError("");
+    try {
+      const res = await fetch(`${API}/api/team`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.message ?? "Erreur"); return; }
+      onAdded(); onClose();
+    } catch { setError("Erreur réseau"); }
+    finally { setSaving(false); }
+  };
+
+  const inp: React.CSSProperties = {
+    width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid #ebebf0",
+    fontSize: 13, outline: "none", boxSizing: "border-box", background: "#fafafa",
+    fontFamily: "inherit", transition: "border .15s",
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)",
+        backdropFilter: "blur(6px)", display: "flex", alignItems: "center",
+        justifyContent: "center", zIndex: 2000, padding: 20 }}>
+      <motion.div
+        initial={{ scale: 0.94, y: 16, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.94, y: 16, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 380, damping: 28 }}
+        onClick={e => e.stopPropagation()}
+        style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 400,
+          boxShadow: "0 32px 80px rgba(0,0,0,0.18)", overflow: "hidden" }}>
+
+        <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid #f0f0f5",
+          display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>Ajouter un membre</div>
+            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+              {chefRole === "ChefVisuel" ? "Graphiste" : chefRole === "ChefRedac" ? "Rédacteur" : "Tous rôles"}
+            </div>
+          </div>
+          <button onClick={onClose}
+            style={{ width: 28, height: 28, borderRadius: 8, background: "#f8f9fc",
+              border: "1px solid #f0f0f5", cursor: "pointer", display: "flex",
+              alignItems: "center", justifyContent: "center", color: "#64748b" }}>
+            <FiX size={13} />
+          </button>
+        </div>
+
+        <div style={{ padding: "18px 20px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Role selector */}
+          <div style={{ display: "grid", gridTemplateColumns: roleOptions.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
+            {roleOptions.map(({ r, label }) => (
+              <button key={r} onClick={() => setForm(f => ({ ...f, role: r }))}
+                style={{ padding: "10px 8px", borderRadius: 10,
+                  border: `2px solid ${form.role === r ? ACCENT : "#ebebf0"}`,
+                  background: form.role === r ? ACCENT_LIGHT : "#fafafa",
+                  cursor: "pointer", fontSize: 12, fontWeight: 700,
+                  color: form.role === r ? ACCENT : "#94a3b8",
+                  fontFamily: "inherit", transition: "all .15s" }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {[
+            { key: "name",     label: "Nom",         placeholder: "Prénom Nom",        required: false },
+            { key: "email",    label: "Email",        placeholder: "membre@agence.com", required: true  },
+            { key: "password", label: "Mot de passe", placeholder: "Temporaire…",       required: true, type: "password" },
+          ].map(f => (
+            <div key={f.key}>
+              <label style={{ fontSize: 10, fontWeight: 700, color: "#374151", display: "block",
+                marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                {f.label} {f.required && <span style={{ color: ACCENT }}>*</span>}
+              </label>
+              <input
+                type={(f as any).type ?? "text"}
+                value={(form as any)[f.key]}
+                onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                placeholder={f.placeholder}
+                style={inp}
+                onFocus={e => { e.target.style.borderColor = ACCENT; e.target.style.background = "#fff"; }}
+                onBlur={e => { e.target.style.borderColor = "#ebebf0"; e.target.style.background = "#fafafa"; }}
+              />
+            </div>
+          ))}
+
+          {error && (
+            <div style={{ background: ACCENT_LIGHT, border: `1px solid ${ACCENT_MID}`, borderRadius: 8,
+              padding: "8px 12px", fontSize: 12, color: ACCENT }}>⚠️ {error}</div>
+          )}
+
+          <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+            <button onClick={onClose}
+              style={{ flex: 1, padding: "10px", borderRadius: 10, border: "1.5px solid #ebebf0",
+                background: "#f8f9fc", color: "#64748b", fontSize: 13,
+                cursor: "pointer", fontFamily: "inherit" }}>
+              Annuler
+            </button>
+            <button onClick={handleSubmit} disabled={saving}
+              style={{ flex: 2, padding: "10px", borderRadius: 10, border: "none",
+                background: saving ? "#e5e7eb" : ACCENT,
+                color: saving ? "#9ca3af" : "#fff", fontSize: 13, fontWeight: 700,
+                cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit",
+                boxShadow: saving ? "none" : `0 4px 14px ${ACCENT}40` }}>
+              {saving ? "Création…" : "Créer le compte"}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function MyTasksView({ token, role }: { token: string | null; role?: string | null }) {
   const [tasks, setTasks]       = useState<Assignment[]>([]);
@@ -1114,6 +1264,7 @@ export default function MyTasksView({ token, role }: { token: string | null; rol
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState("");
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [showAddMember, setShowAddMember] = useState(false);
   const isChef = role === "ChefVisuel" || role === "ChefRedac" || role === "ChefEquipe";
 
   const load = async () => {
@@ -1181,11 +1332,24 @@ export default function MyTasksView({ token, role }: { token: string | null; rol
           display: "flex", flexDirection: "column", overflow: "hidden",
           border: "1px solid #ebebf0" }}>
 
-          <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid #f0f0f5" }}>
-            <div style={{ fontSize: 13, color: "#172b4d" }}>Mon équipe</div>
-            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>
-              {visibleMembers.length} membre{visibleMembers.length !== 1 ? "s" : ""}
+          <div style={{ padding: "12px 14px 10px", borderBottom: "1px solid #f0f0f5",
+            display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontSize: 13, color: "#172b4d" }}>Mon équipe</div>
+              <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>
+                {visibleMembers.length} membre{visibleMembers.length !== 1 ? "s" : ""}
+              </div>
             </div>
+            <button onClick={() => setShowAddMember(true)}
+              title="Ajouter un membre"
+              style={{ width: 28, height: 28, borderRadius: 8, border: `1.5px solid ${ACCENT_MID}`,
+                background: ACCENT_LIGHT, color: ACCENT, cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all .15s" }}
+              onMouseEnter={e => { e.currentTarget.style.background = ACCENT; e.currentTarget.style.color = "#fff"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = ACCENT_LIGHT; e.currentTarget.style.color = ACCENT; }}>
+              <FiPlus size={14} />
+            </button>
           </div>
 
           <div style={{ flex: 1, overflowY: "auto", padding: "10px 10px" }}>
@@ -1494,6 +1658,18 @@ export default function MyTasksView({ token, role }: { token: string | null; rol
         @keyframes chatdot { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-4px);opacity:1} }
       `}</style>
       </div>
+
+      {/* Add member modal */}
+      <AnimatePresence>
+        {showAddMember && role && (
+          <AddMemberModal
+            token={token}
+            chefRole={role}
+            onClose={() => setShowAddMember(false)}
+            onAdded={load}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

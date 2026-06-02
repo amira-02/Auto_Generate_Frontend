@@ -1132,7 +1132,7 @@ export default function Dashboard() {
 
                 {activeNav === "team" && (
                   <motion.div key="team" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                    <TeamView token={token} />
+                    <TeamView token={token} role={userRole} />
                   </motion.div>
                 )}
 

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiPlus, FiTrash2, FiX } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiX, FiSlash, FiCheckCircle } from "react-icons/fi";
 
 const API = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
 
-type Member = { id: number; name: string | null; email: string; role: string; createdAt: string };
+type Member = { id: number; name: string | null; email: string; role: string; createdAt: string; isBlocked?: boolean };
 
 const ROLE_STYLE: Record<string, { bg: string; color: string; label: string }> = {
   ChefVisuel: { bg: "#fef2f2", color: "#dc2626", label: "👑 Chef Visuel" },
@@ -25,10 +25,18 @@ function Avatar({ name, email }: { name: string | null; email: string }) {
   );
 }
 
-function AddMemberModal({ token, onClose, onAdded }: {
-  token: string | null; onClose: () => void; onAdded: () => void;
+function AddMemberModal({ token, managerRole, onClose, onAdded }: {
+  token: string | null; managerRole?: string; onClose: () => void; onAdded: () => void;
 }) {
-  const [form, setForm]     = useState({ name: "", email: "", password: "", role: "ChefVisuel" });
+  const roleOptions =
+    managerRole === "ChefVisuel" ? [{ r: "Graphiste",  label: "🎨 Graphiste" }] :
+    managerRole === "ChefRedac"  ? [{ r: "Redacteur",  label: "✍️ Rédacteur" }] :
+    [
+      { r: "ChefVisuel", label: "👑 Chef Visuel" },
+      { r: "ChefRedac",  label: "👑 Chef Rédac"  },
+    ] as { r: string; label: string }[];
+
+  const [form, setForm]     = useState({ name: "", email: "", password: "", role: roleOptions[0].r });
   const [saving, setSaving] = useState(false);
   const [error, setError]   = useState("");
 
@@ -85,13 +93,8 @@ function AddMemberModal({ token, onClose, onAdded }: {
         <div style={{ padding: "20px 22px 22px", display: "flex", flexDirection: "column", gap: 14 }}>
 
           {/* Role selector */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            {([
-              { r: "ChefVisuel", label: "👑 Chef Visuel" },
-              { r: "ChefRedac",  label: "👑 Chef Rédac" },
-              { r: "Graphiste",  label: "🎨 Graphiste" },
-              { r: "Redacteur",  label: "✍️ Rédacteur" },
-            ] as const).map(({ r, label }) => (
+          <div style={{ display: "grid", gridTemplateColumns: roleOptions.length === 1 ? "1fr" : "1fr 1fr", gap: 8 }}>
+            {roleOptions.map(({ r, label }) => (
               <button key={r} onClick={() => setForm(f => ({ ...f, role: r }))}
                 style={{ padding: "12px 8px", borderRadius: 12,
                   border: `2px solid ${form.role === r ? "#dc2626" : "#e5e7eb"}`,
@@ -152,11 +155,12 @@ function AddMemberModal({ token, onClose, onAdded }: {
   );
 }
 
-export default function TeamView({ token }: { token: string | null }) {
+export default function TeamView({ token, role }: { token: string | null; role?: string }) {
   const [members, setMembers]   = useState<Member[]>([]);
   const [loading, setLoading]   = useState(true);
   const [showAdd, setShowAdd]   = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [blocking, setBlocking] = useState<number | null>(null);
 
   const fetch_ = async () => {
     setLoading(true);
@@ -181,10 +185,50 @@ export default function TeamView({ token }: { token: string | null }) {
     finally { setDeleting(null); }
   };
 
+  const handleBlock = async (id: number, isBlocked: boolean) => {
+    setBlocking(id);
+    try {
+      await fetch(`${API}/api/team/${id}/block`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ blocked: !isBlocked }),
+      });
+      setMembers(m => m.map(x => x.id === id ? { ...x, isBlocked: !isBlocked } : x));
+    } catch {}
+    finally { setBlocking(null); }
+  };
+
   const chefsVisuels = members.filter(m => m.role === "ChefVisuel");
   const chefsRedacs  = members.filter(m => m.role === "ChefRedac");
   const graphistes   = members.filter(m => m.role === "Graphiste");
   const redacteurs   = members.filter(m => m.role === "Redacteur");
+
+  // Groupes visibles selon le rôle de l'utilisateur connecté
+  const isCM         = !role || role === "CM" || role === "Editor";
+  const isChefVisuel = role === "ChefVisuel";
+  const isChefRedac  = role === "ChefRedac";
+
+  const allGroups = [
+    { title: "👑 Chefs Visuel",    list: chefsVisuels, visibleFor: ["CM", "ChefEquipe"] },
+    { title: "👑 Chefs Rédaction", list: chefsRedacs,  visibleFor: ["CM", "ChefEquipe"] },
+    { title: "🎨 Graphistes",      list: graphistes,   visibleFor: ["ChefVisuel", "ChefEquipe"] },
+    { title: "✍️ Rédacteurs",     list: redacteurs,   visibleFor: ["ChefRedac", "ChefEquipe"] },
+  ];
+
+  const visibleGroups = allGroups.filter(g => {
+    if (!role || role === "CM" || role === "Editor") return g.visibleFor.includes("CM");
+    if (role === "ChefEquipe") return true;
+    return g.visibleFor.includes(role);
+  });
+
+  const subtitle = isCM ? "Chefs Visuel & Rédaction"
+    : isChefVisuel ? "Mon équipe Graphisme"
+    : isChefRedac  ? "Mon équipe Rédaction"
+    : "Chefs d'équipe, Graphistes & Rédacteurs";
+
+  // Tous les managers peuvent ajouter dans leur périmètre
+  const canAdd = role === "CM" || role === "Editor" || role === "ChefEquipe"
+              || role === "ChefVisuel" || role === "ChefRedac";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -192,8 +236,9 @@ export default function TeamView({ token }: { token: string | null }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a" }}>Équipe</div>
-          <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>Chefs d'équipe, Graphistes & Rédacteurs</div>
+          <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{subtitle}</div>
         </div>
+        {canAdd && (
         <button onClick={() => setShowAdd(true)}
           style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px",
             borderRadius: 10, border: "none", background: "#dc2626", color: "#fff",
@@ -201,6 +246,7 @@ export default function TeamView({ token }: { token: string | null }) {
             boxShadow: "0 4px 14px #dc262640" }}>
           <FiPlus size={13} /> Ajouter un membre
         </button>
+        )}
       </div>
 
       {loading ? (
@@ -223,12 +269,7 @@ export default function TeamView({ token }: { token: string | null }) {
         </div>
       ) : (
         <>
-          {[
-            { title: "👑 Chefs Visuel",    list: chefsVisuels },
-            { title: "👑 Chefs Rédaction", list: chefsRedacs  },
-            { title: "🎨 Graphistes",      list: graphistes   },
-            { title: "✍️ Rédacteurs",     list: redacteurs   },
-          ].map(group => group.list.length > 0 && (
+          {visibleGroups.map(group => group.list.length > 0 && (
             <div key={group.title}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8",
                 textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
@@ -240,12 +281,20 @@ export default function TeamView({ token }: { token: string | null }) {
                     initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                     style={{ display: "flex", alignItems: "center", gap: 12,
                       padding: "12px 16px", borderRadius: 14,
-                      border: "1.5px solid #e5e7eb", background: "#fff",
-                      boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+                      border: `1.5px solid ${m.isBlocked ? "#fca5a5" : "#e5e7eb"}`,
+                      background: m.isBlocked ? "#fff7f7" : "#fff",
+                      boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                      opacity: m.isBlocked ? 0.75 : 1 }}>
                     <Avatar name={m.name} email={m.email} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#0f172a", display: "flex", alignItems: "center", gap: 6 }}>
                         {m.name ?? m.email.split("@")[0]}
+                        {m.isBlocked && (
+                          <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px",
+                            borderRadius: 20, background: "#fee2e2", color: "#dc2626" }}>
+                            Bloqué
+                          </span>
+                        )}
                       </div>
                       <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 1 }}>{m.email}</div>
                     </div>
@@ -253,11 +302,22 @@ export default function TeamView({ token }: { token: string | null }) {
                       borderRadius: 20, background: "#fef2f2", color: "#dc2626" }}>
                       {ROLE_STYLE[m.role]?.label ?? m.role}
                     </span>
+                    <button onClick={() => handleBlock(m.id, !!m.isBlocked)} disabled={blocking === m.id}
+                      title={m.isBlocked ? "Débloquer" : "Bloquer"}
+                      style={{ width: 30, height: 30, borderRadius: 8,
+                        border: `1px solid ${m.isBlocked ? "#bbf7d0" : "#fde68a"}`,
+                        background: "#fff", cursor: "pointer", display: "flex",
+                        alignItems: "center", justifyContent: "center",
+                        color: m.isBlocked ? "#16a34a" : "#d97706",
+                        opacity: blocking === m.id ? 0.4 : 1, transition: "all .15s" }}>
+                      {m.isBlocked ? <FiCheckCircle size={13} /> : <FiSlash size={13} />}
+                    </button>
                     <button onClick={() => handleDelete(m.id)} disabled={deleting === m.id}
+                      title="Supprimer"
                       style={{ width: 30, height: 30, borderRadius: 8, border: "1px solid #fee2e2",
                         background: "#fff", cursor: "pointer", display: "flex",
                         alignItems: "center", justifyContent: "center", color: "#dc2626",
-                        opacity: deleting === m.id ? 0.4 : 1 }}>
+                        opacity: deleting === m.id ? 0.4 : 1, transition: "all .15s" }}>
                       <FiTrash2 size={13} />
                     </button>
                   </motion.div>
@@ -270,7 +330,7 @@ export default function TeamView({ token }: { token: string | null }) {
 
       <AnimatePresence>
         {showAdd && (
-          <AddMemberModal token={token} onClose={() => setShowAdd(false)} onAdded={fetch_} />
+          <AddMemberModal token={token} managerRole={role} onClose={() => setShowAdd(false)} onAdded={fetch_} />
         )}
       </AnimatePresence>
 
