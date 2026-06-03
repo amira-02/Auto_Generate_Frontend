@@ -26,8 +26,8 @@ const card: React.CSSProperties = {
 };
 
 // ── KPI tile ──────────────────────────────────────────────────────────────────
-function KpiTile({ label, value, delta, sub, accent }: {
-  label: string; value: string | number; delta?: number; sub?: string; accent: string;
+function KpiTile({ label, value, delta, sub }: {
+  label: string; value: string | number; delta?: number; sub?: string;
 }) {
   return (
     <div style={{ ...card, padding: "14px 16px" }}>
@@ -159,6 +159,65 @@ function PostActivityCalendar({ posts }: { posts: Post[] }) {
   );
 }
 
+// ── Insight card (Meta/TikTok style) ─────────────────────────────────────────
+function InsightCard({ title, sub, value, delta, timeline, color, subMetrics }: {
+  title: string; sub: string; value: string | number; delta?: number;
+  timeline?: { date?: string; value: number }[];
+  color: string;
+  subMetrics?: { label: string; value: string | number }[];
+}) {
+  const sparkData = (timeline ?? []).map((d, i) => ({ i, v: d.value }));
+  return (
+    <div style={{ ...card, padding: "16px 18px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{title}</div>
+          <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>{sub}</div>
+        </div>
+        {sparkData.length > 0 && (
+          <ResponsiveContainer width={72} height={34}>
+            <AreaChart data={sparkData} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
+              <defs>
+                <linearGradient id={`gic-${title}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%"  stopColor={color} stopOpacity={0.25} />
+                  <stop offset="95%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5}
+                fill={`url(#gic-${title})`} dot={false} isAnimationActive={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8, margin: "10px 0 0" }}>
+        <span style={{ fontSize: 26, fontWeight: 700, color: "#0f172a", letterSpacing: "-1px", lineHeight: 1 }}>
+          {value}
+        </span>
+        {delta !== undefined && (
+          <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 6px", borderRadius: 20,
+            background: delta >= 0 ? "#f0fdf4" : "#fef2f2",
+            color: delta >= 0 ? "#16a34a" : "#dc2626" }}>
+            {delta >= 0 ? "↑" : "↓"} {Math.abs(delta)}%
+          </span>
+        )}
+      </div>
+
+      {subMetrics && subMetrics.length > 0 && (
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid #f0f0f5",
+          display: "flex", flexDirection: "column", gap: 5 }}>
+          {subMetrics.map(s => (
+            <div key={s.label} style={{ display: "flex", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 10, color: "#94a3b8" }}>{s.label}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#374151" }}>{s.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function OverviewTab({ posts, igData, fbData, liData, ttData }: Props) {
   const { token } = useContext(AuthContext);
@@ -200,19 +259,26 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
   });
 
   // ── Cross-platform reach timeline ─────────────────────────────────────────
-  const igTimeline = (igData?.reachTimeline ?? []).slice(-21);
-  const fbTimeline = (fbData?.impressionsTimeline ?? []).slice(-21);
-  const reachMap = new Map<string, { date: string; ig: number; fb: number }>();
-  igTimeline.forEach(r => { const d = fmtDate(r.date); reachMap.set(d, { date: d, ig: r.value, fb: 0 }); });
-  fbTimeline.forEach(r => {
-    const d = fmtDate(r.date);
-    const e = reachMap.get(d);
-    if (e) e.fb = r.value; else reachMap.set(d, { date: d, ig: 0, fb: r.value });
+  // Always show last 15 days from today — fill missing days with 0
+  const reachDays = Array.from({ length: 15 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (14 - i));
+    return fmtDate(d.toISOString());
   });
-  const reachData = [...reachMap.values()]
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-14);
-  const hasReach = igTimeline.length > 0 || fbTimeline.length > 0;
+  const reachMap = new Map<string, { date: string; ig: number; fb: number }>();
+  reachDays.forEach(label => reachMap.set(label, { date: label, ig: 0, fb: 0 }));
+  (igData?.reachTimeline ?? []).forEach(r => {
+    const d = fmtDate(r.date);
+    if (reachMap.has(d)) reachMap.get(d)!.ig = r.value;
+  });
+  (fbData?.impressionsTimeline ?? []).forEach(r => {
+    const d = fmtDate(r.date);
+    if (reachMap.has(d)) reachMap.get(d)!.fb = r.value;
+  });
+  const reachData  = reachDays.map(label => reachMap.get(label)!);
+  const igTimeline = igData?.reachTimeline ?? [];
+  const fbTimeline = fbData?.impressionsTimeline ?? [];
+  const hasReach   = igTimeline.length > 0 || fbTimeline.length > 0;
 
 
   const recentPosts = [...published]
@@ -230,15 +296,14 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
   const postsByDayOfWeek = dowLabels.map((day, i) => ({ day, posts: dowCounts[i] }));
   const bestDayIndex = dowCounts.indexOf(Math.max(...dowCounts));
 
-  // Posts by hour of day
-  const hourCounts = Array(24).fill(0);
-  posts.forEach(p => { hourCounts[new Date(p.createdAt).getHours()]++; });
-  const postsByHour = Array.from({ length: 8 }, (_, i) => {
-    const from = i * 3;
-    const to   = from + 2;
-    return { hour: `${String(from).padStart(2,"0")}h`, posts: hourCounts.slice(from, to + 1).reduce((a, b) => a + b, 0) };
-  });
-  const bestHourIndex = postsByHour.indexOf(postsByHour.reduce((a, b) => b.posts > a.posts ? b : a));
+  // Insight card delta helper
+  const calcDelta = (tl: {date:string;value:number}[]) => {
+    if (tl.length < 14) return undefined;
+    const recent = tl.slice(-7).reduce((s,d) => s + d.value, 0);
+    const prev   = tl.slice(-14,-7).reduce((s,d) => s + d.value, 0);
+    if (prev === 0) return undefined;
+    return Math.round((recent - prev) / prev * 100);
+  };
 
   // Content health score
   const publishRate  = posts.length > 0 ? Math.round((published.length / posts.length) * 100) : 0;
@@ -291,10 +356,10 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
 
       {/* ── 1. KPIs ─────────────────────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-        <KpiTile label="Total Posts"  value={posts.length}     delta={growthPct} sub="vs mois dernier" accent="#dc2626" />
-        <KpiTile label="Publiés"      value={published.length}                   sub="tous les temps"  accent="#10b981" />
-        <KpiTile label="Planifiés"    value={scheduled.length}                   sub="à venir"         accent="#6366f1" />
-        <KpiTile label="En révision"  value={inReview.length}                    sub="en attente"      accent="#f59e0b" />
+        <KpiTile label="Total Posts"  value={posts.length}     delta={growthPct} sub="vs mois dernier" />
+        <KpiTile label="Publiés"      value={published.length}                   sub="tous les temps"  />
+        <KpiTile label="Planifiés"    value={scheduled.length}                   sub="à venir"         />
+        <KpiTile label="En révision"  value={inReview.length}                    sub="en attente"      />
       </div>
 
       {/* ── 2. Content trend + Audience + Posting by day ────────────────────── */}
@@ -379,11 +444,17 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
         <div style={{ ...card }}>
           <ChartHead
             title="Cross-Platform Reach"
-            sub="Instagram reach · Facebook impressions — last 14 days"
+            sub="Instagram reach · Facebook impressions"
             right={
-              <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 {igTimeline.length > 0 && <Dot color="#e1306c" label="IG Reach" />}
                 {fbTimeline.length > 0 && <Dot color="#1877f2" label="FB Impressions" />}
+                <span title="Meta publie les stats avec 2-3 jours de délai"
+                  style={{ fontSize: 10, color: "#94a3b8", background: "#f8f9fc",
+                    border: "1px solid #ebebf0", borderRadius: 6,
+                    padding: "2px 7px", cursor: "default" }}>
+                  ⏱ délai Meta ~2j
+                </span>
               </div>
             }
           />
@@ -434,7 +505,7 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
                     data={totalInteractions.map(e => ({ ...e, value: e.value, fill: e.color }))}
                     startAngle={90} endAngle={-270}>
                     <RadialBar dataKey="value" cornerRadius={6} background={{ fill: "#f1f5f9" }} />
-                    <Tooltip formatter={(v: any, _: any, p: any) => [fmtNum(p.payload.value), p.payload.label]} />
+                    <Tooltip formatter={(_: any, __: any, p: any) => [fmtNum(p.payload.value), p.payload.label]} />
                   </RadialBarChart>
                 </ResponsiveContainer>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px", justifyContent: "center", marginTop: 2 }}>
@@ -615,96 +686,90 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
         </div>
       </div>
 
-      {/* ── 6. Follower growth + Best hour + Content health ─────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 14 }}>
+      {/* ── 6. Insight cards (Meta/TikTok style) ────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        <InsightCard
+          title="Portée"
+          sub="Comptes touchés"
+          value={fmtNum(igData?.reachTimeline?.slice(-14).reduce((s,d) => s + d.value, 0) ?? 0)}
+          delta={calcDelta(igData?.reachTimeline ?? [])}
+          timeline={igData?.reachTimeline?.slice(-14) ?? []}
+          color="#e1306c"
+          subMetrics={[
+            { label: "Total likes",    value: fmtNum(igData?.totalLikes    ?? 0) },
+            { label: "Total comments", value: fmtNum(igData?.totalComments ?? 0) },
+          ]}
+        />
+        <InsightCard
+          title="Impressions"
+          sub="Facebook · total vues"
+          value={fmtNum(fbData?.totalImpressions ?? 0)}
+          delta={calcDelta(fbData?.impressionsTimeline ?? [])}
+          timeline={fbData?.impressionsTimeline?.slice(-14) ?? []}
+          color="#1877f2"
+          subMetrics={[
+            { label: "Engagés",   value: fmtNum(fbData?.totalEngagedUsers ?? 0) },
+            { label: "Fans",      value: fmtNum(fbData?.fans              ?? 0) },
+          ]}
+        />
+        <InsightCard
+          title="Vues TikTok"
+          sub="Vidéos · cumul"
+          value={fmtNum(ttData?.totalViews ?? 0)}
+          delta={calcDelta(ttData?.viewsTimeline ?? [])}
+          timeline={ttData?.viewsTimeline?.slice(-14) ?? []}
+          color="#69C9D0"
+          subMetrics={[
+            { label: "Likes",    value: fmtNum(ttData?.totalLikes    ?? 0) },
+            { label: "Partages", value: fmtNum(ttData?.totalShares   ?? 0) },
+          ]}
+        />
+        <InsightCard
+          title="Abonnés"
+          sub="Instagram followers"
+          value={fmtNum(igData?.followers ?? 0)}
+          delta={calcDelta(igData?.followerTimeline ?? [])}
+          timeline={igData?.followerTimeline?.slice(-14) ?? []}
+          color="#10b981"
+          subMetrics={[
+            { label: "Posts",      value: igData?.mediaCount ?? 0 },
+            { label: "Connecté",   value: igData ? "✓" : "--" },
+          ]}
+        />
+      </div>
 
-        {/* Follower growth (IG timeline) */}
-        <div style={{ ...card }}>
-          <ChartHead
-            title="Croissance des abonnés"
-            sub="Instagram — évolution des followers"
-            right={igData ? <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, background: "#fce7f3", color: "#e1306c", fontWeight: 600 }}>IG</span> : undefined}
-          />
-          {!igData || igData.followerTimeline.length === 0
-            ? <div style={{ textAlign: "center", padding: "50px 0", color: "#cbd5e1", fontSize: 12 }}>Connecte Instagram pour voir la croissance</div>
-            : <ResponsiveContainer width="100%" height={190}>
-                <AreaChart data={igData.followerTimeline.slice(-21).map(d => ({ date: fmtDate(d.date), value: d.value }))}
-                  margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gFollowers" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#e1306c" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#e1306c" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
-                  <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} interval={6} />
-                  <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={v => fmtNum(v)} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="value" name="Abonnés"
-                    stroke="#e1306c" strokeWidth={2.5} fill="url(#gFollowers)"
-                    dot={false} activeDot={{ r: 4, fill: "#e1306c" }} />
-                </AreaChart>
-              </ResponsiveContainer>
-          }
-        </div>
-
-        {/* Best hour to post */}
-        <div style={{ ...card }}>
-          <ChartHead title="Meilleure heure" sub="Activité de publication par tranche horaire" />
-          <ResponsiveContainer width="100%" height={190}>
-            <BarChart data={postsByHour} margin={{ top: 4, right: 4, left: -14, bottom: 0 }} barSize={10}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
-              <XAxis dataKey="hour" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="posts" name="Posts" radius={[4, 4, 0, 0]}>
-                {postsByHour.map((_, i) => (
-                  <Cell key={i} fill={i === bestHourIndex ? "#dc2626" : "#f1a1b0"} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-          {bestHourIndex >= 0 && (
-            <div style={{ textAlign: "center", fontSize: 11, color: "#64748b", marginTop: 6 }}>
-              Pic à <strong style={{ color: "#dc2626" }}>{postsByHour[bestHourIndex].hour}</strong>
-            </div>
-          )}
-        </div>
-
-        {/* Content health score */}
-        <div style={{ ...card, display: "flex", flexDirection: "column", gap: 12 }}>
-          <ChartHead title="Santé du contenu" sub="Indicateurs clés de qualité" />
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {healthMetrics.map(h => (
-              <div key={h.label}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                  <span style={{ fontSize: 11, color: "#374151" }}>{h.label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: h.score >= 70 ? "#16a34a" : h.score >= 40 ? "#f59e0b" : "#dc2626" }}>
-                    {h.score}%
-                  </span>
-                </div>
-                <div style={{ height: 7, borderRadius: 6, background: "#f1f5f9", overflow: "hidden" }}>
-                  <div style={{
-                    height: "100%", borderRadius: 6, transition: "width .7s ease",
-                    width: `${h.score}%`,
-                    background: h.score >= 70 ? "linear-gradient(90deg,#86efac,#16a34a)"
-                      : h.score >= 40 ? "linear-gradient(90deg,#fde68a,#f59e0b)"
-                      : "linear-gradient(90deg,#fca5a5,#dc2626)",
-                  }} />
-                </div>
+      {/* ── 7. Santé du contenu ─────────────────────────────────────────────── */}
+      <div style={{ ...card }}>
+        <ChartHead title="Santé du contenu" sub="Indicateurs clés de qualité" />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
+          {healthMetrics.map(h => (
+            <div key={h.label}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontSize: 11, color: "#374151" }}>{h.label}</span>
+                <span style={{ fontSize: 12, fontWeight: 700,
+                  color: h.score >= 70 ? "#16a34a" : h.score >= 40 ? "#f59e0b" : "#dc2626" }}>
+                  {h.score}%
+                </span>
               </div>
-            ))}
-            <div style={{ marginTop: 4, padding: "10px 12px", borderRadius: 10,
-              background: overallScore >= 70 ? "#f0fdf4" : overallScore >= 40 ? "#fefce8" : "#fff1f2",
-              border: `1px solid ${overallScore >= 70 ? "#bbf7d0" : overallScore >= 40 ? "#fde68a" : "#fecdd3"}`,
-              display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 12, color: "#374151", fontWeight: 600 }}>Score global</span>
-              <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-1px",
-                color: overallScore >= 70 ? "#16a34a" : overallScore >= 40 ? "#ca8a04" : "#dc2626" }}>
-                {overallScore}<span style={{ fontSize: 11, fontWeight: 400 }}>/100</span>
-              </span>
+              <div style={{ height: 7, borderRadius: 6, background: "#f1f5f9", overflow: "hidden" }}>
+                <div style={{ height: "100%", borderRadius: 6, transition: "width .7s ease",
+                  width: `${h.score}%`,
+                  background: h.score >= 70 ? "linear-gradient(90deg,#86efac,#16a34a)"
+                    : h.score >= 40 ? "linear-gradient(90deg,#fde68a,#f59e0b)"
+                    : "linear-gradient(90deg,#fca5a5,#dc2626)" }} />
+              </div>
             </div>
-          </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 14, padding: "10px 14px", borderRadius: 10,
+          background: overallScore >= 70 ? "#f0fdf4" : overallScore >= 40 ? "#fefce8" : "#fff1f2",
+          border: `1px solid ${overallScore >= 70 ? "#bbf7d0" : overallScore >= 40 ? "#fde68a" : "#fecdd3"}`,
+          display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 12, color: "#374151" }}>Score global</span>
+          <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-1px",
+            color: overallScore >= 70 ? "#16a34a" : overallScore >= 40 ? "#ca8a04" : "#dc2626" }}>
+            {overallScore}<span style={{ fontSize: 11, fontWeight: 400 }}>/100</span>
+          </span>
         </div>
       </div>
 
