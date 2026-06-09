@@ -91,7 +91,8 @@ export default function AiRecommendations({ posts, igData, fbData, token }: Prop
   };
 
   return (
-    <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #f0f0f0", padding: "20px 24px" }}>
+    <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #f0f0f0", padding: "20px 24px",
+      display: "flex", flexDirection: "column", height: "100%", boxSizing: "border-box" }}>
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
@@ -120,6 +121,8 @@ export default function AiRecommendations({ posts, igData, fbData, token }: Prop
           }
         </button>
       </div>
+
+      <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
 
       {/* Error */}
       {error && (
@@ -216,6 +219,8 @@ export default function AiRecommendations({ posts, igData, fbData, token }: Prop
           </motion.div>
         )}
       </AnimatePresence>
+
+      </div>
 
       <style>{`
         @keyframes spin  { to { transform: rotate(360deg); } }

@@ -118,6 +118,59 @@ function getDomain(url: string): string {
   catch { return url.slice(0, 30); }
 }
 
+function SmartCaption({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const slideRe = /^(SLIDE\s+\d+\s*[—\-–:]\s*)/i;
+  const titleRe = /^(Titre\s*[:\-–]\s*)/i;
+
+  return (
+    <div style={{ maxHeight: 320, overflowY: "auto", paddingRight: 4,
+      display: "flex", flexDirection: "column", gap: 2 }}>
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={i} style={{ height: 6 }} />;
+
+        if (slideRe.test(trimmed)) {
+          const match = trimmed.match(slideRe)!;
+          const prefix = match[0];
+          const rest   = trimmed.slice(prefix.length);
+          return (
+            <div key={i} style={{ marginTop: i > 0 ? 10 : 0, paddingTop: i > 0 ? 8 : 0,
+              borderTop: i > 0 ? "1px dashed #d1fae5" : "none" }}>
+              <span style={{ fontSize: 9, fontWeight: 800, color: "#16a34a",
+                textTransform: "uppercase", letterSpacing: "0.08em",
+                background: "#dcfce7", padding: "1px 6px", borderRadius: 4, marginRight: 6 }}>
+                {prefix.replace(/[—\-–:]\s*$/, "").trim()}
+              </span>
+              {rest && <span style={{ fontSize: 12, fontWeight: 700, color: "#0f172a" }}>{rest}</span>}
+            </div>
+          );
+        }
+
+        if (titleRe.test(trimmed)) {
+          const match = trimmed.match(titleRe)!;
+          const rest  = trimmed.slice(match[0].length);
+          return (
+            <div key={i} style={{ fontSize: 11, color: "#374151", lineHeight: 1.6,
+              paddingLeft: 8, borderLeft: "2px solid #22c55e" }}>
+              <span style={{ fontSize: 9, fontWeight: 700, color: "#94a3b8",
+                textTransform: "uppercase", marginRight: 4 }}>Titre</span>
+              {rest}
+            </div>
+          );
+        }
+
+        return (
+          <div key={i} style={{ fontSize: 11, color: "#374151", lineHeight: 1.65,
+            paddingLeft: 2 }}>
+            {trimmed}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function ImageField({ value }: { value: string }) {
   const urls = value.match(/https?:\/\/[^\s"]+/g) ?? [];
   const rest  = value.replace(/https?:\/\/[^\s"]+/g, "").trim();
@@ -200,13 +253,22 @@ const STATUS_COLOR: Record<string, { bg: string; text: string }> = {
 type AssignTarget = { rowKey: string; postId: number | null; briefTitle: string };
 
 export default function BriefDetailPanel({ briefId, clientId, token, onBack }: Props) {
-  const [brief,       setBrief]       = useState<BriefDetail | null>(null);
-  const [loading,     setLoading]     = useState(true);
-  const [tab,         setTab]         = useState<"rows" | "comments" | "info" | "live">("rows");
-  const [assignRow,   setAssignRow]   = useState<AssignTarget | null>(null);
+  const [brief,           setBrief]           = useState<BriefDetail | null>(null);
+  const [loading,         setLoading]         = useState(true);
+  const [tab,             setTab]             = useState<"rows" | "comments" | "info" | "live">("rows");
+  const [assignRow,       setAssignRow]       = useState<AssignTarget | null>(null);
+  const [assignedRowKeys, setAssignedRowKeys] = useState<Set<string>>(new Set());
+  const [showAllRows,     setShowAllRows]     = useState(false);
+  const [viewMore, setViewMore] = useState<{ label: string; value: string; image: boolean } | null>(null);
 
   useEffect(() => {
     fetchBrief();
+    fetch(`${API}/api/assignments?clientId=${clientId}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then((list: any[]) => {
+        setAssignedRowKeys(new Set(list.map((a: any) => a.rowKey).filter(Boolean)));
+      })
+      .catch(() => {});
   }, [briefId]);
 
   // Auto-refresh brief data every 90 seconds to reflect backend sheet sync
@@ -239,6 +301,7 @@ export default function BriefDetailPanel({ briefId, clientId, token, onBack }: P
 
   const labels: string[] = brief.labelsJson ? JSON.parse(brief.labelsJson) : [];
   const dueDate = brief.due ? new Date(brief.due) : null;
+
 
   return (
     <motion.div
@@ -327,11 +390,13 @@ export default function BriefDetailPanel({ briefId, clientId, token, onBack }: P
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {brief.rows.map(row => {
+
+            {brief.rows.slice(0, 2).map(row => {
               const sc = STATUS_COLOR[row.status ?? ""] ?? STATUS_COLOR.Draft;
               const platforms: string[] = row.platforms
                 ? (() => { try { return JSON.parse(row.platforms); } catch { return [row.platforms]; } })()
                 : [];
+              const isAssigned = assignedRowKeys.has(row.rowKey);
 
               const briefFields = [
                 { label: "Détails / Brief",  value: row.brief,        image: false },
@@ -349,18 +414,17 @@ export default function BriefDetailPanel({ briefId, clientId, token, onBack }: P
 
               return (
                 <div key={row.rowKey} style={{
-                  borderRadius: 16, border: "1.5px solid #e5e7eb",
+                  borderRadius: 16, border: `1.5px solid ${isAssigned ? "#bbf7d0" : "#e5e7eb"}`,
                   background: "#fff", overflow: "hidden",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
 
-                  {/* ── Card header ── */}
+                  {/* ── Header ── */}
                   <div style={{ padding: "12px 16px", background: "#f8fafc",
                     borderBottom: "1.5px solid #e5e7eb",
                     display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 8,
-                      background: "#0f172a", display: "flex", alignItems: "center",
-                      justifyContent: "center", color: "#fff", fontSize: 12, fontWeight: 800,
-                      flexShrink: 0 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: "#0f172a",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
                       {row.rowKey}
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px",
@@ -368,8 +432,7 @@ export default function BriefDetailPanel({ briefId, clientId, token, onBack }: P
                       {row.status ?? "—"}
                     </span>
                     {row.scheduledAt && (
-                      <span style={{ fontSize: 11, color: "#64748b", display: "flex",
-                        alignItems: "center", gap: 4 }}>
+                      <span style={{ fontSize: 11, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
                         📅 {new Date(row.scheduledAt).toLocaleDateString("fr-FR")}
                       </span>
                     )}
@@ -378,89 +441,111 @@ export default function BriefDetailPanel({ briefId, clientId, token, onBack }: P
                         {platforms.map(p => <PlatformBadge key={p} name={p} />)}
                       </div>
                     )}
-                    <button
-                      onClick={() => setAssignRow({ rowKey: row.rowKey, postId: row.postId, briefTitle: brief.title })}
-                      style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5,
-                        padding: "4px 10px", borderRadius: 8, border: "1.5px solid #dc2626",
-                        background: "#fef2f2", color: "#dc2626", fontSize: 11, fontWeight: 700,
-                        cursor: "pointer" }}>
-                      <FiUserPlus size={11} /> Assigner
-                    </button>
-                    {row.budget && (
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#16a34a" }}>
-                        💰 {row.budget}
-                      </span>
+                    {row.budget && <span style={{ fontSize: 11, fontWeight: 700, color: "#16a34a" }}>💰 {row.budget}</span>}
+                    {isAssigned ? (
+                      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 700 }}>✓ Assigné</span>
+                        <button onClick={() => {
+                            setAssignedRowKeys(prev => { const s = new Set(prev); s.delete(row.rowKey); return s; });
+                            fetch(`${API}/api/assignments/cancel`, {
+                              method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ rowKey: row.rowKey, postId: row.postId, clientId }),
+                            }).catch(() => {});
+                          }}
+                          style={{ fontSize: 10, padding: "3px 9px", borderRadius: 8,
+                            border: "1px solid #fca5a5", background: "#fff1f2",
+                            color: "#dc2626", cursor: "pointer", fontWeight: 600 }}>
+                          Annuler
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setAssignRow({ rowKey: row.rowKey, postId: row.postId, briefTitle: brief.title })}
+                        style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5,
+                          padding: "4px 10px", borderRadius: 8, border: "1.5px solid #dc2626",
+                          background: "#fef2f2", color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                        <FiUserPlus size={11} /> Assigner
+                      </button>
                     )}
                   </div>
 
-                  {/* ── Card body: two columns ── */}
+                  {/* ── Body: two columns ── */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
 
-                    {/* Left — Brief créa (orange theme) */}
-                    <div style={{ padding: "14px 16px",
-                      borderRight: "1.5px solid #e5e7eb",
+                    {/* Left — Brief créa */}
+                    <div style={{ padding: "14px 16px", borderRight: "1.5px solid #e5e7eb",
                       background: "linear-gradient(180deg,#fffbf5 0%,#fff 100%)" }}>
                       <div style={{ fontSize: 10, fontWeight: 800, color: "#d97706",
                         letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10,
                         display: "flex", alignItems: "center", gap: 6 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: 3,
-                          background: "#f59e0b" }} />
+                        <div style={{ width: 10, height: 10, borderRadius: 3, background: "#f59e0b" }} />
                         Brief créa
                       </div>
-                      {briefFields.length === 0 ? (
-                        <span style={{ fontSize: 11, color: "#cbd5e1", fontStyle: "italic" }}>
-                          Aucun brief renseigné
-                        </span>
-                      ) : (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                          {briefFields.map(f => (
-                            <div key={f.label}>
-                              <div style={{ fontSize: 9, fontWeight: 700, color: "#94a3b8",
-                                textTransform: "uppercase", letterSpacing: "0.06em",
-                                marginBottom: 3 }}>{f.label}</div>
-                              {f.image && f.value
-                                ? <ImageField value={f.value} />
-                                : <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.5 }}>{f.value}</div>
-                              }
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      {briefFields.length === 0
+                        ? <span style={{ fontSize: 11, color: "#cbd5e1", fontStyle: "italic" }}>Aucun brief renseigné</span>
+                        : <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {briefFields.map(f => {
+                              const isLong = f.value!.length > 60 || f.value!.includes("\n");
+                              const preview = f.value!.split("\n")[0].slice(0, 60);
+                              return (
+                                <div key={f.label}>
+                                  <div style={{ fontSize: 9, fontWeight: 700, color: "#94a3b8",
+                                    textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>
+                                    {f.label}
+                                  </div>
+                                  {f.image
+                                    ? <ImageField value={f.value!} />
+                                    : <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.5,
+                                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {preview}{isLong ? "…" : ""}
+                                      </div>
+                                  }
+                                  {isLong && !f.image && (
+                                    <button onClick={() => setViewMore({ label: f.label, value: f.value!, image: false })}
+                                      style={{ fontSize: 10, color: "#dc2626", background: "none", border: "none",
+                                        cursor: "pointer", padding: 0, marginTop: 2, fontFamily: "inherit" }}>
+                                      View more
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                      }
                     </div>
 
-                    {/* Right — Texte du post (green theme) */}
-                    <div style={{ padding: "14px 16px",
-                      background: "linear-gradient(180deg,#f0fdf4 0%,#fff 100%)" }}>
+                    {/* Right — Texte du post */}
+                    <div style={{ padding: "14px 16px", background: "linear-gradient(180deg,#f0fdf4 0%,#fff 100%)" }}>
                       <div style={{ fontSize: 10, fontWeight: 800, color: "#16a34a",
                         letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10,
                         display: "flex", alignItems: "center", gap: 6 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: 3,
-                          background: "#22c55e" }} />
+                        <div style={{ width: 10, height: 10, borderRadius: 3, background: "#22c55e" }} />
                         Texte du post
                       </div>
-                      {row.caption ? (
-                        <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.7,
-                          whiteSpace: "pre-wrap" }}>
-                          {row.caption}
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: 11, color: "#cbd5e1", fontStyle: "italic" }}>
-                          Pas encore rédigé
-                        </span>
+                      {row.caption ? (() => {
+                        const isLong = row.caption!.length > 60 || row.caption!.includes("\n");
+                        const preview = row.caption!.split("\n")[0].slice(0, 60);
+                        return (
+                          <>
+                            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.5,
+                              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {preview}{isLong ? "…" : ""}
+                            </div>
+                            {isLong && (
+                              <button onClick={() => setViewMore({ label: "Texte du post", value: row.caption!, image: false })}
+                                style={{ fontSize: 10, color: "#16a34a", background: "none", border: "none",
+                                  cursor: "pointer", padding: 0, marginTop: 4, fontFamily: "inherit" }}>
+                                View more
+                              </button>
+                            )}
+                          </>
+                        );
+                      })() : (
+                        <span style={{ fontSize: 11, color: "#cbd5e1", fontStyle: "italic" }}>Pas encore rédigé</span>
                       )}
                       {row.hashtags && (
                         <div style={{ marginTop: 8, fontSize: 11, color: "#dc2626",
-                          lineHeight: 1.6, wordBreak: "break-word" }}>
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {row.hashtags}
-                        </div>
-                      )}
-                      {row.commentaires && (
-                        <div style={{ marginTop: 10, paddingTop: 10,
-                          borderTop: "1px solid #dcfce7" }}>
-                          <div style={{ fontSize: 9, fontWeight: 700, color: "#94a3b8",
-                            textTransform: "uppercase", marginBottom: 4 }}>Commentaires</div>
-                          <div style={{ fontSize: 11, color: "#64748b",
-                            lineHeight: 1.5 }}>{row.commentaires}</div>
                         </div>
                       )}
                     </div>
@@ -468,9 +553,198 @@ export default function BriefDetailPanel({ briefId, clientId, token, onBack }: P
                 </div>
               );
             })}
+
+            {brief.rows.length > 2 && (
+              <button onClick={() => setShowAllRows(true)}
+                style={{ width: "100%", padding: "11px", borderRadius: 12,
+                  border: "1.5px dashed #dc2626", background: "#fff8f8",
+                  color: "#dc2626", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  fontFamily: "inherit", display: "flex", alignItems: "center",
+                  justifyContent: "center", gap: 8, transition: "all .15s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "#fef2f2"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "#fff8f8"; }}>
+                👁 Voir tout — {brief.rows.length} posts
+              </button>
+            )}
           </div>
         )
       )}
+
+      {/* ── View more popup ── */}
+      <AnimatePresence>
+        {viewMore && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setViewMore(null)}
+            style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)",
+              backdropFilter: "blur(6px)", zIndex: 1200, display: "flex",
+              alignItems: "center", justifyContent: "center", padding: 24 }}>
+            <motion.div
+              initial={{ scale: 0.94, y: 16, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.94, y: 16, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 380, damping: 28 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 560,
+                maxHeight: "80vh", display: "flex", flexDirection: "column",
+                boxShadow: "0 32px 80px rgba(0,0,0,0.2)", overflow: "hidden" }}>
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid #f0f0f5",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                flexShrink: 0 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                  {viewMore.label}
+                </span>
+                <button onClick={() => setViewMore(null)}
+                  style={{ width: 28, height: 28, borderRadius: 8, background: "#f8f9fc",
+                    border: "1px solid #f0f0f5", cursor: "pointer", display: "flex",
+                    alignItems: "center", justifyContent: "center", color: "#64748b", fontSize: 16 }}>
+                  ✕
+                </button>
+              </div>
+              <div style={{ padding: "18px 20px", overflowY: "auto" }}>
+                {viewMore.label === "Texte du post"
+                  ? <SmartCaption text={viewMore.value} />
+                  : viewMore.image
+                  ? <ImageField value={viewMore.value} />
+                  : <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.8,
+                      whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                      {viewMore.value}
+                    </div>
+                }
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── All rows modal ── */}
+      <AnimatePresence>
+        {showAllRows && brief && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setShowAllRows(false)}
+            style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)",
+              backdropFilter: "blur(8px)", zIndex: 1100, display: "flex",
+              alignItems: "center", justifyContent: "center", padding: 24 }}>
+            <motion.div
+              initial={{ scale: 0.94, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.94, y: 20, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 360, damping: 28 }}
+              onClick={e => e.stopPropagation()}
+              style={{ background: "#f8fafc", borderRadius: 24, width: "100%", maxWidth: 860,
+                maxHeight: "88vh", display: "flex", flexDirection: "column",
+                boxShadow: "0 40px 100px rgba(0,0,0,0.22)", overflow: "hidden" }}>
+
+              {/* Modal header */}
+              <div style={{ padding: "18px 24px", background: "#fff",
+                borderBottom: "1.5px solid #f0f0f5",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                flexShrink: 0 }}>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>
+                    {brief.title} — tous les posts
+                  </div>
+                  <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
+                    {brief.rows.length} ligne{brief.rows.length > 1 ? "s" : ""} · cliquer une ligne pour l'assigner
+                  </div>
+                </div>
+                <button onClick={() => setShowAllRows(false)}
+                  style={{ width: 32, height: 32, borderRadius: 9,
+                    background: "#f8f9fc", border: "1px solid #ebebf0",
+                    cursor: "pointer", display: "flex", alignItems: "center",
+                    justifyContent: "center", color: "#64748b", fontSize: 16 }}>
+                  ✕
+                </button>
+              </div>
+
+              {/* Modal body — scrollable grid */}
+              <div style={{ overflowY: "auto", padding: "20px 24px",
+                display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                {brief.rows.map(row => {
+                  const sc = STATUS_COLOR[row.status ?? ""] ?? STATUS_COLOR.Draft;
+                  const isAssigned = assignedRowKeys.has(row.rowKey);
+                  const platforms: string[] = row.platforms
+                    ? (() => { try { return JSON.parse(row.platforms); } catch { return [row.platforms]; } })()
+                    : [];
+                  return (
+                    <div key={row.rowKey}
+                      style={{ background: "#fff", borderRadius: 16,
+                        border: `1.5px solid ${isAssigned ? "#bbf7d0" : "#e5e7eb"}`,
+                        overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+
+                      {/* Row header */}
+                      <div style={{ padding: "10px 14px", background: isAssigned ? "#f0fdf4" : "#f8fafc",
+                        borderBottom: `1.5px solid ${isAssigned ? "#bbf7d0" : "#e5e7eb"}`,
+                        display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <div style={{ width: 26, height: 26, borderRadius: 7,
+                          background: "#0f172a", display: "flex", alignItems: "center",
+                          justifyContent: "center", color: "#fff", fontSize: 11,
+                          fontWeight: 800, flexShrink: 0 }}>
+                          {row.rowKey}
+                        </div>
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px",
+                          borderRadius: 20, background: sc.bg, color: sc.text }}>
+                          {row.status ?? "—"}
+                        </span>
+                        {platforms.slice(0, 2).map(p => <PlatformBadge key={p} name={p} />)}
+                        <div style={{ marginLeft: "auto" }}>
+                          {isAssigned ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 700 }}>✓ Assigné</span>
+                              <button
+                                onClick={() => {
+                                  setAssignedRowKeys(prev => { const s = new Set(prev); s.delete(row.rowKey); return s; });
+                                  fetch(`${API}/api/assignments/cancel`, {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                                    body: JSON.stringify({ rowKey: row.rowKey, postId: row.postId, clientId }),
+                                  }).catch(() => {});
+                                }}
+                                style={{ fontSize: 10, padding: "2px 8px", borderRadius: 8,
+                                  border: "1px solid #fca5a5", background: "#fff", color: "#dc2626",
+                                  cursor: "pointer", fontWeight: 600 }}>
+                                Annuler
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => { setShowAllRows(false); setAssignRow({ rowKey: row.rowKey, postId: row.postId, briefTitle: brief.title }); }}
+                              style={{ display: "flex", alignItems: "center", gap: 4,
+                                padding: "4px 10px", borderRadius: 8,
+                                border: "1.5px solid #dc2626", background: "#fef2f2",
+                                color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                              <FiUserPlus size={10} /> Assigner
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Row summary */}
+                      <div style={{ padding: "10px 14px" }}>
+                        {row.caption ? (
+                          <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.6,
+                            display: "-webkit-box", WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                            {row.caption}
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: 11, color: "#cbd5e1", fontStyle: "italic" }}>
+                            Pas encore rédigé
+                          </div>
+                        )}
+                        {row.scheduledAt && (
+                          <div style={{ fontSize: 10, color: "#64748b", marginTop: 6 }}>
+                            📅 {new Date(row.scheduledAt).toLocaleDateString("fr-FR")}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Tab: Comments ── */}
       {tab === "comments" && (
@@ -591,7 +865,10 @@ export default function BriefDetailPanel({ briefId, clientId, token, onBack }: P
             clientId={clientId}
             token={token}
             onClose={() => setAssignRow(null)}
-            onAssigned={() => setAssignRow(null)}
+            onAssigned={() => {
+              if (assignRow) setAssignedRowKeys(prev => new Set([...prev, assignRow.rowKey]));
+              setAssignRow(null);
+            }}
             onSelf={() => setAssignRow(null)}
           />
         )}
