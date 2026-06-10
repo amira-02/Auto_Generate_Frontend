@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiArrowLeft, FiExternalLink, FiUserPlus } from "react-icons/fi";
+import { FiArrowLeft, FiExternalLink, FiUserPlus, FiCalendar, FiClock, FiGlobe, FiPenTool, FiSend, FiDollarSign, FiTarget, FiUsers, FiMessageCircle, FiHash, FiAlignLeft, FiRefreshCw, FiFileText, FiDroplet, FiImage, FiInfo, FiCheck } from "react-icons/fi";
 import AssignModal from "../Team/AssignModal";
 
 const API = import.meta.env.VITE_API_URL ?? "https://localhost:7079";
@@ -31,61 +31,40 @@ type SheetRow = {
   commentaires: string | null;
 };
 
-function PlatformBadge({ name }: { name: string }) {
-  const key = name.toLowerCase();
+function PlatformIcon({ name, dim, size = 22 }: { name: string; dim?: boolean; size?: number }) {
+  const opacity = dim ? 0.15 : 1;
+  const filter  = dim ? "grayscale(1)" : "none";
+  const base: React.CSSProperties = { display: "block", flexShrink: 0, opacity, filter, transition: "opacity .15s, filter .15s" };
+  const k = name.toLowerCase();
 
-  if (key === "instagram") return (
-    <svg viewBox="0 0 48 48" width="22" height="22" style={{ borderRadius: 6, display: "block", flexShrink: 0 }}>
-      <defs>
-        <radialGradient id="ig-g" cx="30%" cy="107%" r="150%">
-          <stop offset="0%"  stopColor="#fdf497"/>
-          <stop offset="5%"  stopColor="#fdf497"/>
-          <stop offset="45%" stopColor="#fd5949"/>
-          <stop offset="60%" stopColor="#d6249f"/>
-          <stop offset="90%" stopColor="#285AEB"/>
-        </radialGradient>
-      </defs>
-      <rect width="48" height="48" rx="11" fill="url(#ig-g)"/>
-      <rect x="11" y="11" width="26" height="26" rx="7" fill="none" stroke="white" strokeWidth="2.8"/>
-      <circle cx="24" cy="24" r="6.3" fill="none" stroke="white" strokeWidth="2.8"/>
-      <circle cx="33.5" cy="14.5" r="1.8" fill="white"/>
+  if (k === "instagram") return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" style={base}>
+      <defs><linearGradient id="pi-ig-pop" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#feda75"/><stop offset=".3" stopColor="#fa7e1e"/>
+        <stop offset=".6" stopColor="#d62976"/><stop offset="1" stopColor="#4f5bd5"/>
+      </linearGradient></defs>
+      <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="url(#pi-ig-pop)" strokeWidth="2"/>
+      <circle cx="12" cy="12" r="4.5" stroke="url(#pi-ig-pop)" strokeWidth="2"/>
+      <circle cx="17.5" cy="6.5" r="1.2" fill="#d62976"/>
     </svg>
   );
-
-  if (key === "facebook") return (
-    <svg viewBox="0 0 48 48" width="22" height="22" style={{ borderRadius: 6, display: "block", flexShrink: 0 }}>
-      <rect width="48" height="48" rx="11" fill="#1877F2"/>
-      <path d="M28.5 25.5H32l1.5-6H28.5V17c0-1.6.8-3 3.2-3H34v-5.1A39 39 0 0 0 29.8 8C25 8 21.5 11.2 21.5 17v2.5H17v6h4.5V38h7V25.5z" fill="white"/>
+  if (k === "facebook") return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="#1877f2" style={base}>
+      <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
     </svg>
   );
-
-  if (key === "tiktok") return (
-    <svg viewBox="0 0 48 48" width="22" height="22" style={{ borderRadius: 6, display: "block", flexShrink: 0 }}>
-      <rect width="48" height="48" rx="11" fill="#010101"/>
-      <path d="M34.2 14.7a8.3 8.3 0 0 1-5.2-4.7H24v22.7a3.8 3.8 0 1 1-3-3.7v-5a9 9 0 1 0 8 8.9V19.9a13.5 13.5 0 0 0 7.5 2.3v-4.8a8.4 8.4 0 0 1-2.3-2.7z" fill="white"/>
-      <path d="M34.2 14.7a8.3 8.3 0 0 1-2.3-2.7A8.3 8.3 0 0 1 29 10h-1v2a8.4 8.4 0 0 0 6.2 2.7z" fill="#69C9D0"/>
-      <path d="M21 29.7a3.8 3.8 0 1 0 3 3.7V11.9h1a8.3 8.3 0 0 0 2.9 8.1 13.5 13.5 0 0 1-6.9-9V10h-5v19.7a3.8 3.8 0 0 1 5 0z" fill="#EE1D52" fillOpacity="0"/>
+  if (k === "linkedin") return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="#0077b5" style={base}>
+      <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4V9h4v1.5A6 6 0 0116 8z"/>
+      <rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/>
     </svg>
   );
-
-  if (key === "linkedin") return (
-    <svg viewBox="0 0 48 48" width="22" height="22" style={{ borderRadius: 6, display: "block", flexShrink: 0 }}>
-      <rect width="48" height="48" rx="11" fill="#0A66C2"/>
-      <path d="M14 19h5v19h-5zm2.5-7.5a2.9 2.9 0 1 1 0 5.8 2.9 2.9 0 0 1 0-5.8zM22 19h5v2.6c.7-1.3 2.4-2.6 5-2.6 5.3 0 6.3 3.5 6.3 8V38h-5v-9.8c0-2.3-.7-3.5-2.5-3.5-2.2 0-3.1 1.5-3.1 3.5V38H22V19z" fill="white"/>
+  if (k === "tiktok") return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="#010101" style={base}>
+      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05A6.34 6.34 0 003.15 15.3a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V9.97a8.16 8.16 0 004.77 1.52V8.04a4.85 4.85 0 01-1-.35z"/>
     </svg>
   );
-
-  if (key === "twitter") return (
-    <svg viewBox="0 0 48 48" width="22" height="22" style={{ borderRadius: 6, display: "block", flexShrink: 0 }}>
-      <rect width="48" height="48" rx="11" fill="#000"/>
-      <path d="M11 11h9.5l7.7 10.5L37 11h3L28.3 24.2 40 37h-9.5L22.4 26 13 37h-3l11.8-13.7L11 11zm4 2 20 22h3L18 13h-3z" fill="white"/>
-    </svg>
-  );
-
-  return (
-    <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 9px", borderRadius: 8,
-      background: "#f1f5f9", color: "#475569", textTransform: "capitalize" as const }}>{name}</span>
-  );
+  return <span style={{ ...base, fontSize: 11, fontWeight: 700, color: "#9ca3af" }}>{name[0]}</span>;
 }
 
 function toEmbedUrl(url: string): string {
@@ -224,6 +203,48 @@ function ImageField({ value }: { value: string }) {
   );
 }
 
+// ── Popup helpers ────────────────────────────────────────────────────────────
+function SecHead({ icon, title }: { icon: React.ReactNode; title: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+      <div style={{ width: 26, height: 26, borderRadius: 7, background: "#eef2ff",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: "#6366f1", flexShrink: 0 }}>
+        {icon}
+      </div>
+      <span style={{ fontSize: 13, fontWeight: 700, color: "#111827" }}>{title}</span>
+    </div>
+  );
+}
+
+function Tile({ label, icon, children }: { label: string; icon?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 5 }}>
+        {icon && <span style={{ color: "#d1d5db", display: "flex", alignItems: "center" }}>{icon}</span>}
+        <span style={{ fontSize: 10, fontWeight: 600, color: "#9ca3af",
+          textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>{label}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Empty() {
+  return <span style={{ fontSize: 13, color: "#d1d5db" }}>—</span>;
+}
+
+function TextField({ label, value, icon }: { label: string; value: string | null; icon?: React.ReactNode }) {
+  return (
+    <Tile label={label} icon={icon}>
+      {value
+        ? <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.7,
+            whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{value}</div>
+        : <Empty />}
+    </Tile>
+  );
+}
+
 type Comment = { author: string; text: string; date: string | null };
 
 type BriefDetail = {
@@ -255,14 +276,44 @@ type AssignTarget = { rowKey: string; postId: number | null; briefTitle: string 
 export default function BriefDetailPanel({ briefId, clientId, token, onBack }: Props) {
   const [brief,           setBrief]           = useState<BriefDetail | null>(null);
   const [loading,         setLoading]         = useState(true);
+  const [syncing,         setSyncing]         = useState(false);
+  const [syncDone,        setSyncDone]        = useState(false);
   const [tab,             setTab]             = useState<"rows" | "comments" | "info" | "live">("rows");
   const [assignRow,       setAssignRow]       = useState<AssignTarget | null>(null);
   const [assignedRowKeys, setAssignedRowKeys] = useState<Set<string>>(new Set());
-  const [showAllRows,     setShowAllRows]     = useState(false);
-  const [viewMore, setViewMore] = useState<{ label: string; value: string; image: boolean } | null>(null);
+  const [detailRow,       setDetailRow]       = useState<SheetRow | null>(null);
 
+  // Fetch brief data (silent — no full page loader)
+  const fetchBrief = async () => {
+    try {
+      const res = await fetch(`${API}/api/trello/briefs/${briefId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) setBrief(await res.json());
+    } catch {}
+  };
+
+  // Trigger backend sync then refresh displayed data
+  const syncAndFetch = async () => {
+    setSyncing(true);
+    setSyncDone(false);
+    try {
+      await fetch(`${API}/api/sheets/sync/${clientId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch {}
+    await fetchBrief();
+    setSyncing(false);
+    setSyncDone(true);
+    setTimeout(() => setSyncDone(false), 2500);
+  };
+
+  // On mount: sync first, then show data
   useEffect(() => {
-    fetchBrief();
+    setLoading(true);
+    syncAndFetch().finally(() => setLoading(false));
+
     fetch(`${API}/api/assignments?clientId=${clientId}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : [])
       .then((list: any[]) => {
@@ -271,22 +322,11 @@ export default function BriefDetailPanel({ briefId, clientId, token, onBack }: P
       .catch(() => {});
   }, [briefId]);
 
-  // Auto-refresh brief data every 90 seconds to reflect backend sheet sync
+  // Background refresh every 30s
   useEffect(() => {
-    const id = setInterval(() => fetchBrief(), 90 * 1000);
+    const id = setInterval(() => fetchBrief(), 30 * 1000);
     return () => clearInterval(id);
   }, [briefId]);
-
-  const fetchBrief = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API}/api/trello/briefs/${briefId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) setBrief(await res.json());
-    } catch {}
-    finally { setLoading(false); }
-  };
 
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center",
@@ -337,6 +377,22 @@ export default function BriefDetailPanel({ briefId, clientId, token, onBack }: P
             )}
           </div>
         </div>
+
+        {/* Sync button */}
+        <button onClick={syncAndFetch} disabled={syncing}
+          title="Synchroniser avec Google Sheets"
+          style={{ display: "flex", alignItems: "center", gap: 6,
+            padding: "7px 12px", borderRadius: 9, border: "1px solid #e5e7eb",
+            background: syncDone ? "#f0fdf4" : "#fff",
+            color: syncDone ? "#16a34a" : syncing ? "#9ca3af" : "#374151",
+            fontSize: 12, fontWeight: 600, cursor: syncing ? "not-allowed" : "pointer",
+            transition: "all .2s", flexShrink: 0 }}>
+          {syncDone
+            ? <><FiCheck size={12} /> Synced</>
+            : <><FiRefreshCw size={12}
+                style={{ animation: syncing ? "spin .7s linear infinite" : "none" }} />
+               {syncing ? "Sync…" : "Actualiser"}</>}
+        </button>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
@@ -373,7 +429,7 @@ export default function BriefDetailPanel({ briefId, clientId, token, onBack }: P
         ))}
       </div>
 
-      {/* ── Tab: Posts (card view) ── */}
+      {/* ── Tab: Posts ── */}
       {tab === "rows" && (
         brief.rows.length === 0 ? (
           <div style={{ textAlign: "center", padding: "32px 16px", background: "#f8fafc",
@@ -389,361 +445,498 @@ export default function BriefDetailPanel({ briefId, clientId, token, onBack }: P
             </div>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ borderRadius: 14, border: "1px solid #e5e7eb", overflow: "hidden",
+            background: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.04)" }}>
 
-            {brief.rows.slice(0, 2).map(row => {
+            {/* Table header */}
+            <div style={{ display: "grid", gridTemplateColumns: "48px 110px 96px 1fr 148px",
+              padding: "10px 16px", background: "#f8fafc",
+              borderBottom: "1px solid #e5e7eb", gap: 12 }}>
+              {["N°", "Statut", "Date", "Contenu", ""].map((h, i) => (
+                <span key={i} style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8",
+                  textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</span>
+              ))}
+            </div>
+
+            {/* All rows */}
+            {brief.rows.map((row, idx) => {
               const sc = STATUS_COLOR[row.status ?? ""] ?? STATUS_COLOR.Draft;
-              const platforms: string[] = row.platforms
-                ? (() => { try { return JSON.parse(row.platforms); } catch { return [row.platforms]; } })()
-                : [];
               const isAssigned = assignedRowKeys.has(row.rowKey);
-
-              const briefFields = [
-                { label: "Détails / Brief",  value: row.brief,        image: false },
-                { label: "Charte",           value: row.charte,       image: false },
-                { label: "Format",           value: row.format,       image: false },
-                { label: "Texte visuel",     value: row.texteVisuel,  image: false },
-                { label: "Images & photos",  value: row.imagesPhotos, image: true  },
-                { label: "Infos du post",    value: row.infosPost,    image: false },
-                { label: "Budget",           value: row.budget,       image: false },
-                { label: "Objectif",         value: row.objectif,     image: false },
-                { label: "Duplication IG",   value: row.duplicateIG,  image: false },
-                { label: "Fin sponso",       value: row.sponsoEnd,    image: false },
-                { label: "Audience",         value: row.audience,     image: false },
-              ].filter(f => f.value);
-
               return (
-                <div key={row.rowKey} style={{
-                  borderRadius: 16, border: `1.5px solid ${isAssigned ? "#bbf7d0" : "#e5e7eb"}`,
-                  background: "#fff", overflow: "hidden",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                <div key={row.rowKey}
+                  style={{ display: "grid", gridTemplateColumns: "48px 110px 96px 1fr 148px",
+                    padding: "13px 16px", gap: 12, alignItems: "center",
+                    borderTop: idx > 0 ? "1px solid #f0f0f5" : "none",
+                    background: isAssigned ? "#f0fdf4" : "#fff",
+                    borderLeft: `3px solid ${isAssigned ? "#22c55e" : "transparent"}`,
+                    cursor: "pointer", transition: "background .12s" }}
+                  onMouseEnter={e => { if (!isAssigned) e.currentTarget.style.background = "#f8fafc"; }}
+                  onMouseLeave={e => { if (!isAssigned) e.currentTarget.style.background = "#fff"; }}>
 
-                  {/* ── Header ── */}
-                  <div style={{ padding: "12px 16px", background: "#f8fafc",
-                    borderBottom: "1.5px solid #e5e7eb",
-                    display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 8, background: "#0f172a",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#fff", fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
-                      {row.rowKey}
+                  <div style={{ width: 32, height: 32, borderRadius: 9, background: "#6366f1",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#fff", fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
+                    {row.rowKey}
+                  </div>
+
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px",
+                    borderRadius: 20, background: sc.bg, color: sc.text,
+                    display: "inline-block", whiteSpace: "nowrap" }}>
+                    {row.status ?? "—"}
+                  </span>
+
+                  <span style={{ fontSize: 11, color: "#64748b" }}>
+                    {row.scheduledAt
+                      ? new Date(row.scheduledAt).toLocaleDateString("fr-FR")
+                      : <span style={{ color: "#e2e8f0" }}>—</span>}
+                  </span>
+
+                  <div style={{ overflow: "hidden", minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: "#374151",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {row.caption || <span style={{ color: "#cbd5e1", fontStyle: "italic" }}>Pas encore rédigé</span>}
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px",
-                      borderRadius: 20, background: sc.bg, color: sc.text }}>
-                      {row.status ?? "—"}
-                    </span>
-                    {row.scheduledAt && (
-                      <span style={{ fontSize: 11, color: "#64748b", display: "flex", alignItems: "center", gap: 4 }}>
-                        📅 {new Date(row.scheduledAt).toLocaleDateString("fr-FR")}
-                      </span>
-                    )}
-                    {platforms.length > 0 && (
-                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                        {platforms.map(p => <PlatformBadge key={p} name={p} />)}
+                    {row.brief && (
+                      <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2,
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {row.brief}
                       </div>
-                    )}
-                    {row.budget && <span style={{ fontSize: 11, fontWeight: 700, color: "#16a34a" }}>💰 {row.budget}</span>}
-                    {isAssigned ? (
-                      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 700 }}>✓ Assigné</span>
-                        <button onClick={() => {
-                            setAssignedRowKeys(prev => { const s = new Set(prev); s.delete(row.rowKey); return s; });
-                            fetch(`${API}/api/assignments/cancel`, {
-                              method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                              body: JSON.stringify({ rowKey: row.rowKey, postId: row.postId, clientId }),
-                            }).catch(() => {});
-                          }}
-                          style={{ fontSize: 10, padding: "3px 9px", borderRadius: 8,
-                            border: "1px solid #fca5a5", background: "#fff1f2",
-                            color: "#dc2626", cursor: "pointer", fontWeight: 600 }}>
-                          Annuler
-                        </button>
-                      </div>
-                    ) : (
-                      <button onClick={() => setAssignRow({ rowKey: row.rowKey, postId: row.postId, briefTitle: brief.title })}
-                        style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5,
-                          padding: "4px 10px", borderRadius: 8, border: "1.5px solid #dc2626",
-                          background: "#fef2f2", color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
-                        <FiUserPlus size={11} /> Assigner
-                      </button>
                     )}
                   </div>
 
-                  {/* ── Body: two columns ── */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
-
-                    {/* Left — Brief créa */}
-                    <div style={{ padding: "14px 16px", borderRight: "1.5px solid #e5e7eb",
-                      background: "linear-gradient(180deg,#fffbf5 0%,#fff 100%)" }}>
-                      <div style={{ fontSize: 10, fontWeight: 800, color: "#d97706",
-                        letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10,
-                        display: "flex", alignItems: "center", gap: 6 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: 3, background: "#f59e0b" }} />
-                        Brief créa
-                      </div>
-                      {briefFields.length === 0
-                        ? <span style={{ fontSize: 11, color: "#cbd5e1", fontStyle: "italic" }}>Aucun brief renseigné</span>
-                        : <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            {briefFields.map(f => {
-                              const isLong = f.value!.length > 60 || f.value!.includes("\n");
-                              const preview = f.value!.split("\n")[0].slice(0, 60);
-                              return (
-                                <div key={f.label}>
-                                  <div style={{ fontSize: 9, fontWeight: 700, color: "#94a3b8",
-                                    textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>
-                                    {f.label}
-                                  </div>
-                                  {f.image
-                                    ? <ImageField value={f.value!} />
-                                    : <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.5,
-                                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                        {preview}{isLong ? "…" : ""}
-                                      </div>
-                                  }
-                                  {isLong && !f.image && (
-                                    <button onClick={() => setViewMore({ label: f.label, value: f.value!, image: false })}
-                                      style={{ fontSize: 10, color: "#dc2626", background: "none", border: "none",
-                                        cursor: "pointer", padding: 0, marginTop: 2, fontFamily: "inherit" }}>
-                                      View more
-                                    </button>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                      }
-                    </div>
-
-                    {/* Right — Texte du post */}
-                    <div style={{ padding: "14px 16px", background: "linear-gradient(180deg,#f0fdf4 0%,#fff 100%)" }}>
-                      <div style={{ fontSize: 10, fontWeight: 800, color: "#16a34a",
-                        letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10,
-                        display: "flex", alignItems: "center", gap: 6 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: 3, background: "#22c55e" }} />
-                        Texte du post
-                      </div>
-                      {row.caption ? (() => {
-                        const isLong = row.caption!.length > 60 || row.caption!.includes("\n");
-                        const preview = row.caption!.split("\n")[0].slice(0, 60);
-                        return (
-                          <>
-                            <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.5,
-                              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                              {preview}{isLong ? "…" : ""}
-                            </div>
-                            {isLong && (
-                              <button onClick={() => setViewMore({ label: "Texte du post", value: row.caption!, image: false })}
-                                style={{ fontSize: 10, color: "#16a34a", background: "none", border: "none",
-                                  cursor: "pointer", padding: 0, marginTop: 4, fontFamily: "inherit" }}>
-                                View more
-                              </button>
-                            )}
-                          </>
-                        );
-                      })() : (
-                        <span style={{ fontSize: 11, color: "#cbd5e1", fontStyle: "italic" }}>Pas encore rédigé</span>
-                      )}
-                      {row.hashtags && (
-                        <div style={{ marginTop: 8, fontSize: 11, color: "#dc2626",
-                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {row.hashtags}
-                        </div>
-                      )}
-                    </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                    <button onClick={() => setDetailRow(row)}
+                      style={{ padding: "4px 10px", borderRadius: 8,
+                        border: "1px solid #e2e8f0", background: "#f8fafc",
+                        color: "#64748b", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                      Voir
+                    </button>
+                    {isAssigned ? (
+                      <button onClick={() => {
+                          setAssignedRowKeys(prev => { const s = new Set(prev); s.delete(row.rowKey); return s; });
+                          fetch(`${API}/api/assignments/cancel`, {
+                            method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ rowKey: row.rowKey, postId: row.postId, clientId }),
+                          }).catch(() => {});
+                        }}
+                        style={{ fontSize: 10, padding: "4px 10px", borderRadius: 8,
+                          border: "1px solid #fca5a5", background: "#fff1f2",
+                          color: "#dc2626", cursor: "pointer", fontWeight: 600 }}>
+                        Annuler
+                      </button>
+                    ) : (
+                      <button onClick={() => setAssignRow({ rowKey: row.rowKey, postId: row.postId, briefTitle: brief.title })}
+                        style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px",
+                          borderRadius: 8, border: "1.5px solid #dc2626", background: "#fef2f2",
+                          color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                        <FiUserPlus size={10} /> Assigner
+                      </button>
+                    )}
                   </div>
                 </div>
               );
             })}
-
-            {brief.rows.length > 2 && (
-              <button onClick={() => setShowAllRows(true)}
-                style={{ width: "100%", padding: "11px", borderRadius: 12,
-                  border: "1.5px dashed #dc2626", background: "#fff8f8",
-                  color: "#dc2626", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                  fontFamily: "inherit", display: "flex", alignItems: "center",
-                  justifyContent: "center", gap: 8, transition: "all .15s" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "#fef2f2"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "#fff8f8"; }}>
-                👁 Voir tout — {brief.rows.length} posts
-              </button>
-            )}
           </div>
         )
       )}
 
-      {/* ── View more popup ── */}
+      {/* ── Row detail popup ── */}
       <AnimatePresence>
-        {viewMore && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setViewMore(null)}
-            style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.5)",
-              backdropFilter: "blur(6px)", zIndex: 1200, display: "flex",
-              alignItems: "center", justifyContent: "center", padding: 24 }}>
-            <motion.div
-              initial={{ scale: 0.94, y: 16, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.94, y: 16, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 380, damping: 28 }}
-              onClick={e => e.stopPropagation()}
-              style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 560,
-                maxHeight: "80vh", display: "flex", flexDirection: "column",
-                boxShadow: "0 32px 80px rgba(0,0,0,0.2)", overflow: "hidden" }}>
-              <div style={{ padding: "16px 20px", borderBottom: "1px solid #f0f0f5",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                flexShrink: 0 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
-                  {viewMore.label}
-                </span>
-                <button onClick={() => setViewMore(null)}
-                  style={{ width: 28, height: 28, borderRadius: 8, background: "#f8f9fc",
-                    border: "1px solid #f0f0f5", cursor: "pointer", display: "flex",
-                    alignItems: "center", justifyContent: "center", color: "#64748b", fontSize: 16 }}>
-                  ✕
-                </button>
-              </div>
-              <div style={{ padding: "18px 20px", overflowY: "auto" }}>
-                {viewMore.label === "Texte du post"
-                  ? <SmartCaption text={viewMore.value} />
-                  : viewMore.image
-                  ? <ImageField value={viewMore.value} />
-                  : <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.8,
-                      whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                      {viewMore.value}
+        {detailRow && (() => {
+          const sc = STATUS_COLOR[detailRow.status ?? ""] ?? STATUS_COLOR.Draft;
+          const isAssigned = assignedRowKeys.has(detailRow.rowKey);
+          const pubDate = detailRow.scheduledAt ? new Date(detailRow.scheduledAt) : null;
+          const platforms: string[] = detailRow.platforms
+            ? (() => { try { return JSON.parse(detailRow.platforms); } catch { return detailRow.platforms!.split(",").map((s: string) => s.trim()); } })()
+            : [];
+          const pages: string[] = detailRow.pages
+            ? (() => { try { return JSON.parse(detailRow.pages); } catch { return detailRow.pages!.split(",").map((s: string) => s.trim()); } })()
+            : [];
+          const allPlatforms = ["Instagram", "Facebook", "LinkedIn", "TikTok"];
+          const activePlats = [...new Set([...platforms, ...pages].map(p => p.toLowerCase()))];
+          const tags = detailRow.hashtags ? (detailRow.hashtags.match(/#\w+/g) ?? detailRow.hashtags.split(/\s+/).filter(Boolean)) : [];
+          const dupeOui = detailRow.duplicateIG ? /oui|yes|true|1/i.test(detailRow.duplicateIG) : null;
+
+          const sCard: React.CSSProperties = {
+            background: "#fff", borderRadius: 14, border: "1px solid #f1f5f9",
+            padding: "18px 20px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)"
+          };
+
+          return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setDetailRow(null)}
+              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
+                backdropFilter: "blur(8px)", zIndex: 1100, display: "flex",
+                alignItems: "center", justifyContent: "center", padding: 20 }}>
+              <motion.div
+                initial={{ scale: 0.95, y: 16, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                exit={{ scale: 0.95, y: 16, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                onClick={e => e.stopPropagation()}
+                style={{ background: "#f9fafb", borderRadius: 20, width: "100%", maxWidth: 840,
+                  maxHeight: "92vh", display: "flex", flexDirection: "column",
+                  boxShadow: "0 24px 64px rgba(0,0,0,0.14)",
+                  fontFamily: "'Inter','Segoe UI',system-ui,-apple-system,sans-serif",
+                  overflow: "hidden" }}>
+
+                {/* ── Header ── */}
+                <div style={{ padding: "16px 22px", background: "#fff", flexShrink: 0,
+                  borderBottom: "1px solid #f3f4f6",
+                  display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>
+                        Post {detailRow.rowKey}
+                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px",
+                        borderRadius: 20, background: sc.bg, color: sc.text }}>
+                        {detailRow.status ?? "—"}
+                      </span>
                     </div>
-                }
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── All rows modal ── */}
-      <AnimatePresence>
-        {showAllRows && brief && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setShowAllRows(false)}
-            style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.55)",
-              backdropFilter: "blur(8px)", zIndex: 1100, display: "flex",
-              alignItems: "center", justifyContent: "center", padding: 24 }}>
-            <motion.div
-              initial={{ scale: 0.94, y: 20, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.94, y: 20, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 360, damping: 28 }}
-              onClick={e => e.stopPropagation()}
-              style={{ background: "#f8fafc", borderRadius: 24, width: "100%", maxWidth: 860,
-                maxHeight: "88vh", display: "flex", flexDirection: "column",
-                boxShadow: "0 40px 100px rgba(0,0,0,0.22)", overflow: "hidden" }}>
-
-              {/* Modal header */}
-              <div style={{ padding: "18px 24px", background: "#fff",
-                borderBottom: "1.5px solid #f0f0f5",
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                flexShrink: 0 }}>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>
-                    {brief.title} — tous les posts
+                    <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2, fontWeight: 500,
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {brief.title}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>
-                    {brief.rows.length} ligne{brief.rows.length > 1 ? "s" : ""} · cliquer une ligne pour l'assigner
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    {isAssigned ? (
+                      <>
+                        <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700 }}>✓ Assigné</span>
+                        <button onClick={() => {
+                            setAssignedRowKeys(prev => { const s = new Set(prev); s.delete(detailRow.rowKey); return s; });
+                            fetch(`${API}/api/assignments/cancel`, {
+                              method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ rowKey: detailRow.rowKey, postId: detailRow.postId, clientId }),
+                            }).catch(() => {});
+                          }}
+                          style={{ fontSize: 11, padding: "6px 12px", borderRadius: 8, cursor: "pointer",
+                            border: "1px solid #fca5a5", background: "#fef2f2", color: "#ef4444", fontWeight: 600 }}>
+                          Annuler
+                        </button>
+                      </>
+                    ) : (
+                      <button onClick={() => { setDetailRow(null); setAssignRow({ rowKey: detailRow.rowKey, postId: detailRow.postId, briefTitle: brief.title }); }}
+                        style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px",
+                          borderRadius: 9, border: "none", background: "#6366f1",
+                          color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                        <FiUserPlus size={12} /> Assigner
+                      </button>
+                    )}
+                    <button onClick={() => setDetailRow(null)}
+                      style={{ width: 32, height: 32, borderRadius: 8, background: "#f3f4f6",
+                        border: "none", cursor: "pointer", display: "flex",
+                        alignItems: "center", justifyContent: "center", color: "#6b7280", fontSize: 16 }}>
+                      ✕
+                    </button>
                   </div>
                 </div>
-                <button onClick={() => setShowAllRows(false)}
-                  style={{ width: 32, height: 32, borderRadius: 9,
-                    background: "#f8f9fc", border: "1px solid #ebebf0",
-                    cursor: "pointer", display: "flex", alignItems: "center",
-                    justifyContent: "center", color: "#64748b", fontSize: 16 }}>
-                  ✕
-                </button>
-              </div>
 
-              {/* Modal body — scrollable grid */}
-              <div style={{ overflowY: "auto", padding: "20px 24px",
-                display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-                {brief.rows.map(row => {
-                  const sc = STATUS_COLOR[row.status ?? ""] ?? STATUS_COLOR.Draft;
-                  const isAssigned = assignedRowKeys.has(row.rowKey);
-                  const platforms: string[] = row.platforms
-                    ? (() => { try { return JSON.parse(row.platforms); } catch { return [row.platforms]; } })()
-                    : [];
-                  return (
-                    <div key={row.rowKey}
-                      style={{ background: "#fff", borderRadius: 16,
-                        border: `1.5px solid ${isAssigned ? "#bbf7d0" : "#e5e7eb"}`,
-                        overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+                {/* ── Body ── */}
+                <div style={{ overflowY: "auto", flex: 1, padding: "14px 16px",
+                  display: "flex", flexDirection: "column", gap: 12, background: "#f9fafb" }}>
 
-                      {/* Row header */}
-                      <div style={{ padding: "10px 14px", background: isAssigned ? "#f0fdf4" : "#f8fafc",
-                        borderBottom: `1.5px solid ${isAssigned ? "#bbf7d0" : "#e5e7eb"}`,
-                        display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <div style={{ width: 26, height: 26, borderRadius: 7,
-                          background: "#0f172a", display: "flex", alignItems: "center",
-                          justifyContent: "center", color: "#fff", fontSize: 11,
-                          fontWeight: 800, flexShrink: 0 }}>
-                          {row.rowKey}
-                        </div>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px",
-                          borderRadius: 20, background: sc.bg, color: sc.text }}>
-                          {row.status ?? "—"}
-                        </span>
-                        {platforms.slice(0, 2).map(p => <PlatformBadge key={p} name={p} />)}
-                        <div style={{ marginLeft: "auto" }}>
-                          {isAssigned ? (
-                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ fontSize: 11, color: "#16a34a", fontWeight: 700 }}>✓ Assigné</span>
-                              <button
-                                onClick={() => {
-                                  setAssignedRowKeys(prev => { const s = new Set(prev); s.delete(row.rowKey); return s; });
-                                  fetch(`${API}/api/assignments/cancel`, {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                                    body: JSON.stringify({ rowKey: row.rowKey, postId: row.postId, clientId }),
-                                  }).catch(() => {});
-                                }}
-                                style={{ fontSize: 10, padding: "2px 8px", borderRadius: 8,
-                                  border: "1px solid #fca5a5", background: "#fff", color: "#dc2626",
-                                  cursor: "pointer", fontWeight: 600 }}>
-                                Annuler
-                              </button>
+                  {/* ① Planification */}
+                  <div style={sCard}>
+                    <SecHead icon={<FiCalendar size={13}/>} title="Planification" />
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+
+                      {/* Date */}
+                      <Tile label="Date de publication" icon={<FiCalendar size={11}/>}>
+                        {pubDate ? (
+                          <div style={{ marginTop: 4 }}>
+                            <div style={{ fontSize: 24, fontWeight: 800, color: "#111827", lineHeight: 1, letterSpacing: "-0.5px" }}>
+                              {pubDate.getDate()} {pubDate.toLocaleDateString("fr-FR", { month: "short" })}
                             </div>
-                          ) : (
-                            <button
-                              onClick={() => { setShowAllRows(false); setAssignRow({ rowKey: row.rowKey, postId: row.postId, briefTitle: brief.title }); }}
-                              style={{ display: "flex", alignItems: "center", gap: 4,
-                                padding: "4px 10px", borderRadius: 8,
-                                border: "1.5px solid #dc2626", background: "#fef2f2",
-                                color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
-                              <FiUserPlus size={10} /> Assigner
-                            </button>
-                          )}
+                            <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 3 }}>
+                              {pubDate.toLocaleDateString("fr-FR", { weekday: "long" })} · {pubDate.getFullYear()}
+                            </div>
+                          </div>
+                        ) : <Empty />}
+                      </Tile>
+
+                      {/* Heure */}
+                      <Tile label="Heure de publication" icon={<FiClock size={11}/>}>
+                        {pubDate ? (
+                          <div style={{ marginTop: 4 }}>
+                            <div style={{ fontSize: 24, fontWeight: 800, color: "#111827", lineHeight: 1, letterSpacing: "-0.5px" }}>
+                              {pubDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                            </div>
+                            <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 3 }}>Heure locale</div>
+                          </div>
+                        ) : <Empty />}
+                      </Tile>
+
+                      {/* Plateformes */}
+                      <Tile label="Pages" icon={<FiGlobe size={11}/>}>
+                        <div style={{ display: "flex", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
+                          {allPlatforms.map(p => (
+                            <div key={p} title={p}>
+                              <PlatformIcon name={p} dim={!activePlats.includes(p.toLowerCase())} />
+                            </div>
+                          ))}
+                          {activePlats.length === 0 && <Empty />}
                         </div>
+                      </Tile>
+                    </div>
+                  </div>
+
+                  {/* ② Création du contenu */}
+                  <div style={sCard}>
+                    <SecHead icon={<FiPenTool size={13}/>} title="Création du contenu" />
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+
+                      {/* Brief */}
+                      <Tile label="Brief créatif" icon={<FiFileText size={11}/>}>
+                        {detailRow.brief
+                          ? <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.75, marginTop: 4,
+                              whiteSpace: "pre-wrap", wordBreak: "break-word",
+                              borderLeft: "2px solid #e9d5ff", paddingLeft: 10 }}>
+                              {detailRow.brief}
+                            </div>
+                          : <Empty />}
+                      </Tile>
+
+                      {/* Charte */}
+                      <Tile label="Charte graphique" icon={<FiDroplet size={11}/>}>
+                        {detailRow.charte ? (() => {
+                          const hexes = detailRow.charte.match(/#[0-9a-fA-F]{3,6}/g) ?? [];
+                          return (
+                            <div style={{ marginTop: 4 }}>
+                              {hexes.length > 0 && (
+                                <div style={{ display: "flex", gap: 5, marginBottom: 8 }}>
+                                  {hexes.map((h, i) => (
+                                    <div key={i} title={h} style={{ width: 22, height: 22, borderRadius: 6,
+                                      background: h, boxShadow: "0 0 0 1px rgba(0,0,0,0.1)" }} />
+                                  ))}
+                                </div>
+                              )}
+                              <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.65,
+                                whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                                {detailRow.charte}
+                              </div>
+                            </div>
+                          );
+                        })() : <Empty />}
+                      </Tile>
+
+                      {/* Format */}
+                      <Tile label="Format" icon={<FiImage size={11}/>}>
+                        {detailRow.format ? (() => {
+                          const f = detailRow.format.toLowerCase();
+                          const isSquare = /carr[eé]|1:1/.test(f);
+                          const isStory  = /story|9:16/.test(f);
+                          const isLandsc = /paysage|16:9|youtube/.test(f);
+                          const isPortr  = /portrait|4:5/.test(f);
+                          const isA4     = /a4|a3|pdf/.test(f);
+                          const ratio    = isA4 ? "A4" : isStory ? "9:16" : isLandsc ? "16:9" : isPortr ? "4:5" : isSquare ? "1:1" : null;
+                          const bw = isStory ? 18 : isLandsc ? 40 : isPortr ? 24 : 30;
+                          const bh = isStory ? 36 : isLandsc ? 24 : isPortr ? 34 : isA4 ? 38 : 30;
+                          return (
+                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
+                              {ratio && (
+                                <div style={{ width: bw, height: bh, borderRadius: 4, flexShrink: 0,
+                                  background: "#eef2ff", border: "2px solid #6366f1",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  fontSize: 7, fontWeight: 800, color: "#6366f1" }}>
+                                  {ratio}
+                                </div>
+                              )}
+                              <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{detailRow.format}</span>
+                            </div>
+                          );
+                        })() : <Empty />}
+                      </Tile>
+
+                      {/* Texte visuel */}
+                      <Tile label="Texte visuel" icon={<FiPenTool size={11}/>}>
+                        {detailRow.texteVisuel ? (
+                          <div style={{ marginTop: 4, padding: "10px 12px", borderRadius: 8,
+                            background: "#f5f3ff", border: "1px solid #ddd6fe" }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#6d28d9",
+                              fontStyle: "italic", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                              "{detailRow.texteVisuel}"
+                            </div>
+                          </div>
+                        ) : <Empty />}
+                      </Tile>
+
+                      {/* Images – full width */}
+                      <div style={{ gridColumn: "1 / -1" }}>
+                        <Tile label="Images & photos" icon={<FiImage size={11}/>}>
+                          <div style={{ marginTop: 6 }}>
+                            {detailRow.imagesPhotos ? <ImageField value={detailRow.imagesPhotos} /> : <Empty />}
+                          </div>
+                        </Tile>
                       </div>
 
-                      {/* Row summary */}
-                      <div style={{ padding: "10px 14px" }}>
-                        {row.caption ? (
-                          <div style={{ fontSize: 11, color: "#374151", lineHeight: 1.6,
-                            display: "-webkit-box", WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                            {row.caption}
-                          </div>
-                        ) : (
-                          <div style={{ fontSize: 11, color: "#cbd5e1", fontStyle: "italic" }}>
-                            Pas encore rédigé
-                          </div>
-                        )}
-                        {row.scheduledAt && (
-                          <div style={{ fontSize: 10, color: "#64748b", marginTop: 6 }}>
-                            📅 {new Date(row.scheduledAt).toLocaleDateString("fr-FR")}
-                          </div>
-                        )}
+                      {/* Infos du post – full width */}
+                      <div style={{ gridColumn: "1 / -1" }}>
+                        <Tile label="Infos à intégrer" icon={<FiInfo size={11}/>}>
+                          {detailRow.infosPost
+                            ? <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.7, marginTop: 4,
+                                whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                                {detailRow.infosPost}
+                              </div>
+                            : <Empty />}
+                        </Tile>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+
+                  {/* ③ Publication */}
+                  <div style={sCard}>
+                    <SecHead icon={<FiSend size={13}/>} title="Publication" />
+                    <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 18 }}>
+
+                      <Tile label="Texte du post" icon={<FiAlignLeft size={11}/>}>
+                        <div style={{ marginTop: 4 }}>
+                          {detailRow.caption ? <SmartCaption text={detailRow.caption} /> : <Empty />}
+                        </div>
+                      </Tile>
+
+                      <Tile label="Hashtags" icon={<FiHash size={11}/>}>
+                        {tags.length > 0 ? (
+                          <div style={{ marginTop: 6 }}>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 6px" }}>
+                              {tags.map((t, i) => (
+                                <span key={i} style={{ fontSize: 11, fontWeight: 600, padding: "3px 10px",
+                                  borderRadius: 20, background: "#fef2f2", color: "#ef4444",
+                                  border: "1px solid #fecaca" }}>{t}</span>
+                              ))}
+                            </div>
+                            <div style={{ marginTop: 6, fontSize: 10, color: "#9ca3af" }}>
+                              {tags.length} hashtag{tags.length > 1 ? "s" : ""}
+                            </div>
+                          </div>
+                        ) : <Empty />}
+                      </Tile>
+                    </div>
+                  </div>
+
+                  {/* ④ Sponsorisation & Budget */}
+                  <div style={sCard}>
+                    <SecHead icon={<FiDollarSign size={13}/>} title="Sponsorisation & Budget" />
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 18 }}>
+
+                      {/* Budget */}
+                      <Tile label="Budget alloué" icon={<FiDollarSign size={11}/>}>
+                        {detailRow.budget ? (
+                          <div style={{ marginTop: 4 }}>
+                            <div style={{ fontSize: 26, fontWeight: 900, color: "#4f46e5",
+                              letterSpacing: "-1px", lineHeight: 1 }}>
+                              {detailRow.budget}
+                            </div>
+                            <div style={{ width: 36, height: 3, background: "#6366f1",
+                              borderRadius: 2, marginTop: 8 }} />
+                          </div>
+                        ) : <Empty />}
+                      </Tile>
+
+                      {/* Période de sponsorisation – horizontal */}
+                      <Tile label="Période sponso" icon={<FiCalendar size={11}/>}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                          <div>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: "#10b981",
+                              textTransform: "uppercase", letterSpacing: "0.06em" }}>Début</div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>—</div>
+                          </div>
+                          <div style={{ flex: 1, height: 2, borderRadius: 2,
+                            background: "linear-gradient(90deg,#10b981,#ef4444)" }} />
+                          <div>
+                            <div style={{ fontSize: 9, fontWeight: 700, color: "#ef4444",
+                              textTransform: "uppercase", letterSpacing: "0.06em" }}>Fin</div>
+                            <div style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>
+                              {detailRow.sponsoEnd ?? "—"}
+                            </div>
+                          </div>
+                        </div>
+                      </Tile>
+
+                      {/* Duplication IG */}
+                      <Tile label="Duplication Instagram" icon={<FiRefreshCw size={11}/>}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
+                          <div style={{ width: 44, height: 24, borderRadius: 12, position: "relative", flexShrink: 0,
+                            background: dupeOui ? "#10b981" : "#e5e7eb", transition: "background .2s" }}>
+                            <div style={{ position: "absolute", top: 2, width: 20, height: 20,
+                              borderRadius: "50%", background: "#fff",
+                              boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                              left: dupeOui ? 22 : 2, transition: "left .2s" }} />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 700,
+                              color: dupeOui === null ? "#9ca3af" : dupeOui ? "#10b981" : "#ef4444" }}>
+                              {dupeOui === null ? "—" : dupeOui ? "Oui" : "Non"}
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
+                              <PlatformIcon name="Instagram" size={14} dim={!dupeOui} />
+                              <span style={{ fontSize: 10, color: "#9ca3af" }}>Instagram</span>
+                            </div>
+                          </div>
+                        </div>
+                      </Tile>
+                    </div>
+                  </div>
+
+                  {/* ⑤ Ciblage & Objectifs */}
+                  <div style={sCard}>
+                    <SecHead icon={<FiTarget size={13}/>} title="Ciblage & Objectifs" />
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+
+                      <Tile label="Objectif de campagne" icon={<FiTarget size={11}/>}>
+                        {detailRow.objectif ? (
+                          <span style={{ display: "inline-block", marginTop: 5, fontSize: 12, fontWeight: 700,
+                            padding: "5px 14px", borderRadius: 20,
+                            background: "#eef2ff", color: "#4f46e5", border: "1px solid #c7d2fe" }}>
+                            {detailRow.objectif}
+                          </span>
+                        ) : <Empty />}
+                      </Tile>
+
+                      <Tile label="Audience cible" icon={<FiUsers size={11}/>}>
+                        {detailRow.audience ? (() => {
+                          const ageMatch = detailRow.audience.match(/\d{2}[\s-–]+\d{2}/);
+                          const words = detailRow.audience.split(/[\s,;\/]+/).filter(w => w.length > 2);
+                          return (
+                            <div style={{ marginTop: 5 }}>
+                              {ageMatch && (
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 7,
+                                  fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20,
+                                  background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0" }}>
+                                  {ageMatch[0]} ans
+                                </span>
+                              )}
+                              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                                {words.slice(0, 8).map((w, i) => (
+                                  <span key={i} style={{ fontSize: 11, padding: "3px 9px", borderRadius: 20,
+                                    background: "#f3f4f6", color: "#4b5563", fontWeight: 500 }}>{w}</span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })() : <Empty />}
+                      </Tile>
+                    </div>
+                  </div>
+
+                  {/* ⑥ Notes & Commentaires */}
+                  <div style={sCard}>
+                    <SecHead icon={<FiMessageCircle size={13}/>} title="Notes & Commentaires" />
+                    <div style={{ borderLeft: "2px solid #e9d5ff", paddingLeft: 14 }}>
+                      {detailRow.commentaires
+                        ? <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.8,
+                            whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                            {detailRow.commentaires}
+                          </div>
+                        : <span style={{ fontSize: 12, color: "#d1d5db" }}>Aucune note pour ce post</span>}
+                    </div>
+                  </div>
+
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
 
       {/* ── Tab: Comments ── */}

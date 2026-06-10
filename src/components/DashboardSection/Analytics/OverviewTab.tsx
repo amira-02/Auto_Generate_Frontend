@@ -1,16 +1,113 @@
 // Analytics/OverviewTab.tsx
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import {
   AreaChart, Area, BarChart, Bar, ComposedChart, Line, LineChart,
-  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  Cell, PieChart, Pie,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, PieChart, Pie,
 } from "recharts";
 
 import { AuthContext } from "../../../hooks/AuthContext";
 import { CustomTooltip } from "./AnalyticsComponents";
-import { fmtNum, fmtDate } from "./analyticsHelpers";
+import { fmtNum, fmtDate, normalizePlatforms } from "./analyticsHelpers";
 import type { Post, InstagramSummary, FacebookSummary, LinkedInSummary, TikTokSummary } from "./analyticsTypes";
 import Airecommendations from "./Airecommendations";
+
+// ── Mock data (set MOCK_MODE = false to use real API data) ────────────────────
+const MOCK_MODE = false;
+
+function makeTl(base: number, variance: number, days = 14) {
+  let seed = base;
+  return Array.from({ length: days }, (_, i) => {
+    seed = (seed * 9301 + 49297) % 233280;
+    const d = new Date(); d.setDate(d.getDate() - (days - 1 - i));
+    return { date: d.toISOString(), value: Math.max(0, Math.round(base + (seed / 233280 - 0.5) * variance)) };
+  });
+}
+
+const MOCK_POSTS: Post[] = [
+  { id:1,  status:"published", topicName:"Summer Campaign",    platforms:'["instagram","facebook"]', scheduledAt:null,                    createdAt:"2026-06-01T10:00:00Z", caption:"Discover our summer collection ☀️", imageUrl:null },
+  { id:2,  status:"published", topicName:"Product Launch",     platforms:'["instagram"]',             scheduledAt:null,                    createdAt:"2026-06-02T14:00:00Z", caption:"Introducing something new 🚀",       imageUrl:null },
+  { id:3,  status:"published", topicName:"Brand Story",        platforms:'["linkedin","facebook"]',   scheduledAt:null,                    createdAt:"2026-06-03T09:00:00Z", caption:"Our story started with a vision and grew from there.", imageUrl:null },
+  { id:4,  status:"published", topicName:"Engagement Post",    platforms:'["instagram"]',             scheduledAt:null,                    createdAt:"2026-06-04T11:00:00Z", caption:"What is your favorite product? 💬",  imageUrl:null },
+  { id:5,  status:"published", topicName:"TikTok Trend",       platforms:'["tiktok"]',                scheduledAt:null,                    createdAt:"2026-05-20T15:00:00Z", caption:"Trending sound #viral",              imageUrl:null },
+  { id:6,  status:"published", topicName:"Behind the Scenes",  platforms:'["instagram","tiktok"]',    scheduledAt:null,                    createdAt:"2026-05-25T08:00:00Z", caption:"Behind the scenes magic ✨",          imageUrl:null },
+  { id:7,  status:"published", topicName:"Weekly Tips",        platforms:'["linkedin"]',              scheduledAt:null,                    createdAt:"2026-05-15T10:00:00Z", caption:"5 tips for better engagement 📈",    imageUrl:null },
+  { id:8,  status:"published", topicName:"Community Story",    platforms:'["facebook","instagram"]',  scheduledAt:null,                    createdAt:"2026-05-10T12:00:00Z", caption:"Real stories from our community 💙", imageUrl:null },
+  { id:9,  status:"published", topicName:"Flash Sale",         platforms:'["facebook","instagram"]',  scheduledAt:null,                    createdAt:"2026-04-15T10:00:00Z", caption:"Flash sale today only! ⚡",           imageUrl:null },
+  { id:10, status:"published", topicName:"Monthly Recap",      platforms:'["linkedin","facebook"]',   scheduledAt:null,                    createdAt:"2026-05-01T09:00:00Z", caption:"May recap highlights 📊",            imageUrl:null },
+  { id:11, status:"scheduled", topicName:"June Event",         platforms:'["instagram","facebook"]',  scheduledAt:"2026-06-15T10:00:00Z",  createdAt:"2026-06-07T09:00:00Z", caption:"Do not miss our event!",            imageUrl:null },
+  { id:12, status:"scheduled", topicName:"Summer Sale",        platforms:'["instagram"]',             scheduledAt:"2026-06-18T12:00:00Z",  createdAt:"2026-06-07T10:00:00Z", caption:"Big sale coming soon 🔥",           imageUrl:null },
+  { id:13, status:"scheduled", topicName:"Podcast Episode",    platforms:'["linkedin"]',              scheduledAt:"2026-06-20T09:00:00Z",  createdAt:"2026-06-06T08:00:00Z", caption:"New episode dropping soon...",      imageUrl:null },
+  { id:14, status:"scheduled", topicName:"TikTok Challenge",   platforms:'["tiktok"]',                scheduledAt:"2026-06-22T14:00:00Z",  createdAt:"2026-06-06T11:00:00Z", caption:"Join the challenge!",               imageUrl:null },
+  { id:15, status:"draft",     topicName:"Q3 Campaign",        platforms:'["instagram","facebook"]',  scheduledAt:null,                    createdAt:"2026-06-05T14:00:00Z", caption:"Draft ideas for Q3...",             imageUrl:null },
+  { id:16, status:"draft",     topicName:"Influencer Collab",  platforms:'["instagram"]',             scheduledAt:null,                    createdAt:"2026-06-04T16:00:00Z", caption:null,                                imageUrl:null },
+  { id:17, status:"draft",     topicName:"New Product Teaser", platforms:'["tiktok","instagram"]',    scheduledAt:null,                    createdAt:"2026-06-03T10:00:00Z", caption:"Coming soon...",                    imageUrl:null },
+  { id:18, status:"inreview",  topicName:"Partnership Post",   platforms:'["linkedin","facebook"]',   scheduledAt:null,                    createdAt:"2026-06-06T09:00:00Z", caption:"Excited to announce our partnership!", imageUrl:null },
+  { id:19, status:"inreview",  topicName:"Testimonial",        platforms:'["instagram"]',             scheduledAt:null,                    createdAt:"2026-06-07T08:00:00Z", caption:"Hear from our customers 💬",         imageUrl:null },
+  { id:20, status:"published", topicName:"Community Post",     platforms:'["instagram"]',             scheduledAt:null,                    createdAt:"2026-04-20T11:00:00Z", caption:"Thank you to our community 🙏",     imageUrl:null },
+];
+
+const MOCK_IG: InstagramSummary = {
+  followers: 4823, mediaCount: 42, name: "AutoGenerate", profilePicture: "",
+  totalLikes: 1250, totalComments: 347,
+  reachTimeline:    makeTl(320, 200), followerTimeline: makeTl(4760, 80), topPosts: [],
+};
+const MOCK_FB: FacebookSummary = {
+  fans: 3241, followers: 3241, name: "AutoGenerate", profilePicture: "",
+  totalImpressions: 18750, totalEngagedUsers: 892,
+  impressionsTimeline: makeTl(1300, 600), engagedUsersTimeline: makeTl(62, 28),
+  fanAddsTimeline: makeTl(6, 8), recentPosts: [],
+};
+const MOCK_LI: LinkedInSummary = {
+  followers: 1456, name: "AutoGenerate", profilePicture: "", connectionsCount: 312,
+  totalImpressions: 9200, totalReactions: 340, totalClicks: 210,
+  impressionsTimeline: makeTl(650, 280), clicksTimeline: makeTl(15, 10), reactionsTimeline: makeTl(24, 14), recentPosts: [],
+};
+const MOCK_TT: TikTokSummary = {
+  followers: 7856, following: 124, likes: 24300, videoCount: 38, name: "AutoGenerate", profilePicture: "",
+  totalViews: 124300, totalLikes: 8920, totalComments: 1240, totalShares: 567,
+  viewsTimeline: makeTl(8900, 4000), likesTimeline: makeTl(640, 280), recentVideos: [],
+};
+
+// ── Body Rings ────────────────────────────────────────────────────────────────
+function BodyRings({ metrics }: {
+  metrics: { label: string; score: number; max: number; unit: string; color: string }[];
+}) {
+  const cx = 90, cy = 90, trackW = 13, gap = 7;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 24, justifyContent: "center", paddingTop: 8 }}>
+      <svg width={180} height={180} style={{ flexShrink: 0 }}>
+        {metrics.map((m, i) => {
+          const r = cx - trackW / 2 - i * (trackW + gap);
+          const circ = 2 * Math.PI * r;
+          const dash = (m.score / m.max) * circ;
+          return (
+            <g key={i}>
+              <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f5f9" strokeWidth={trackW} />
+              <circle cx={cx} cy={cy} r={r} fill="none" stroke={m.color} strokeWidth={trackW}
+                strokeLinecap="round"
+                strokeDasharray={`${dash} ${circ}`}
+                transform={`rotate(-90 ${cx} ${cy})`} />
+            </g>
+          );
+        })}
+      </svg>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {metrics.map((m, i) => (
+          <div key={i}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: "#94a3b8",
+              letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 3 }}>
+              {m.label}
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: m.color, lineHeight: 1 }}>
+              {m.score}
+              <span style={{ fontSize: 11, fontWeight: 500, color: "#94a3b8" }}>/{m.max} {m.unit}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 type Props = {
   posts: Post[];
@@ -159,19 +256,23 @@ function PostActivityCalendar({ posts }: { posts: Post[] }) {
 }
 
 // ── Insight card (Meta/TikTok style) ─────────────────────────────────────────
-function InsightCard({ title, sub, value, delta, timeline, color, subMetrics }: {
+function InsightCard({ title, sub, value, delta, timeline, color, subMetrics, icon }: {
   title: string; sub: string; value: string | number; delta?: number;
   timeline?: { date?: string; value: number }[];
   color: string;
   subMetrics?: { label: string; value: string | number }[];
+  icon?: React.ReactNode;
 }) {
   const sparkData = (timeline ?? []).map((d, i) => ({ i, v: d.value }));
   return (
     <div style={{ ...card, padding: "16px 18px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{title}</div>
-          <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>{sub}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {icon && <div style={{ flexShrink: 0 }}>{icon}</div>}
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>{title}</div>
+            <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>{sub}</div>
+          </div>
         </div>
         {sparkData.length > 0 && (
           <ResponsiveContainer width={72} height={34}>
@@ -217,9 +318,159 @@ function InsightCard({ title, sub, value, delta, timeline, color, subMetrics }: 
   );
 }
 
+const PLAT_COLORS: Record<string, string> = {
+  instagram: "#e1306c", facebook: "#1877f2", linkedin: "#0077b5",
+  tiktok: "#010101",    twitter:  "#1da1f2", threads:  "#000000",
+};
+
+// ── Hashtag Word Cloud ────────────────────────────────────────────────────────
+const HASHTAG_DATA: { word: string; count: number; color: string }[] = [
+  { word: "#reels",         count: 48, color: "#e1306c" },
+  { word: "#instagood",     count: 42, color: "#e1306c" },
+  { word: "#photooftheday", count: 36, color: "#e1306c" },
+  { word: "#fashion",       count: 32, color: "#e1306c" },
+  { word: "#travel",        count: 29, color: "#e1306c" },
+  { word: "#viral",         count: 26, color: "#e1306c" },
+  { word: "#love",          count: 24, color: "#e1306c" },
+  { word: "#summer",        count: 22, color: "#e1306c" },
+  { word: "#fyp",           count: 21, color: "#555" },
+  { word: "#trending",      count: 17, color: "#555" },
+  { word: "#challenge",     count: 14, color: "#555" },
+  { word: "#foryou",        count: 11, color: "#555" },
+  { word: "#community",     count: 18, color: "#1877f2" },
+  { word: "#share",         count: 15, color: "#1877f2" },
+  { word: "#event",         count: 13, color: "#1877f2" },
+  { word: "#family",        count: 10, color: "#1877f2" },
+  { word: "#networking",    count:  9, color: "#0077b5" },
+  { word: "#leadership",    count:  7, color: "#0077b5" },
+  { word: "#innovation",    count:  6, color: "#0077b5" },
+  { word: "#career",        count:  5, color: "#0077b5" },
+  { word: "#growth",        count:  4, color: "#0077b5" },
+  { word: "#content",       count: 20, color: "#e1306c" },
+  { word: "#local",         count:  8, color: "#1877f2" },
+  { word: "#professional",  count:  4, color: "#0077b5" },
+];
+
+const PLAT_OPTS = [
+  { label: "Instagram", value: "#e1306c" },
+  { label: "Facebook",  value: "#1877f2" },
+  { label: "LinkedIn",  value: "#0077b5" },
+  { label: "TikTok",    value: "#555555" },
+];
+
+function HashtagCloud({ words, onRemove }: {
+  words: { word: string; count: number; color: string }[];
+  onRemove: (word: string) => void;
+}) {
+  const W = 420, H = 150, cx = W / 2, cy = H / 2;
+  const max = words[0]?.count ?? 1;
+  const placed: { x: number; y: number; pw: number; ph: number }[] = [];
+
+  const overlaps = (x: number, y: number, pw: number, ph: number) =>
+    placed.some(p => Math.abs(x - p.x) < (pw + p.pw) / 2 + 2 &&
+                     Math.abs(y - p.y) < (ph + p.ph) / 2 + 2);
+
+  const elements = words.map(item => {
+    const fontSize = 11 + Math.round((item.count / max) * 28);
+    const pw = item.word.length * fontSize * 0.52;
+    const ph = fontSize * 1.3;
+    let t = 0, x = cx, y = cy;
+    while (t < 1000) {
+      const r = 0.42 * t;
+      x = cx + r * Math.cos(t);
+      y = cy + r * Math.sin(t) * 0.62;
+      if (x - pw / 2 > 4 && x + pw / 2 < W - 4 &&
+          y - ph / 2 > 4 && y + ph / 2 < H - 4 &&
+          !overlaps(x, y, pw, ph)) break;
+      t += 0.16;
+    }
+    placed.push({ x, y, pw, ph });
+    return { ...item, x, y, fontSize };
+  });
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ minHeight: 110 }}>
+      {elements.map(e => (
+        <text key={e.word} x={e.x} y={e.y}
+          fontSize={e.fontSize}
+          fontWeight={e.fontSize > 24 ? 800 : e.fontSize > 16 ? 700 : 500}
+          fill={e.color} textAnchor="middle" dominantBaseline="middle"
+          onClick={() => onRemove(e.word)}
+          style={{ cursor: "pointer", opacity: 0.5 + (e.count / max) * 0.5,
+            transition: "opacity .15s" }}>
+          {e.word}
+        </text>
+      ))}
+    </svg>
+  );
+}
+
+function InteractiveHashtagCard() {
+  const [words, setWords] = useState(HASHTAG_DATA);
+  const [input, setInput] = useState("");
+  const [color, setColor] = useState("#e1306c");
+
+  const remove = (word: string) => setWords(ws => ws.filter(w => w.word !== word));
+
+  const add = () => {
+    let tag = input.trim();
+    if (!tag) return;
+    if (!tag.startsWith("#")) tag = "#" + tag;
+    if (words.find(w => w.word.toLowerCase() === tag.toLowerCase())) { setInput(""); return; }
+    setWords(ws => [...ws, { word: tag, count: Math.max(6, Math.round((ws[0]?.count ?? 20) * 0.25)), color }]);
+    setInput("");
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <HashtagCloud words={words} onRemove={remove} />
+
+      {/* Chips */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 6px", maxHeight: 52,
+        overflowY: "auto", padding: "4px 0" }}>
+        {words.map(w => (
+          <div key={w.word} style={{ display: "flex", alignItems: "center", gap: 3,
+            padding: "3px 8px 3px 9px", borderRadius: 20,
+            background: w.color + "12", border: `1px solid ${w.color}30` }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: w.color }}>{w.word}</span>
+            <button onClick={() => remove(w.word)} style={{
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 13, lineHeight: 1, color: w.color, opacity: 0.6,
+              padding: "0 0 0 2px", display: "flex", alignItems: "center" }}>×</button>
+          </div>
+        ))}
+      </div>
+
+      {/* Add row */}
+      <div style={{ display: "flex", gap: 6 }}>
+        <input value={input} onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && add()}
+          placeholder="#hashtag..."
+          style={{ flex: 1, borderRadius: 8, border: "1px solid #e2e8f0",
+            padding: "6px 10px", fontSize: 12, outline: "none", color: "#374151" }} />
+        <select value={color} onChange={e => setColor(e.target.value)}
+          style={{ borderRadius: 8, border: "1px solid #e2e8f0", padding: "4px 6px",
+            fontSize: 11, color: "#374151", background: "#fff", cursor: "pointer" }}>
+          {PLAT_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <button onClick={add} style={{ padding: "6px 14px", borderRadius: 8, border: "none",
+          background: "#dc2626", color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer" }}>
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function OverviewTab({ posts, igData, fbData, liData, ttData }: Props) {
+export default function OverviewTab(rawProps: Props) {
   const { token } = useContext(AuthContext);
+
+  const posts  = MOCK_MODE ? MOCK_POSTS : rawProps.posts;
+  const igData = MOCK_MODE ? MOCK_IG    : rawProps.igData;
+  const fbData = MOCK_MODE ? MOCK_FB    : rawProps.fbData;
+  const liData = MOCK_MODE ? MOCK_LI    : rawProps.liData;
+  const ttData = MOCK_MODE ? MOCK_TT    : rawProps.ttData;
 
   const now          = new Date();
   const thisMonth    = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -231,7 +482,6 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
   const published  = posts.filter(p => p.status?.toLowerCase() === "published");
   const scheduled  = posts.filter(p => p.status?.toLowerCase() === "scheduled");
   const inReview   = posts.filter(p => ["inreview", "approved"].includes(p.status?.toLowerCase() ?? ""));
-  const drafts     = posts.filter(p => p.status?.toLowerCase() === "draft");
   const growthPct  = postsLastM.length > 0
     ? Math.round(((postsThisM.length - postsLastM.length) / postsLastM.length) * 100) : 0;
 
@@ -322,6 +572,31 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
   }));
   const peakBlockIndex = peakHoursData.reduce((bi, b, i, arr) => b.posts > arr[bi].posts ? i : bi, 0);
 
+  // ── Follower growth (IG, last 30 days) ───────────────────────────────────
+  const followerGrowthData = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (29 - i));
+    const label = fmtDate(d.toISOString());
+    const ig = igData?.followerTimeline?.find(r => fmtDate(r.date) === label)?.value ?? null;
+    const tt = ttData?.viewsTimeline?.find(r => fmtDate(r.date) === label)?.value ?? null;
+    return { date: label, ig, tt };
+  }).filter(r => r.ig !== null || r.tt !== null) as { date: string; ig: number; tt: number }[];
+  const hasFollowerData = followerGrowthData.length > 0;
+
+  // ── Posts per platform ────────────────────────────────────────────────────
+  const platCounts: Record<string, number> = {};
+  posts.forEach(p => {
+    normalizePlatforms(p.platforms).forEach(pl => {
+      platCounts[pl] = (platCounts[pl] || 0) + 1;
+    });
+  });
+  const platDistData = Object.entries(platCounts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count]) => ({
+      platform: name.charAt(0).toUpperCase() + name.slice(1),
+      count,
+      color: PLAT_COLORS[name.toLowerCase()] ?? "#94a3b8",
+    }));
+
   // ── Engagement rate per platform ──────────────────────────────────────────
   const engagementRates = [
     igData && igData.followers > 0 ? { platform: "Instagram", color: "#e1306c",
@@ -345,62 +620,58 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-      {/* ── 1. KPIs ─────────────────────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-        <KpiTile label="Total Posts"  value={posts.length}     delta={growthPct} sub="vs mois dernier" />
-        <KpiTile label="Publiés"      value={published.length}                   sub="tous les temps"  />
-        <KpiTile label="Planifiés"    value={scheduled.length}                   sub="à venir"         />
-        <KpiTile label="En révision"  value={inReview.length}                    sub="en attente"      />
-      </div>
-
-      {/* ── 2. Insight cards ────────────────────────────────────────────────── */}
+      {/* ── 1. Insight cards ────────────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
         <InsightCard
-          title="Portée"
-          sub="Comptes touchés"
-          value={fmtNum(igData?.reachTimeline?.slice(-14).reduce((s,d) => s + d.value, 0) ?? 0)}
-          delta={calcDelta(igData?.reachTimeline ?? [])}
-          timeline={igData?.reachTimeline?.slice(-14) ?? []}
+          title="Instagram"
+          sub="Portée · abonnés"
+          value={fmtNum(igData?.followers ?? 0)}
+          delta={calcDelta(igData?.followerTimeline ?? [])}
+          timeline={igData?.followerTimeline?.slice(-14) ?? []}
           color="#e1306c"
+          icon={<PlatformIcon.Instagram />}
           subMetrics={[
-            { label: "Total likes",    value: fmtNum(igData?.totalLikes    ?? 0) },
-            { label: "Total comments", value: fmtNum(igData?.totalComments ?? 0) },
+            { label: "Portée 14j",  value: fmtNum(igData?.reachTimeline?.slice(-14).reduce((s,d) => s + d.value, 0) ?? 0) },
+            { label: "Total likes", value: fmtNum(igData?.totalLikes ?? 0) },
           ]}
         />
         <InsightCard
-          title="Impressions"
-          sub="Facebook · total vues"
+          title="Facebook"
+          sub="Impressions · fans"
           value={fmtNum(fbData?.totalImpressions ?? 0)}
           delta={calcDelta(fbData?.impressionsTimeline ?? [])}
           timeline={fbData?.impressionsTimeline?.slice(-14) ?? []}
           color="#1877f2"
+          icon={<PlatformIcon.Facebook />}
           subMetrics={[
             { label: "Engagés", value: fmtNum(fbData?.totalEngagedUsers ?? 0) },
             { label: "Fans",    value: fmtNum(fbData?.fans              ?? 0) },
           ]}
         />
         <InsightCard
-          title="Vues TikTok"
-          sub="Vidéos · cumul"
+          title="TikTok"
+          sub="Vues · cumul"
           value={fmtNum(ttData?.totalViews ?? 0)}
           delta={calcDelta(ttData?.viewsTimeline ?? [])}
           timeline={ttData?.viewsTimeline?.slice(-14) ?? []}
           color="#69C9D0"
+          icon={<PlatformIcon.TikTok />}
           subMetrics={[
             { label: "Likes",    value: fmtNum(ttData?.totalLikes  ?? 0) },
             { label: "Partages", value: fmtNum(ttData?.totalShares ?? 0) },
           ]}
         />
         <InsightCard
-          title="Abonnés"
-          sub="Instagram followers"
-          value={fmtNum(igData?.followers ?? 0)}
-          delta={calcDelta(igData?.followerTimeline ?? [])}
-          timeline={igData?.followerTimeline?.slice(-14) ?? []}
-          color="#10b981"
+          title="LinkedIn"
+          sub="Abonnés · impressions"
+          value={fmtNum(liData?.followers ?? 0)}
+          delta={calcDelta(liData?.impressionsTimeline ?? [])}
+          timeline={liData?.impressionsTimeline?.slice(-14) ?? []}
+          color="#0077b5"
+          icon={<PlatformIcon.LinkedIn />}
           subMetrics={[
-            { label: "Posts",    value: igData?.mediaCount ?? 0 },
-            { label: "Connecté", value: igData ? "✓" : "--"    },
+            { label: "Impressions", value: fmtNum(liData?.totalImpressions ?? 0) },
+            { label: "Réactions",   value: fmtNum(liData?.totalReactions   ?? 0) },
           ]}
         />
       </div>
@@ -484,7 +755,7 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
 
         {/* Cross-platform reach */}
-        <div style={{ ...card }}>
+        <div style={{ ...card, display: "flex", flexDirection: "column" }}>
           <ChartHead
             title="Cross-Platform Reach"
             sub="Instagram reach · Facebook impressions"
@@ -501,8 +772,9 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
               </div>
             }
           />
+          <div style={{ flex: 1, display: "flex", alignItems: "center", minHeight: 190 }}>
           {!hasReach
-            ? <div style={{ textAlign: "center", padding: "50px 0", color: "#cbd5e1", fontSize: 12 }}>
+            ? <div style={{ width: "100%", textAlign: "center", color: "#cbd5e1", fontSize: 12 }}>
                 Connect Instagram or Facebook to see reach data
               </div>
             : <ResponsiveContainer width="100%" height={190}>
@@ -532,6 +804,7 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
                 </AreaChart>
               </ResponsiveContainer>
           }
+          </div>
         </div>
 
         <div style={{ ...card }}>
@@ -604,6 +877,14 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
         </div>
       </div>
 
+      {/* ── 4. KPIs ─────────────────────────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+        <KpiTile label="Total Posts"  value={posts.length}     delta={growthPct} sub="vs mois dernier" />
+        <KpiTile label="Publiés"      value={published.length}                   sub="tous les temps"  />
+        <KpiTile label="Planifiés"    value={scheduled.length}                   sub="à venir"         />
+        <KpiTile label="En révision"  value={inReview.length}                    sub="en attente"      />
+      </div>
+
       {/* ── 5. Peak Hours + Engagement Rate + Total Impressions ─────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
 
@@ -635,17 +916,29 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
           <ChartHead title="Taux d'engagement" sub="(Likes + Commentaires) / Abonnés" />
           {engagementRates.length === 0
             ? <div style={{ textAlign: "center", padding: "50px 0", color: "#cbd5e1", fontSize: 12 }}>Aucune plateforme connectée</div>
-            : <ResponsiveContainer width="100%" height={190}>
-                <BarChart data={engagementRates} margin={{ top: 4, right: 4, left: -10, bottom: 0 }} barSize={32}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
-                  <XAxis dataKey="platform" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} />
-                  <Tooltip formatter={(v: any) => [`${v}%`, "Taux"]} />
-                  <Bar dataKey="rate" name="Engagement" radius={[6, 6, 0, 0]}>
-                    {engagementRates.map((e, i) => <Cell key={i} fill={e.color} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            : <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <ResponsiveContainer width="60%" height={160}>
+                  <PieChart>
+                    <Pie data={engagementRates} dataKey="rate" nameKey="platform"
+                      cx="50%" cy="50%" innerRadius={44} outerRadius={72}
+                      paddingAngle={4} cornerRadius={6} strokeWidth={0}>
+                      {engagementRates.map((e, i) => <Cell key={i} fill={e.color} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: any) => [`${v}%`, "Taux"]} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {engagementRates.map(e => (
+                    <div key={e.platform} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: e.color, flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontSize: 10, color: "#64748b", lineHeight: 1 }}>{e.platform}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: e.color, lineHeight: 1.2 }}>{e.rate}%</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
           }
         </div>
 
@@ -669,57 +962,82 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
         </div>
       </div>
 
-      {/* ── 6. Calendar + Santé du contenu + Pipeline ───────────────────────── */}
+      {/* ── 6. Word Cloud + Follower Growth + Posts par plateforme ──────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+
+        {/* Hashtag Word Cloud */}
+        <div style={{ ...card }}>
+          <ChartHead title="Hashtags tendance" sub="Cliquer sur un mot pour le supprimer" />
+          <InteractiveHashtagCard />
+        </div>
+
+        {/* Follower Growth */}
+        <div style={{ ...card }}>
+          <ChartHead
+            title="Croissance abonnés"
+            sub="Évolution sur les 30 derniers jours"
+            right={
+              <div style={{ display: "flex", gap: 10 }}>
+                {igData && <Dot color="#e1306c" label="Instagram" />}
+              </div>
+            }
+          />
+          {!hasFollowerData
+            ? <div style={{ textAlign:"center", padding:"50px 0", color:"#cbd5e1", fontSize:12 }}>Aucune donnée de croissance</div>
+            : <ResponsiveContainer width="100%" height={190}>
+                <AreaChart data={followerGrowthData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gFolIg" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="#e1306c" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#e1306c" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false}
+                    interval={Math.floor(followerGrowthData.length / 5)} />
+                  <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false}
+                    tickFormatter={v => fmtNum(v)} domain={["auto", "auto"]} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="ig" name="Instagram" stroke="#e1306c" strokeWidth={2}
+                    fill="url(#gFolIg)" dot={false} activeDot={{ r: 4, fill: "#e1306c" }} connectNulls />
+                </AreaChart>
+              </ResponsiveContainer>
+          }
+        </div>
+
+        {/* Posts per platform */}
+        <div style={{ ...card }}>
+          <ChartHead title="Posts par plateforme" sub="Répartition du contenu créé" />
+          {platDistData.length === 0
+            ? <div style={{ textAlign:"center", padding:"50px 0", color:"#cbd5e1", fontSize:12 }}>Aucun post</div>
+            : <ResponsiveContainer width="100%" height={190}>
+                <BarChart data={platDistData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }} barSize={32}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" vertical={false} />
+                  <XAxis dataKey="platform" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 9, fill: "#94a3b8" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="count" name="Posts" radius={[6, 6, 0, 0]}>
+                    {platDistData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+          }
+        </div>
+      </div>
+
+      {/* ── 7. Calendar + Santé du contenu + Pipeline ───────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, alignItems: "stretch" }}>
         <PostActivityCalendar posts={posts} />
 
-        {/* Santé du contenu */}
-        <div style={{ ...card, display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 20px 20px" }}>
+        {/* Santé du contenu — Body Rings */}
+        <div style={{ ...card, padding: "20px 20px 20px" }}>
           <ChartHead title="Santé du contenu" sub="Indicateurs clés de qualité" />
-          <div style={{ position: "relative" }}>
-            <PieChart width={220} height={220}>
-              <Pie
-                data={healthMetrics.map(h => ({ name: h.label, value: h.score, color: h.color }))}
-                cx={110} cy={110}
-                innerRadius={62} outerRadius={96}
-                paddingAngle={4} dataKey="value"
-                startAngle={90} endAngle={-270}
-                strokeWidth={0}
-                cornerRadius={8}
-                label={({ cx, cy, midAngle, innerRadius, outerRadius, value }) => {
-                  const RADIAN = Math.PI / 180;
-                  const r = innerRadius + (outerRadius - innerRadius) * 0.5;
-                  const x = cx + r * Math.cos(-(midAngle ?? 0) * RADIAN);
-                  const y = cy + r * Math.sin(-(midAngle ?? 0) * RADIAN);
-                  return value > 6 ? (
-                    <text x={x} y={y} fill="#fff" textAnchor="middle" dominantBaseline="central"
-                      fontSize={12} fontWeight={700}>{value}%</text>
-                  ) : null;
-                }}
-                labelLine={false}>
-                {healthMetrics.map((h, i) => (
-                  <Cell key={i} fill={h.color} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(v: any, n: any) => [`${v}%`, n]} />
-            </PieChart>
-            <div style={{ position: "absolute", top: "50%", left: "50%",
-              transform: "translate(-50%,-50%)", textAlign: "center", pointerEvents: "none" }}>
-              <div style={{ fontSize: 24, fontWeight: 800, color: "#0f172a", letterSpacing: "-1px" }}>
-                {overallScore}
-              </div>
-              <div style={{ fontSize: 10, color: "#94a3b8" }}>/100</div>
-            </div>
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 16px", marginTop: 12 }}>
-            {healthMetrics.map(h => (
-              <div key={h.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: 10, height: 10, borderRadius: 3, background: h.color }} />
-                <span style={{ fontSize: 11, color: "#64748b" }}>{h.label}</span>
-                <span style={{ fontSize: 11, fontWeight: 700, color: h.color }}>{h.score}%</span>
-              </div>
-            ))}
-          </div>
+          <BodyRings metrics={[
+            { label: "Taux de publication", score: publishRate,  max: 100, unit: "pts", color: "#dc2626" },
+            { label: "Posts avec caption",  score: captionRate,  max: 100, unit: "%",   color: "#0f172a" },
+            { label: "Posts avec visuel",   score: imageRate,    max: 100, unit: "%",   color: "#10b981" },
+            { label: "Posts planifiés",     score: scheduleRate, max: 100, unit: "%",   color: "#94a3b8" },
+          ]} />
         </div>
 
         {/* AI Recommendations */}
@@ -729,42 +1047,38 @@ export default function OverviewTab({ posts, igData, fbData, liData, ttData }: P
   );
 }
 
-// ── Platform icons (SVG) ──────────────────────────────────────────────────────
+// ── Platform icons (SVG — flat icon style, no background) ────────────────────
 const PlatformIcon = {
   Instagram: () => (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
       <defs>
-        <radialGradient id="ig1" cx="30%" cy="107%" r="150%">
-          <stop offset="0%" stopColor="#fdf497"/>
-          <stop offset="10%" stopColor="#fdf497"/>
-          <stop offset="50%" stopColor="#fd5949"/>
-          <stop offset="68%" stopColor="#d6249f"/>
-          <stop offset="100%" stopColor="#285AEB"/>
-        </radialGradient>
+        <linearGradient id="pi-ig-ln" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#feda75"/>
+          <stop offset="0.25" stopColor="#fa7e1e"/>
+          <stop offset="0.55" stopColor="#d62976"/>
+          <stop offset="1"    stopColor="#4f5bd5"/>
+        </linearGradient>
       </defs>
-      <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#ig1)"/>
-      <circle cx="12" cy="12" r="4.5" stroke="#fff" strokeWidth="1.8" fill="none"/>
-      <circle cx="17.5" cy="6.5" r="1.2" fill="#fff"/>
+      <rect x="2" y="2" width="20" height="20" rx="6" stroke="url(#pi-ig-ln)" strokeWidth="2"/>
+      <circle cx="12" cy="12" r="4.5" stroke="url(#pi-ig-ln)" strokeWidth="2"/>
+      <circle cx="17.5" cy="6.5" r="1.3" fill="#d62976"/>
     </svg>
   ),
   Facebook: () => (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-      <rect x="2" y="2" width="20" height="20" rx="6" fill="#1877f2"/>
-      <path d="M13.5 21v-7.5h2.5l.5-3H13.5V9c0-.83.42-1.5 1.5-1.5h1.5V5s-1-.1-2-.1c-2.5 0-4 1.5-4 4v1.5H8v3h2.5V21h3z" fill="#fff"/>
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="#1877f2">
+      <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
     </svg>
   ),
   LinkedIn: () => (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-      <rect x="2" y="2" width="20" height="20" rx="6" fill="#0077b5"/>
-      <path d="M7 10h2v7H7v-7zm1-3a1.1 1.1 0 110 2.2A1.1 1.1 0 018 7zm4 3h2v1h.03C14.4 10.4 15.2 10 16 10c2 0 3 1.3 3 3.5V17h-2v-3.3c0-.8-.3-1.7-1.3-1.7-1.1 0-1.7.8-1.7 1.7V17h-2v-7z" fill="#fff"/>
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="#0077b5">
+      <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4V9h4v1.5A6 6 0 0116 8z"/>
+      <rect x="2" y="9" width="4" height="12"/>
+      <circle cx="4" cy="4" r="2"/>
     </svg>
   ),
   TikTok: () => (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-      <rect x="2" y="2" width="20" height="20" rx="6" fill="#010101"/>
-      <path d="M17 8.5a3.5 3.5 0 01-3.5-3.5h-2v9.5a1.5 1.5 0 11-2-1.4V11a4 4 0 105.5 3.7V11a6 6 0 003.5 1.1V9.9A3.5 3.5 0 0117 8.5z" fill="white"/>
-      <path d="M17 8.5a3.5 3.5 0 01-2-.6v.1a3.5 3.5 0 002 .5z" fill="#69C9D0"/>
-      <path d="M13.5 5a3.5 3.5 0 003.5 3.5v-1a2.5 2.5 0 01-2.5-2.5h-1z" fill="#EE1D52"/>
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="#010101">
+      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05A6.34 6.34 0 003.15 15.3a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V9.97a8.16 8.16 0 004.77 1.52V8.04a4.85 4.85 0 01-1-.35z"/>
     </svg>
   ),
 };
